@@ -1,0 +1,84 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: streamhub-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: streamhub
+      MYSQL_USER: streamhub
+      MYSQL_PASSWORD: streamhub
+      TZ: Asia/Seoul
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: streamhub-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: streamhub-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: streamhub
+      MINIO_ROOT_PASSWORD: streamhub123
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web console
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: create the media bucket and make objects downloadable.
+  minio-init:
+    image: minio/mc:latest
+    container_name: streamhub-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 streamhub streamhub123 &&
+      mc mb --ignore-existing local/streamhub-media &&
+      mc anonymous set download local/streamhub-media &&
+      echo 'bucket ready';
+      "
+
+  # LocalStack — SQS emulation. The same AWS SDK / spring-cloud-aws code that
+  # targets this locally works unchanged against real SQS in production.
+  localstack:
+    image: localstack/localstack:3
+    container_name: streamhub-localstack
+    environment:
+      SERVICES: sqs
+      DEBUG: "0"
+    ports:
+      - "4566:4566"
+    healthcheck:
+      test: ["CMD-SHELL", "awslocal sqs list-queues || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  mysql-data:
+  minio-data:

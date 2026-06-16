@@ -1,0 +1,44 @@
+name: Deploy API
+
+# Manual trigger. Builds the API image, pushes to ECR, and rolls the EC2 container.
+# Required repo secrets:
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY  (a deploy IAM user with ECR push + SSM SendCommand)
+#   AWS_REGION            e.g. ap-northeast-2
+#   ECR_REPOSITORY        e.g. streamhub-api
+#   EC2_INSTANCE_ID       the target instance id (terraform output)
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push image (linux/amd64)
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPO: ${{ secrets.ECR_REPOSITORY }}
+        run: |
+          docker buildx build --platform linux/amd64 \
+            -t "$REGISTRY/$REPO:latest" \
+            -t "$REGISTRY/$REPO:${{ github.sha }}" \
+            streamhub-api --push
+
+      - name: Roll container via SSM
+        run: |
+          aws ssm send-command \
+            --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "deploy ${{ github.sha }}" \
+            --parameters 'commands=["/usr/local/bin/streamhub-deploy"]' \
+            --region "${{ secrets.AWS_REGION }}"

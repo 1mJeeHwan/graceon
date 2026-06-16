@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (Maven)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: streamhub-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Build & test
+        run: ./mvnw -B verify
+
+  frontend:
+    name: Frontend (Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: streamhub-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install
+        run: npm install --legacy-peer-deps
+      - name: Build (type-check + lint + build)
+        run: npm run build
+        env:
+          NEXTAUTH_SECRET: ci-placeholder-secret
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:8080

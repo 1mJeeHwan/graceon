@@ -1,0 +1,33 @@
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Java / Maven (any subproject)
+**/target/
+*.class
+
+# Node / Next.js (any subproject)
+**/node_modules/
+**/.next/
+**/out/
+**/build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Env / secrets
+**/.env
+**/.env.local
+**/.env*.local
+
+# Logs
+*.log
+
+# Terraform state (never commit)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
