@@ -4,6 +4,10 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { api } from "./api";
 import type { MemberInfo } from "./types";
 
+// Trade-off: the member token is kept in localStorage for simplicity (no backend session/cookie
+// plumbing on this read-only public site). It is XSS-exposed; a production build would move to an
+// httpOnly, SameSite cookie issued by the API. The admin console already does the cookie-backed
+// approach via NextAuth — see streamhub-web.
 const STORAGE_KEY = "streamhub_member_token";
 
 interface AuthState {
