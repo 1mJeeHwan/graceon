@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* PalmPlus ng-front dark tokens (R G B channels for Tailwind alpha). */
+  --bg: 21 23 29; /* #15171D background */
+  --surface: 32 34 43; /* #20222B layer_popup (section/card bg) */
+  --card: 34 37 46; /* #22252E select_bg (elevated) */
+  --border: 53 56 65; /* #353841 disable (borders) */
+  --active: 247 248 252; /* #F7F8FC primary text */
+  --inactive: 124 129 146; /* #7C8192 secondary text */
+  --noimg: 145 153 168; /* #9199A8 image placeholder */
+  --primary: 64 193 223; /* #40C1DF cyan identity */
+  --secondary: 91 48 255; /* #5B30FF */
+  --point: 255 27 88; /* #FF1B58 */
+
+  /* Outside the phone frame (desktop letterboxing). */
+  --frame-out: 11 12 16;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: rgb(var(--frame-out));
+  color: rgb(var(--active));
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Phone-style frame: app lives in a centered column, letterboxed on desktop. */
+.app-frame {
+  position: relative;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  background-color: rgb(var(--bg));
+}
+@media (min-width: 481px) {
+  .app-frame {
+    border-inline: 1px solid rgb(var(--border));
+  }
+}
+
+@layer components {
+  .ellipsis-1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+  .ellipsis-2 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  /* Horizontal swipe row with snap + hidden scrollbar. */
+  .hrow {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .hrow::-webkit-scrollbar {
+    display: none;
+  }
+  .hrow > * {
+    scroll-snap-align: start;
+    flex: 0 0 auto;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    padding-inline: 14px;
+    border-radius: 16px;
+    border: 1px solid rgb(var(--border));
+    font-size: 14px;
+    color: rgb(var(--inactive));
+    transition: all 0.18s;
+  }
+  .pill[data-active="true"] {
+    background-color: rgb(var(--primary));
+    border-color: rgb(var(--primary));
+    color: #fff;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.2rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    color: #fff;
+    background-color: rgb(var(--primary));
+    transition: opacity 0.18s, transform 0.18s;
+  }
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .input {
+    width: 100%;
+    padding: 0.65rem 1rem 0.65rem 2.5rem;
+    border-radius: 0.75rem;
+    background-color: rgb(var(--surface));
+    border: 1px solid rgb(var(--border));
+    color: rgb(var(--active));
+    outline: none;
+    transition: border-color 0.18s;
+  }
+  .input::placeholder {
+    color: rgb(var(--inactive));
+  }
+  .input:focus {
+    border-color: rgb(var(--primary));
+  }
+
+  .thumb {
+    position: relative;
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: rgb(var(--surface));
+  }
+
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: rgb(var(--surface));
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgb(var(--active) / 0.05), transparent);
+    animation: shimmer 1.5s infinite;
+  }
+}
