@@ -20,6 +20,10 @@ import org.streamhub.api.v1.member.repository.ChurchRepository;
 import org.streamhub.api.v1.member.repository.CountryRepository;
 import org.streamhub.api.v1.member.repository.MemberRepository;
 import org.streamhub.api.v1.member.repository.RegionRepository;
+import org.streamhub.api.v1.church.entity.Denomination;
+import org.streamhub.api.v1.church.entity.WorshipKind;
+import org.streamhub.api.v1.church.entity.WorshipTime;
+import org.streamhub.api.v1.church.repository.WorshipTimeRepository;
 import org.streamhub.api.v1.content.entity.Channel;
 import org.streamhub.api.v1.content.entity.Content;
 import org.streamhub.api.v1.content.entity.ContentHashtag;
@@ -56,6 +60,7 @@ public class DataInitializer implements CommandLineRunner {
     private final CountryRepository countryRepository;
     private final RegionRepository regionRepository;
     private final ChurchRepository churchRepository;
+    private final WorshipTimeRepository worshipTimeRepository;
     private final MemberRepository memberRepository;
     private final ChannelRepository channelRepository;
     private final ContentRepository contentRepository;
@@ -71,6 +76,7 @@ public class DataInitializer implements CommandLineRunner {
             CountryRepository countryRepository,
             RegionRepository regionRepository,
             ChurchRepository churchRepository,
+            WorshipTimeRepository worshipTimeRepository,
             MemberRepository memberRepository,
             ChannelRepository channelRepository,
             ContentRepository contentRepository,
@@ -84,6 +90,7 @@ public class DataInitializer implements CommandLineRunner {
         this.countryRepository = countryRepository;
         this.regionRepository = regionRepository;
         this.churchRepository = churchRepository;
+        this.worshipTimeRepository = worshipTimeRepository;
         this.memberRepository = memberRepository;
         this.channelRepository = channelRepository;
         this.contentRepository = contentRepository;
@@ -125,6 +132,84 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Seeded admin account: {} ({})", loginId, role);
     }
 
+    // --- Church seed (C1 church-finder) ------------------------------------
+    // Deterministic, masked, fictional. Coordinates are real dong-level anchors (Seoul/Gyeonggi)
+    // nudged by an index-based ±offset so no seed row pinpoints a real address. Church names are
+    // synthesized ({지명}+{형용}+교회) and never match a real church; phones are masked virtual
+    // numbers; pastor names are fictional. dataSource="SEED" is the demo-badge basis.
+
+    /** A Seoul dong-level coordinate anchor and its 구(district)/주소 prefix. */
+    private static final String[][] SEOUL_ANCHORS = {
+            // {dongName, district, lat, lng}
+            {"역삼", "강남구", "37.5006", "127.0364"},
+            {"삼성", "강남구", "37.5140", "127.0565"},
+            {"논현", "강남구", "37.5111", "127.0218"},
+            {"청담", "강남구", "37.5197", "127.0473"},
+            {"잠실", "송파구", "37.5132", "127.1001"},
+            {"방이", "송파구", "37.5106", "127.1162"},
+            {"목동", "양천구", "37.5301", "126.8755"},
+            {"여의도", "영등포구", "37.5215", "126.9242"},
+            {"당산", "영등포구", "37.5346", "126.9020"},
+            {"마포", "마포구", "37.5400", "126.9457"},
+            {"상암", "마포구", "37.5790", "126.8895"},
+            {"연남", "마포구", "37.5634", "126.9256"},
+            {"신촌", "서대문구", "37.5598", "126.9425"},
+            {"홍제", "서대문구", "37.5889", "126.9437"},
+            {"종로", "종로구", "37.5704", "126.9921"},
+            {"혜화", "종로구", "37.5824", "127.0019"},
+            {"명동", "중구", "37.5636", "126.9869"},
+            {"용산", "용산구", "37.5311", "126.9810"},
+            {"이태원", "용산구", "37.5345", "126.9946"},
+            {"성수", "성동구", "37.5446", "127.0560"},
+            {"왕십리", "성동구", "37.5614", "127.0378"},
+            {"건대", "광진구", "37.5403", "127.0695"},
+            {"노원", "노원구", "37.6542", "127.0568"},
+            {"수유", "강북구", "37.6383", "127.0254"},
+            {"불광", "은평구", "37.6105", "126.9298"},
+            {"신림", "관악구", "37.4842", "126.9296"},
+            {"사당", "동작구", "37.4765", "126.9816"},
+            {"구로", "구로구", "37.5034", "126.8821"},
+    };
+
+    /** A Gyeonggi dong/시-level coordinate anchor and its 시/주소 prefix. */
+    private static final String[][] GYEONGGI_ANCHORS = {
+            {"수원", "수원시 영통구", "37.2595", "127.0466"},
+            {"분당", "성남시 분당구", "37.3826", "127.1186"},
+            {"판교", "성남시 분당구", "37.3947", "127.1112"},
+            {"일산", "고양시 일산동구", "37.6584", "126.7700"},
+            {"안양", "안양시 동안구", "37.3924", "126.9568"},
+            {"부천", "부천시 원미구", "37.5035", "126.7660"},
+            {"광명", "광명시", "37.4785", "126.8644"},
+            {"용인", "용인시 수지구", "37.3220", "127.0967"},
+            {"평촌", "안양시 동안구", "37.3942", "126.9637"},
+            {"화성", "화성시 동탄", "37.2007", "127.0727"},
+            {"김포", "김포시", "37.6152", "126.7156"},
+            {"의정부", "의정부시", "37.7381", "127.0337"},
+    };
+
+    /** Place adjectives → synthesized church names ({지명}{형용}교회). */
+    private static final String[] CHURCH_ADJ = {"은혜", "소망", "사랑", "중앙", "제일", "비전", "한빛", "새순", "충성", "샘물"};
+
+    /** Round-robin denomination pool, weighted toward presbyterian (PCK/HAPDONG) so filters aren't empty. */
+    private static final Denomination[] DENOM_POOL = {
+            Denomination.PCK, Denomination.HAPDONG, Denomination.METHODIST,
+            Denomination.PCK, Denomination.HAPDONG, Denomination.HOLINESS,
+            Denomination.GOSPEL, Denomination.PCK, Denomination.BAPTIST, Denomination.ETC,
+    };
+
+    /** Facility CSV combinations, picked by index%. */
+    private static final String[] FACILITY_SETS = {
+            "주차,승강기,영유아실,카페",
+            "주차,영유아실",
+            "주차,승강기,카페",
+            "승강기,영유아실,장애인편의",
+            "주차,카페,주일학교",
+            "주차,승강기,영유아실,카페,장애인편의",
+    };
+
+    private static final String[] PASTOR_SURNAMES = {"김", "이", "박", "최", "정", "강", "조", "윤", "장", "임", "한", "신"};
+    private static final String[] PASTOR_GIVENS = {"성", "현", "준", "광", "은", "재", "영", "호", "찬", "환", "석", "민"};
+
     /** Seeds the country &gt; region &gt; church hierarchy. Church id 1 must exist for the manager account. */
     private void seedOrganization() {
         if (countryRepository.count() > 0) {
@@ -135,16 +220,94 @@ public class DataInitializer implements CommandLineRunner {
 
         Region seoul = regionRepository.save(Region.builder().countryId(korea.getId()).name("서울").build());
         Region gyeonggi = regionRepository.save(Region.builder().countryId(korea.getId()).name("경기").build());
-        Region busan = regionRepository.save(Region.builder().countryId(korea.getId()).name("부산").build());
-        Region california = regionRepository.save(Region.builder().countryId(usa.getId()).name("California").build());
+        // 부산/California regions remain in the hierarchy for member/reference data; the 40 seeded
+        // churches live in 서울/경기 only (real dong-level anchors).
+        regionRepository.save(Region.builder().countryId(korea.getId()).name("부산").build());
+        regionRepository.save(Region.builder().countryId(usa.getId()).name("California").build());
 
-        churchRepository.save(Church.builder().regionId(seoul.getId()).name("서울중앙교회").openYn("Y").build());
-        churchRepository.save(Church.builder().regionId(seoul.getId()).name("강남비전교회").openYn("Y").build());
-        churchRepository.save(Church.builder().regionId(gyeonggi.getId()).name("수원은혜교회").openYn("Y").build());
-        churchRepository.save(Church.builder().regionId(busan.getId()).name("부산소망교회").openYn("Y").build());
-        churchRepository.save(Church.builder().regionId(california.getId()).name("LA한인교회").openYn("N").build());
-        log.info("Seeded organization: {} countries, {} regions, {} churches",
-                countryRepository.count(), regionRepository.count(), churchRepository.count());
+        // 40 churches: 28 Seoul + 12 Gyeonggi. The FIRST saved church becomes id=1 (manager mapping).
+        int idx = 0;
+        for (String[] anchor : SEOUL_ANCHORS) {
+            seedChurch(seoul.getId(), anchor, idx++);
+        }
+        for (String[] anchor : GYEONGGI_ANCHORS) {
+            seedChurch(gyeonggi.getId(), anchor, idx++);
+        }
+        log.info("Seeded organization: {} countries, {} regions, {} churches, {} worship times",
+                countryRepository.count(), regionRepository.count(),
+                churchRepository.count(), worshipTimeRepository.count());
+    }
+
+    /**
+     * Seeds one deterministic church row plus its worship-time rows. {@code seq} drives every
+     * derived value so a fresh database always materialises the identical 40-church picture.
+     */
+    private void seedChurch(Long regionId, String[] anchor, int seq) {
+        String place = anchor[0];
+        String district = anchor[1];
+        double baseLat = Double.parseDouble(anchor[2]);
+        double baseLng = Double.parseDouble(anchor[3]);
+
+        // Index-based ±offset (≤ ±0.0019°) so coordinates never pinpoint a real address.
+        double lat = baseLat + ((seq % 7) - 3) * 0.0006;
+        double lng = baseLng + ((seq % 5) - 2) * 0.0007;
+
+        String name = place + CHURCH_ADJ[seq % CHURCH_ADJ.length] + "교회";
+        Denomination denomination = DENOM_POOL[seq % DENOM_POOL.length];
+        // Seoul rows are seeded first (seq < SEOUL_ANCHORS.length); the rest are Gyeonggi.
+        boolean isSeoul = seq < SEOUL_ANCHORS.length;
+        String areaCode = isSeoul ? "02" : "031";
+        String phone = areaCode + "-***-" + String.format("%04d", 1000 + seq * 7 % 9000);
+        String pastorName = PASTOR_SURNAMES[seq % PASTOR_SURNAMES.length]
+                + PASTOR_GIVENS[(seq / PASTOR_SURNAMES.length) % PASTOR_GIVENS.length] + "목사";
+        String facilities = FACILITY_SETS[seq % FACILITY_SETS.length];
+        String address = (isSeoul ? "서울특별시 " : "경기도 ")
+                + district + " " + place + "로 " + (10 + seq * 3 % 200);
+        String zipcode = String.format("%05d", 10000 + seq * 137 % 89999);
+        // Reuse the verified Unsplash sermon/worship thumbnails (StorageService.publicUrl pass-through).
+        String thumbnail = (seq % 2 == 0)
+                ? SERMON_THUMBS[seq % SERMON_THUMBS.length]
+                : WORSHIP_THUMBS[seq % WORSHIP_THUMBS.length];
+        // 1~2 rows hidden from public search as a "노출 제외" demo (id=1 always visible).
+        String useYn = (seq == 9 || seq == 33) ? "N" : "Y";
+
+        Church church = churchRepository.save(Church.builder()
+                .regionId(regionId)
+                .name(name)
+                .openYn("Y")
+                .denomination(denomination)
+                .latitude(lat)
+                .longitude(lng)
+                .address(address)
+                .addressDetail((seq % 3 + 1) + "층 본당")
+                .zipcode(zipcode)
+                .phone(phone)
+                .pastorName(pastorName)
+                .facilities(facilities)
+                .introduction(name + "는 " + place + " 지역의 데모용 가상 교회입니다. (실제 교회 정보 아님)")
+                .thumbnailKey(thumbnail)
+                .dataSource("SEED")
+                .useYn(useYn)
+                .build());
+
+        seedWorshipTimes(church.getId(), seq);
+    }
+
+    /** Seeds 3~4 deterministic worship-time rows for a church. */
+    private void seedWorshipTimes(Long churchId, int seq) {
+        List<WorshipTime> times = new ArrayList<>();
+        times.add(WorshipTime.builder().churchId(churchId).kind(WorshipKind.SUNDAY)
+                .dayLabel("주일").startTime("11:00").place("본당").target("전교인").sort(1).build());
+        times.add(WorshipTime.builder().churchId(churchId).kind(WorshipKind.DAWN)
+                .dayLabel("매일").startTime("05:30").place("본당").target("전교인").sort(2).build());
+        times.add(WorshipTime.builder().churchId(churchId).kind(WorshipKind.WEDNESDAY)
+                .dayLabel("수요").startTime("19:30").place("본당").target("전교인").sort(3).build());
+        // Every 3rd church also offers a youth service.
+        if (seq % 3 == 0) {
+            times.add(WorshipTime.builder().churchId(churchId).kind(WorshipKind.YOUTH)
+                    .dayLabel("주일").startTime("14:00").place("교육관").target("청년/학생").sort(4).build());
+        }
+        worshipTimeRepository.saveAll(times);
     }
 
     /** Seeds demo members spread across churches, statuses, and signup dates. */

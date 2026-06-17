@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.streamhub.api.v1.worship.mapper.WorshipMapper">
+
+    <!-- Shared filter block: searchField+keyword, status, churchId, created_at range. -->
+    <sql id="searchWhere">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="searchField == 'name'">
+                        AND wr.name LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchField == 'phone'">
+                        AND wr.phone LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchField == 'regNo'">
+                        AND wr.reg_no LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <otherwise>
+                        AND wr.name LIKE CONCAT('%', #{keyword}, '%')
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="status != null and status != ''">
+                AND wr.status = #{status}
+            </if>
+            <if test="churchId != null">
+                AND wr.church_id = #{churchId}
+            </if>
+            <if test="fromDate != null">
+                AND wr.created_at &gt;= #{fromDate}
+            </if>
+            <if test="toDate != null">
+                AND wr.created_at &lt; DATE_ADD(#{toDate}, INTERVAL 1 DAY)
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectList" resultType="org.streamhub.api.v1.worship.dto.WorshipRegistrationListItem">
+        SELECT
+            wr.id            AS id,
+            wr.reg_no        AS reg_no,
+            wr.church_id     AS church_id,
+            chu.name         AS church_name,
+            wr.status        AS status,
+            wr.name          AS name,
+            wr.gender        AS gender,
+            wr.register_dept AS register_dept,
+            wr.phone         AS phone,
+            wr.test_mode     AS test_mode,
+            wr.created_at    AS created_at,
+            (SELECT COUNT(*) FROM REGISTRATION_FAMILY rf WHERE rf.registration_id = wr.id) AS family_count
+        FROM WORSHIP_REGISTRATION wr
+            JOIN CHURCH chu ON wr.church_id = chu.id
+        <include refid="searchWhere"/>
+        ORDER BY wr.created_at DESC, wr.id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*)
+        FROM WORSHIP_REGISTRATION wr
+        <include refid="searchWhere"/>
+    </select>
+
+    <select id="selectDetail" resultType="org.streamhub.api.v1.worship.dto.WorshipRegistrationDetail">
+        SELECT
+            wr.id                AS id,
+            wr.reg_no            AS reg_no,
+            wr.church_id         AS church_id,
+            chu.name             AS church_name,
+            wr.status            AS status,
+            wr.name              AS name,
+            wr.gender            AS gender,
+            wr.birth_date        AS birth_date,
+            wr.phone             AS phone,
+            wr.email             AS email,
+            wr.zipcode           AS zipcode,
+            wr.addr1             AS addr1,
+            wr.addr2             AS addr2,
+            wr.register_dept     AS register_dept,
+            wr.church_experience AS church_experience,
+            wr.prev_church       AS prev_church,
+            wr.baptism_type      AS baptism_type,
+            wr.leader_name       AS leader_name,
+            wr.leader_phone      AS leader_phone,
+            wr.privacy_agreed    AS privacy_agreed,
+            wr.memo              AS memo,
+            wr.test_mode         AS test_mode,
+            wr.created_at        AS created_at,
+            wr.updated_at        AS updated_at
+        FROM WORSHIP_REGISTRATION wr
+            JOIN CHURCH chu ON wr.church_id = chu.id
+        WHERE wr.id = #{id}
+    </select>
+
+</mapper>

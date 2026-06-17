@@ -46,3 +46,52 @@ jwt:
 app:
   sqs:
     action-log-queue: ${SQS_ACTION_LOG_QUEUE:streamhub-action-log}
+  # Worship (C2) external-integration seams. Defaults are demo/test no-ops; switch to a real
+  # provider by overriding these (e.g. postcode.provider=kakao, sms.provider=aligo) + adding
+  # the matching @ConditionalOnProperty bean. No real external call is made in mock/noop mode.
+  worship:
+    postcode:
+      provider: ${WORSHIP_POSTCODE_PROVIDER:mock}
+    sms:
+      provider: ${WORSHIP_SMS_PROVIDER:noop}
+  # Church-finder (C1) geocoding seam. seed = deterministic demo coordinates, no external call;
+  # kakao = real Kakao Local key injection point (kakao-rest-key empty = not wired).
+  church:
+    geocode:
+      provider: ${CHURCH_GEOCODE_PROVIDER:seed}
+      kakao-rest-key: ${CHURCH_GEOCODE_KAKAO_REST_KEY:}
+  # Payment (C4) PG seam. mock = fake approve, no real charge; toss/paypal/kakao = real key
+  # injection points (@ConditionalOnProperty-gated). test-mode keeps every approval a demo no-op.
+  payment:
+    provider: ${PAYMENT_PROVIDER:mock}
+    test-mode: ${PAYMENT_TEST_MODE:true}
+    toss:
+      secret-key: ${PAYMENT_TOSS_SECRET_KEY:}
+    paypal:
+      client-id: ${PAYMENT_PAYPAL_CLIENT_ID:}
+      secret: ${PAYMENT_PAYPAL_SECRET:}
+    kakao:
+      secret-key: ${PAYMENT_KAKAO_SECRET_KEY:}
+  # SMS/LMS (C6) sender seam. mock = log-only, no external send; aligo/solapi = real key
+  # injection points (@ConditionalOnProperty-gated). Seeded messages are all testMode=Y.
+  sms:
+    sender: ${SMS_SENDER:mock}
+    aligo:
+      api-key: ${SMS_ALIGO_API_KEY:}
+      user-id: ${SMS_ALIGO_USER_ID:}
+    solapi:
+      api-key: ${SMS_SOLAPI_API_KEY:}
+      api-secret: ${SMS_SOLAPI_API_SECRET:}
+  # Chatbot (C6) provider seam. rule = static keyword FAQ, no external call; llm = real LLM
+  # key injection point (@ConditionalOnProperty-gated, currently a stub).
+  chat:
+    provider: ${CHAT_PROVIDER:rule}
+    llm:
+      api-key: ${CHAT_LLM_API_KEY:}
+  # Music preview (C3) source seam. seed = SoundHelix demo samples, no external call;
+  # external = real music-provider key injection point (@ConditionalOnProperty-gated stub).
+  music:
+    provider: ${MUSIC_PROVIDER:seed}
+    external:
+      api-key: ${MUSIC_EXTERNAL_API_KEY:}
+      base-url: ${MUSIC_EXTERNAL_BASE_URL:}

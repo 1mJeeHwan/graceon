@@ -85,6 +85,8 @@
             o.point_used      AS point_used,
             o.total           AS total,
             o.pay_method      AS pay_method,
+            o.pay_provider    AS pay_provider,
+            o.pay_status      AS pay_status,
             o.tracking_no     AS tracking_no,
             o.ship_company    AS ship_company,
             o.ordered_at      AS ordered_at,

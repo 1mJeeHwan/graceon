@@ -24,7 +24,8 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_orders_member", columnList = "member_id"),
         @Index(name = "idx_orders_status", columnList = "status"),
         @Index(name = "idx_orders_ordered_at", columnList = "ordered_at"),
-        @Index(name = "idx_orders_order_no", columnList = "order_no")
+        @Index(name = "idx_orders_order_no", columnList = "order_no"),
+        @Index(name = "idx_orders_pay_status", columnList = "pay_status")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -88,6 +89,14 @@ public class Order {
     @Column(name = "ship_company", length = 50)
     private String shipCompany;
 
+    /** PG attempted (C4 payment seam). {@code MOCK}/{@code TOSS}/{@code PAYPAL}/{@code KAKAO}/{@code CARD}. */
+    @Column(name = "pay_provider", nullable = false, length = 20)
+    private String payProvider;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pay_status", nullable = false, length = 12)
+    private PayStatus payStatus;
+
     @Column(name = "ordered_at", nullable = false)
     private LocalDateTime orderedAt;
 
@@ -99,7 +108,8 @@ public class Order {
                   String orderedPhone, String receiverName, String receiverPhone,
                   String receiverAddr, Long goodsTotal, Long shipFee, Long couponDiscount,
                   Long pointUsed, Long total, String payMethod, String trackingNo,
-                  String shipCompany, LocalDateTime orderedAt) {
+                  String shipCompany, String payProvider, PayStatus payStatus,
+                  LocalDateTime orderedAt) {
         this.orderNo = orderNo;
         this.memberId = memberId;
         this.status = status;
@@ -116,6 +126,8 @@ public class Order {
         this.payMethod = payMethod;
         this.trackingNo = trackingNo;
         this.shipCompany = shipCompany;
+        this.payProvider = payProvider != null ? payProvider : "MOCK";
+        this.payStatus = payStatus != null ? payStatus : PayStatus.NONE;
         this.orderedAt = orderedAt != null ? orderedAt : LocalDateTime.now();
         this.updatedAt = this.orderedAt;
         if (this.total == null) {
@@ -144,6 +156,25 @@ public class Order {
     public void setTracking(String trackingNo, String shipCompany) {
         this.trackingNo = trackingNo;
         this.shipCompany = shipCompany;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /** Records a payment request against this order (C4 payment seam). */
+    public void applyPayRequest(String payProvider, String ignoredTxnId) {
+        this.payProvider = payProvider;
+        this.payStatus = PayStatus.REQUESTED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /** Marks the payment as approved (C4 payment seam). */
+    public void applyPayApprove() {
+        this.payStatus = PayStatus.APPROVED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /** Marks the payment as canceled (C4 payment seam). */
+    public void applyPayCancel() {
+        this.payStatus = PayStatus.CANCELED;
         this.updatedAt = LocalDateTime.now();
     }
 }

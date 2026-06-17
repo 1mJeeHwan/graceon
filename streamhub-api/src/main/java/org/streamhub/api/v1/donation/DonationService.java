@@ -2,6 +2,7 @@ package org.streamhub.api.v1.donation;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.streamhub.api.base.exception.ApiException;
@@ -19,11 +20,16 @@ import org.streamhub.api.v1.donation.entity.DonationType;
 import org.streamhub.api.v1.donation.mapper.DonationMapper;
 import org.streamhub.api.v1.donation.repository.DonationRepository;
 import org.streamhub.api.v1.member.repository.MemberRepository;
+import org.streamhub.api.v1.sms.SmsService;
 
 /**
  * Donation history listing (MyBatis joins/filters), manual one-off donation entry, and the
  * billing-schedule calendar aggregation. All donations are test mode.
+ *
+ * <p>A one-off donation triggers a best-effort receipt SMS via {@link SmsService} (mock — no
+ * real dispatch); a notification failure never breaks the donation entry.
  */
+@Slf4j
 @Service
 public class DonationService {
 
@@ -35,18 +41,21 @@ public class DonationService {
     private final MemberRepository memberRepository;
     private final PointLedgerWriter pointLedgerWriter;
     private final ActionLogPublisher actionLogPublisher;
+    private final SmsService smsService;
 
     public DonationService(
             DonationMapper donationMapper,
             DonationRepository donationRepository,
             MemberRepository memberRepository,
             PointLedgerWriter pointLedgerWriter,
-            ActionLogPublisher actionLogPublisher) {
+            ActionLogPublisher actionLogPublisher,
+            SmsService smsService) {
         this.donationMapper = donationMapper;
         this.donationRepository = donationRepository;
         this.memberRepository = memberRepository;
         this.pointLedgerWriter = pointLedgerWriter;
         this.actionLogPublisher = actionLogPublisher;
+        this.smsService = smsService;
     }
 
     @Transactional(readOnly = true)
@@ -85,6 +94,11 @@ public class DonationService {
 
         actionLogPublisher.publish("DONATION_ONCE", "DONATION",
                 String.valueOf(saved.getId()), "₩" + request.amount());
+        try {
+            smsService.sendForDonation(request.memberId(), saved.getId(), request.amount());
+        } catch (RuntimeException e) {
+            log.warn("Failed to send donation SMS for {}: {}", saved.getId(), e.getMessage());
+        }
         return donationMapper.selectDetail(saved.getId());
     }
 

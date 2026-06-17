@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.streamhub.api.v1.sms.mapper.SmsMapper">
+
+    <!-- Shared filter block: keyword (content/number), kind, sent_at range. -->
+    <sql id="searchWhere">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (s.content LIKE CONCAT('%', #{keyword}, '%')
+                     OR s.to_number LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="kind != null and kind != ''">
+                AND s.kind = #{kind}
+            </if>
+            <if test="from != null">
+                AND s.sent_at &gt;= #{from}
+            </if>
+            <if test="to != null">
+                AND s.sent_at &lt; DATE_ADD(#{to}, INTERVAL 1 DAY)
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectList" resultType="org.streamhub.api.v1.sms.dto.SmsListItem">
+        SELECT
+            s.id        AS id,
+            s.to_number AS to_number,
+            s.content   AS content,
+            s.kind      AS kind,
+            s.channel   AS channel,
+            s.sender    AS sender,
+            s.status    AS status,
+            s.test_mode AS test_mode,
+            s.member_id AS member_id,
+            m.name      AS member_name,
+            s.ref_type  AS ref_type,
+            s.ref_id    AS ref_id,
+            s.sent_at   AS sent_at
+        FROM SMS_MESSAGE s
+            LEFT JOIN MEMBER m ON s.member_id = m.id
+        <include refid="searchWhere"/>
+        ORDER BY s.sent_at DESC, s.id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*)
+        FROM SMS_MESSAGE s
+        <include refid="searchWhere"/>
+    </select>
+
+</mapper>

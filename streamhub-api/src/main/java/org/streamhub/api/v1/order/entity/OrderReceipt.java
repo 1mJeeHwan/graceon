@@ -46,17 +46,33 @@ public class OrderReceipt {
     @Column(name = "memo", length = 200)
     private String memo;
 
+    /** Issuing PG (C4 payment seam). e.g. {@code MOCK}. */
+    @Column(name = "provider", length = 20)
+    private String provider;
+
+    /** Transaction id. Mock = {@code MOCK-{orderNo}-{seq}}; real key = PG paymentKey. */
+    @Column(name = "txn_id", length = 60)
+    private String txnId;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Builder
     private OrderReceipt(Long orderId, ReceiptKind kind, Long amount, String method,
-                         String memo, LocalDateTime createdAt) {
+                         String memo, String provider, String txnId, LocalDateTime createdAt) {
         this.orderId = orderId;
         this.kind = kind;
         this.amount = amount;
         this.method = method;
         this.memo = memo;
+        this.provider = provider;
+        this.txnId = txnId;
         this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
+    }
+
+    /** Backfills the issuing provider and transaction id (C4 payment seam). */
+    public void setProviderTxn(String provider, String txnId) {
+        this.provider = provider;
+        this.txnId = txnId;
     }
 }

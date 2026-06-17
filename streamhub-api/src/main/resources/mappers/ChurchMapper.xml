@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.streamhub.api.v1.church.mapper.ChurchMapper">
+
+    <sql id="keywordRegionDenom">
+        <if test="keyword != null and keyword != ''">
+            AND (c.name LIKE CONCAT('%', #{keyword}, '%')
+                 OR c.address LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="regionId != null">
+            AND c.region_id = #{regionId}
+        </if>
+        <if test="denomination != null and denomination != ''">
+            AND c.denomination = #{denomination}
+        </if>
+    </sql>
+
+    <!-- ===== Admin list (all use_yn, filterable) ===== -->
+    <select id="selectList" resultType="org.streamhub.api.v1.church.dto.ChurchListItem">
+        SELECT
+            c.id            AS id,
+            c.name          AS name,
+            c.denomination  AS denomination,
+            c.region_id     AS region_id,
+            r.name          AS region_name,
+            c.address       AS address,
+            c.phone         AS phone,
+            c.pastor_name   AS pastor_name,
+            c.latitude      AS latitude,
+            c.longitude     AS longitude,
+            c.thumbnail_key AS thumbnail_key,
+            c.data_source   AS data_source,
+            c.open_yn       AS open_yn,
+            c.use_yn        AS use_yn,
+            c.created_at    AS created_at
+        FROM CHURCH c
+            LEFT JOIN REGION r ON c.region_id = r.id
+        <where>
+            <include refid="keywordRegionDenom"/>
+            <if test="useYn != null and useYn != ''">
+                AND c.use_yn = #{useYn}
+            </if>
+        </where>
+        ORDER BY c.created_at DESC, c.id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*)
+        FROM CHURCH c
+        <where>
+            <include refid="keywordRegionDenom"/>
+            <if test="useYn != null and useYn != ''">
+                AND c.use_yn = #{useYn}
+            </if>
+        </where>
+    </select>
+
+    <!-- ===== Public list (no location): visible only, createdAt desc ===== -->
+    <select id="selectPublicList" resultType="org.streamhub.api.v1.church.dto.ChurchNearbyItem">
+        SELECT
+            c.id            AS id,
+            c.name          AS name,
+            c.denomination  AS denomination,
+            c.region_id     AS region_id,
+            r.name          AS region_name,
+            c.address       AS address,
+            c.phone         AS phone,
+            c.pastor_name   AS pastor_name,
+            c.facilities    AS facilities,
+            c.latitude      AS latitude,
+            c.longitude     AS longitude,
+            c.thumbnail_key AS thumbnail_key,
+            c.data_source   AS data_source
+        FROM CHURCH c
+            LEFT JOIN REGION r ON c.region_id = r.id
+        <where>
+            AND c.use_yn = 'Y'
+            <include refid="keywordRegionDenom"/>
+        </where>
+        ORDER BY c.created_at DESC, c.id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countPublicList" resultType="long">
+        SELECT COUNT(*)
+        FROM CHURCH c
+        <where>
+            AND c.use_yn = 'Y'
+            <include refid="keywordRegionDenom"/>
+        </where>
+    </select>
+
+    <!-- ===== Bounding-box pre-filter (visible only); Haversine refine in service ===== -->
+    <select id="selectInBox" resultType="org.streamhub.api.v1.church.dto.ChurchNearbyItem">
+        SELECT
+            c.id            AS id,
+            c.name          AS name,
+            c.denomination  AS denomination,
+            c.region_id     AS region_id,
+            r.name          AS region_name,
+            c.address       AS address,
+            c.phone         AS phone,
+            c.pastor_name   AS pastor_name,
+            c.facilities    AS facilities,
+            c.latitude      AS latitude,
+            c.longitude     AS longitude,
+            c.thumbnail_key AS thumbnail_key,
+            c.data_source   AS data_source
+        FROM CHURCH c
+            LEFT JOIN REGION r ON c.region_id = r.id
+        <where>
+            AND c.use_yn = 'Y'
+            AND c.latitude IS NOT NULL
+            AND c.longitude IS NOT NULL
+            AND c.latitude BETWEEN #{minLat} AND #{maxLat}
+            AND c.longitude BETWEEN #{minLng} AND #{maxLng}
+            <include refid="keywordRegionDenom"/>
+        </where>
+    </select>
+
+    <!-- ===== Detail (region name; worship times loaded by service) ===== -->
+    <select id="selectDetail" resultType="org.streamhub.api.v1.church.dto.ChurchDetail">
+        SELECT
+            c.id             AS id,
+            c.name           AS name,
+            c.denomination   AS denomination,
+            c.region_id      AS region_id,
+            r.name           AS region_name,
+            c.address        AS address,
+            c.address_detail AS address_detail,
+            c.zipcode        AS zipcode,
+            c.phone          AS phone,
+            c.pastor_name    AS pastor_name,
+            c.facilities     AS facilities,
+            c.introduction   AS introduction,
+            c.homepage_url   AS homepage_url,
+            c.latitude       AS latitude,
+            c.longitude      AS longitude,
+            c.thumbnail_key  AS thumbnail_key,
+            c.data_source    AS data_source,
+            c.open_yn        AS open_yn,
+            c.use_yn         AS use_yn,
+            c.created_at     AS created_at,
+            c.updated_at     AS updated_at
+        FROM CHURCH c
+            LEFT JOIN REGION r ON c.region_id = r.id
+        WHERE c.id = #{id}
+    </select>
+
+</mapper>

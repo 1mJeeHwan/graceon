@@ -1,13 +1,22 @@
 package org.streamhub.api.base.config;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.streamhub.api.v1.album.entity.Album;
+import org.streamhub.api.v1.album.entity.AlbumGenre;
+import org.streamhub.api.v1.album.entity.AlbumStatus;
+import org.streamhub.api.v1.album.entity.MusicSource;
+import org.streamhub.api.v1.album.entity.Track;
+import org.streamhub.api.v1.album.repository.AlbumRepository;
+import org.streamhub.api.v1.album.repository.TrackRepository;
 import org.streamhub.api.v1.donation.entity.Donation;
 import org.streamhub.api.v1.donation.entity.DonationStatus;
 import org.streamhub.api.v1.donation.entity.DonationType;
@@ -36,9 +45,19 @@ import org.streamhub.api.v1.order.entity.OrderItem;
 import org.streamhub.api.v1.order.entity.OrderReceipt;
 import org.streamhub.api.v1.order.entity.OrderStatus;
 import org.streamhub.api.v1.order.entity.ReceiptKind;
+import org.streamhub.api.v1.member.entity.Region;
+import org.streamhub.api.v1.member.repository.RegionRepository;
+import org.streamhub.api.v1.order.entity.PayStatus;
 import org.streamhub.api.v1.order.repository.OrderItemRepository;
 import org.streamhub.api.v1.order.repository.OrderReceiptRepository;
 import org.streamhub.api.v1.order.repository.OrderRepository;
+import org.streamhub.api.v1.sms.entity.SmsChannel;
+import org.streamhub.api.v1.sms.entity.SmsKind;
+import org.streamhub.api.v1.sms.entity.SmsMessage;
+import org.streamhub.api.v1.sms.entity.SmsStatus;
+import org.streamhub.api.v1.sms.repository.SmsMessageRepository;
+import org.streamhub.api.v1.store.entity.Store;
+import org.streamhub.api.v1.store.repository.StoreRepository;
 
 /**
  * Seeds the commerce / membership demo dataset (goods, orders, subscriptions, donations,
@@ -98,6 +117,68 @@ public class PortfolioSeeder implements CommandLineRunner {
     private static final long[] PLAN_PRICES = {5_000L, 15_000L, 30_000L, 50_000L};
     private static final int[] PLAN_POINT_RATES = {1, 2, 3, 5};
 
+    // --- C3 album/store seed -----------------------------------------------
+
+    private static final long SEED_ALBUMS = 1002L;
+    private static final long SEED_STORES = 1008L;
+    private static final long SEED_SMS = 1006L;
+
+    private static final int ALBUM_COUNT = 24;
+    private static final String GOODS_BRIDGE_CATEGORY = "음반";
+    private static final int DEFAULT_NOTI_QTY = 5;
+
+    /**
+     * SoundHelix demo preview samples — same eight URLs as {@code DataInitializer.SAMPLE_AUDIOS}.
+     * Duplicated (not shared) because each seeder owns its own constants. No external call is made;
+     * the frontend mini-player streams these directly.
+     */
+    private static final String[] SAMPLE_AUDIOS = {
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+    };
+
+    /** Fictional CCM team / worship-collective names (no real artists). */
+    private static final String[] ALBUM_ARTISTS = {
+            "은혜워십", "새벽기도밴드", "빛소리찬양팀", "한길워십", "소망싱어즈",
+            "참빛성가대", "새순워십", "예수전한사람들", "강물워십", "하늘소리",
+    };
+
+    /** Synthesized album title fragments combined as "{형용} {명사}". */
+    private static final String[] ALBUM_ADJ = {
+            "은혜의", "새벽", "소망의", "찬양의", "빛나는", "거룩한", "영원한", "감사의",
+    };
+    private static final String[] ALBUM_NOUN = {
+            "찬양", "워십 라이브", "고백", "예배", "찬송 모음", "기도", "노래", "묵상",
+    };
+
+    /** Fictional offline-store names ("○○직영점") and their demo coordinates (Seoul/Gyeonggi). */
+    private static final String[][] STORE_SEED = {
+            // {name, address, lat, lng}
+            {"강남직영점", "서울특별시 강남구 데모로 12", "37.4979", "127.0276"},
+            {"홍대직영점", "서울특별시 마포구 데모로 34", "37.5563", "126.9220"},
+            {"잠실직영점", "서울특별시 송파구 데모로 56", "37.5133", "127.1000"},
+            {"여의도직영점", "서울특별시 영등포구 데모로 78", "37.5219", "126.9245"},
+            {"수원직영점", "경기도 수원시 영통구 데모로 90", "37.2636", "127.0286"},
+            {"분당직영점", "경기도 성남시 분당구 데모로 11", "37.3826", "127.1186"},
+            {"일산직영점", "경기도 고양시 일산동구 데모로 22", "37.6584", "126.7700"},
+            {"부천직영점", "경기도 부천시 원미구 데모로 33", "37.5035", "126.7660"},
+    };
+
+    /** CUSTOM notice bodies (deterministic 공지 발송 demo). */
+    private static final String[] SMS_NOTICES = {
+            "[StreamHub] 부활절 특별예배 안내 (테스트발송)",
+            "[StreamHub] 주일 온라인 생중계 시작 안내 (테스트발송)",
+            "[StreamHub] 신규 찬양 앨범 발매 소식 (테스트발송)",
+            "[StreamHub] 여름 수련회 신청 안내 (테스트발송)",
+            "[StreamHub] 후원 감사 및 영수증 안내 (테스트발송)",
+    };
+
     private final GoodsCategoryRepository goodsCategoryRepository;
     private final GoodsItemRepository goodsItemRepository;
     private final GoodsOptionRepository goodsOptionRepository;
@@ -110,6 +191,11 @@ public class PortfolioSeeder implements CommandLineRunner {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderReceiptRepository orderReceiptRepository;
+    private final AlbumRepository albumRepository;
+    private final TrackRepository trackRepository;
+    private final StoreRepository storeRepository;
+    private final RegionRepository regionRepository;
+    private final SmsMessageRepository smsMessageRepository;
 
     public PortfolioSeeder(
             GoodsCategoryRepository goodsCategoryRepository,
@@ -123,7 +209,12 @@ public class PortfolioSeeder implements CommandLineRunner {
             PointLedgerRepository pointLedgerRepository,
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
-            OrderReceiptRepository orderReceiptRepository) {
+            OrderReceiptRepository orderReceiptRepository,
+            AlbumRepository albumRepository,
+            TrackRepository trackRepository,
+            StoreRepository storeRepository,
+            RegionRepository regionRepository,
+            SmsMessageRepository smsMessageRepository) {
         this.goodsCategoryRepository = goodsCategoryRepository;
         this.goodsItemRepository = goodsItemRepository;
         this.goodsOptionRepository = goodsOptionRepository;
@@ -136,6 +227,11 @@ public class PortfolioSeeder implements CommandLineRunner {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.orderReceiptRepository = orderReceiptRepository;
+        this.albumRepository = albumRepository;
+        this.trackRepository = trackRepository;
+        this.storeRepository = storeRepository;
+        this.regionRepository = regionRepository;
+        this.smsMessageRepository = smsMessageRepository;
     }
 
     @Override
@@ -147,6 +243,13 @@ public class PortfolioSeeder implements CommandLineRunner {
         List<Subscription> subscriptions = seedSubscriptions(now);
         seedDonations(now, subscriptions);
         seedOrders(now, goods);
+        // C3 (CCM commerce) — albums/tracks (+ on-sale GOODS_ITEM bridge) and offline stores.
+        seedAlbums(now);
+        seedStores(now);
+        // C4 (payment seam) — backfill MOCK approval onto existing PAID+ orders and their PAY receipts.
+        seedPaymentBackfill();
+        // C6 (SMS seam) — derive a deterministic send history from seeded orders/donations.
+        seedSmsMessages(now);
     }
 
     // ---------------------------------------------------------------------
@@ -754,5 +857,280 @@ public class PortfolioSeeder implements CommandLineRunner {
         return when.isAfter(now)
                 ? now.minusHours(1 + rnd.nextInt(8)).withSecond(0).withNano(0)
                 : when;
+    }
+
+    // ---------------------------------------------------------------------
+    // 7. CCM albums + tracks (+ on-sale GOODS_ITEM bridge) — C3
+    // ---------------------------------------------------------------------
+
+    /**
+     * Seeds {@value #ALBUM_COUNT} CCM albums with 5-10 tracks each. On-sale albums create a 1:1
+     * bridge {@code GOODS_ITEM} (category "음반") so the order domain is never touched — the same
+     * pattern {@code AlbumService.syncGoodsBridge} uses. Preview URLs reuse the SoundHelix samples.
+     * Idempotent: skips when albums already exist; deterministic via {@link #SEED_ALBUMS}.
+     */
+    private void seedAlbums(LocalDateTime now) {
+        if (albumRepository.count() > 0) {
+            return;
+        }
+        Long bridgeCategoryId = bridgeCategoryId();
+        if (bridgeCategoryId == null) {
+            log.warn("Skipping album seed: '{}' goods category not found", GOODS_BRIDGE_CATEGORY);
+            return;
+        }
+        Random rnd = new Random(SEED_ALBUMS);
+        AlbumGenre[] genres = AlbumGenre.values();
+
+        int totalTracks = 0;
+        int onSaleCount = 0;
+        for (int i = 0; i < ALBUM_COUNT; i++) {
+            AlbumGenre genre = genres[i % genres.length];
+            String artist = ALBUM_ARTISTS[i % ALBUM_ARTISTS.length];
+            String title = ALBUM_ADJ[i % ALBUM_ADJ.length] + " " + ALBUM_NOUN[(i / 2) % ALBUM_NOUN.length]
+                    + " Vol." + (1 + i % 5);
+            LocalDate releaseDate = now.minusDays((i * 23) % 900).toLocalDate();
+            AlbumStatus status = (i % 9 == 0) ? AlbumStatus.HIDDEN : AlbumStatus.ON_SALE;
+            // Reuse a verified Picsum cover (PortfolioSeeder already uses this host for goods).
+            String coverKey = "https://picsum.photos/seed/album" + (i + 1) + "/500/500";
+            LocalDateTime createdAt = now.minusDays((long) i * 5).minusHours(i % 24);
+
+            Album album = albumRepository.save(Album.builder()
+                    .title(title)
+                    .artist(artist)
+                    .label(artist + " 레이블")
+                    .genre(genre)
+                    .releaseDate(releaseDate)
+                    .description(title + " — 데모 음반입니다. (실제 음원사 데이터 아님)")
+                    .coverKey(coverKey)
+                    .status(status)
+                    .viewCount((long) ((i * 91) % 4000))
+                    .source(MusicSource.SEED)
+                    .createdAt(createdAt)
+                    .build());
+
+            // On-sale albums get a sale-bridge GOODS_ITEM (price 9,000~22,000, 1,000 단위).
+            if (status == AlbumStatus.ON_SALE) {
+                long price = (9_000L + (long) (rnd.nextDouble() * 13_000L)) / 1_000L * 1_000L;
+                int stock = 20 + rnd.nextInt(180);
+                GoodsItem bridge = goodsItemRepository.save(GoodsItem.builder()
+                        .categoryId(bridgeCategoryId)
+                        .name(album.getTitle())
+                        .code(String.format("ALB%03d", i + 1))
+                        .description(album.getDescription())
+                        .price(price)
+                        .stock(stock)
+                        .notiQty(DEFAULT_NOTI_QTY)
+                        .soldOut("N")
+                        .useYn("Y")
+                        .status(GoodsStatus.SELLING)
+                        .saleCount(rnd.nextInt(60))
+                        .viewCount(album.getViewCount())
+                        .thumbnailKey(coverKey)
+                        .createdAt(createdAt)
+                        .build());
+                album.linkGoodsItem(bridge.getId());
+                onSaleCount++;
+            }
+
+            int trackCount = 5 + (i % 6); // 5..10 tracks
+            List<Track> tracks = new ArrayList<>();
+            for (int no = 1; no <= trackCount; no++) {
+                int audioIdx = (int) ((album.getId() * 7 + no) % SAMPLE_AUDIOS.length);
+                tracks.add(Track.builder()
+                        .albumId(album.getId())
+                        .trackNo(no)
+                        .title(album.getTitle() + " - " + no + "번 트랙")
+                        .durationSec(180 + (no * 20) % 120)
+                        .previewUrl(SAMPLE_AUDIOS[audioIdx])
+                        .previewStartSec((no * 15) % 60)
+                        .previewLengthSec(30)
+                        .source(MusicSource.SEED)
+                        .build());
+            }
+            trackRepository.saveAll(tracks);
+            album.syncTrackCount(trackCount);
+            albumRepository.save(album);
+            totalTracks += trackCount;
+        }
+        log.info("Seeded {} albums ({} on-sale w/ goods bridge), {} tracks",
+                ALBUM_COUNT, onSaleCount, totalTracks);
+    }
+
+    /** Resolves the "음반" bridge category id, or null when the goods categories aren't seeded. */
+    private Long bridgeCategoryId() {
+        return goodsCategoryRepository.findAllByOrderBySortAscIdAsc().stream()
+                .filter(c -> GOODS_BRIDGE_CATEGORY.equals(c.getName()))
+                .map(GoodsCategory::getId)
+                .findFirst()
+                .orElse(null);
+    }
+
+    // ---------------------------------------------------------------------
+    // 8. Offline retail stores — C3 store-finder
+    // ---------------------------------------------------------------------
+
+    /**
+     * Seeds {@value #STORE_SEED}.length offline stores with demo coordinates. {@code regionId} is
+     * resolved deterministically from the seeded REGION rows; all values are fictional (PII guard).
+     * Idempotent: skips when stores already exist.
+     */
+    private void seedStores(LocalDateTime now) {
+        if (storeRepository.count() > 0) {
+            return;
+        }
+        List<Region> regions = regionRepository.findAll();
+        if (regions.isEmpty()) {
+            return;
+        }
+        List<Store> stores = new ArrayList<>();
+        for (int i = 0; i < STORE_SEED.length; i++) {
+            String[] row = STORE_SEED[i];
+            Region region = regions.get(i % regions.size());
+            String phone = String.format("02-0000-00%02d", i + 1); // demo virtual number
+            String useYn = (i == STORE_SEED.length - 1) ? "N" : "Y"; // last one hidden (비노출 데모)
+            stores.add(Store.builder()
+                    .regionId(region.getId())
+                    .name(row[0])
+                    .address(row[1])
+                    .phone(phone)
+                    .lat(new BigDecimal(row[2]))
+                    .lng(new BigDecimal(row[3]))
+                    .openHours("매일 10:00~20:00")
+                    .useYn(useYn)
+                    .createdAt(now.minusDays((long) i * 10))
+                    .build());
+        }
+        storeRepository.saveAll(stores);
+        log.info("Seeded {} stores", stores.size());
+    }
+
+    // ---------------------------------------------------------------------
+    // 9. Payment backfill (C4 seam) — MOCK approval on existing PAID+ orders
+    // ---------------------------------------------------------------------
+
+    /**
+     * Backfills a MOCK payment approval onto every already-seeded order in a PAID-or-later status:
+     * {@code payProvider="MOCK"}, {@code payStatus=APPROVED}, and the latest PAY receipt gets
+     * {@code provider="MOCK"}, {@code txnId="MOCK-{orderNo}-1"}. Idempotent — skips orders already
+     * marked APPROVED — so re-runs are no-ops. No real PG call is made.
+     */
+    private void seedPaymentBackfill() {
+        List<Order> orders = orderRepository.findAll();
+        List<Order> updatedOrders = new ArrayList<>();
+        List<OrderReceipt> updatedReceipts = new ArrayList<>();
+        for (Order order : orders) {
+            if (!isPaidOrLater(order.getStatus()) || order.getPayStatus() == PayStatus.APPROVED) {
+                continue;
+            }
+            order.applyPayRequest("MOCK", null);
+            order.applyPayApprove();
+            updatedOrders.add(order);
+
+            String txnId = "MOCK-" + order.getOrderNo() + "-1";
+            orderReceiptRepository.findByOrderIdOrderByCreatedAtAscIdAsc(order.getId()).stream()
+                    .filter(r -> r.getKind() == ReceiptKind.PAY)
+                    .reduce((first, second) -> second) // latest PAY receipt
+                    .ifPresent(receipt -> {
+                        receipt.setProviderTxn("MOCK", txnId);
+                        updatedReceipts.add(receipt);
+                    });
+        }
+        if (updatedOrders.isEmpty()) {
+            return;
+        }
+        orderRepository.saveAll(updatedOrders);
+        orderReceiptRepository.saveAll(updatedReceipts);
+        log.info("Backfilled MOCK payment on {} orders ({} PAY receipts)",
+                updatedOrders.size(), updatedReceipts.size());
+    }
+
+    /** True when the order has been paid (PAID/READY/SHIPPING/DONE) — cancel/return excluded. */
+    private boolean isPaidOrLater(OrderStatus status) {
+        return status == OrderStatus.PAID || status == OrderStatus.READY
+                || status == OrderStatus.SHIPPING || status == OrderStatus.DONE;
+    }
+
+    // ---------------------------------------------------------------------
+    // 10. SMS send history (C6 seam) — derived from seeded orders/donations
+    // ---------------------------------------------------------------------
+
+    /**
+     * Seeds an SMS send history (~120 rows) derived deterministically from seeded orders and
+     * one-off donations, plus a handful of CUSTOM notices. The mock sender never performs a real
+     * send — every row is {@code testMode="Y"}, {@code sender="MOCK"}, {@code status=SENT}, and the
+     * recipient number is masked. Idempotent: skips when messages already exist.
+     */
+    private void seedSmsMessages(LocalDateTime now) {
+        if (smsMessageRepository.count() > 0) {
+            return;
+        }
+        Random rnd = new Random(SEED_SMS);
+        List<SmsMessage> messages = new ArrayList<>();
+
+        // Order-derived: PAID+ → ORDER_PAID, SHIPPING/DONE w/ tracking → ORDER_SHIPPING.
+        List<Order> orders = orderRepository.findAll();
+        for (int i = 0; i < orders.size() && messages.size() < 100; i++) {
+            Order order = orders.get(i);
+            if (i % 3 != 0 || !isPaidOrLater(order.getStatus())) {
+                continue; // sample ~1/3 of paid orders to keep the history readable
+            }
+            boolean shipped = (order.getStatus() == OrderStatus.SHIPPING
+                    || order.getStatus() == OrderStatus.DONE) && order.getTrackingNo() != null;
+            SmsKind kind = shipped ? SmsKind.ORDER_SHIPPING : SmsKind.ORDER_PAID;
+            String content = shipped
+                    ? "[StreamHub] 주문하신 상품이 발송되었습니다. 운송장 " + order.getTrackingNo() + " (테스트발송)"
+                    : "[StreamHub] 결제가 완료되었습니다. 주문번호 " + order.getOrderNo() + " (테스트발송)";
+            messages.add(buildSms(content, kind, maskedTo(rnd), order.getMemberId(),
+                    "ORDER", String.valueOf(order.getId()), order.getOrderedAt()));
+        }
+
+        // Donation-derived: one-off donations → DONATION_ONCE receipts.
+        List<Donation> donations = donationRepository.findAll();
+        for (int i = 0; i < donations.size() && messages.size() < 100; i++) {
+            Donation donation = donations.get(i);
+            if (donation.getType() != DonationType.ONCE || i % 17 != 0) {
+                continue;
+            }
+            String content = "[StreamHub] 후원해 주셔서 감사합니다. 후원금 "
+                    + String.format("%,d", donation.getAmount()) + "원 (테스트발송)";
+            messages.add(buildSms(content, SmsKind.DONATION_ONCE, maskedTo(rnd), donation.getMemberId(),
+                    "DONATION", String.valueOf(donation.getId()), donation.getPaidAt()));
+        }
+
+        // CUSTOM notices: ~20 rows cycling the notice templates.
+        for (int i = 0; i < 20; i++) {
+            String content = SMS_NOTICES[i % SMS_NOTICES.length];
+            LocalDateTime sentAt = now.minusDays(i * 2L).minusHours(i % 12);
+            messages.add(buildSms(content, SmsKind.CUSTOM, maskedTo(rnd), null, null, null, sentAt));
+        }
+
+        smsMessageRepository.saveAll(messages);
+        log.info("Seeded {} SMS messages", messages.size());
+    }
+
+    /** Builds one SMS log row (mock: testMode=Y, sender=MOCK, status=SENT). */
+    private SmsMessage buildSms(String content, SmsKind kind, String toNumber, Long memberId,
+                                String refType, String refId, LocalDateTime sentAt) {
+        // LMS when the body exceeds 90 bytes (UTF-8), else SMS.
+        SmsChannel channel = content.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 90
+                ? SmsChannel.LMS : SmsChannel.SMS;
+        return SmsMessage.builder()
+                .toNumber(toNumber)
+                .content(content)
+                .kind(kind)
+                .channel(channel)
+                .sender("MOCK")
+                .status(SmsStatus.SENT)
+                .testMode("Y")
+                .memberId(memberId)
+                .refType(refType)
+                .refId(refId)
+                .sentAt(sentAt)
+                .build();
+    }
+
+    /** Deterministic masked virtual recipient number ({@code 010-{3자리}-****}). */
+    private String maskedTo(Random rnd) {
+        return String.format("010-%03d-****", rnd.nextInt(1000));
     }
 }

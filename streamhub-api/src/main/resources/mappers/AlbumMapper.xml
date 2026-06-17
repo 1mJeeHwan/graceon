@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.streamhub.api.v1.album.mapper.AlbumMapper">
+
+    <sql id="searchWhere">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (a.title LIKE CONCAT('%', #{keyword}, '%')
+                     OR a.artist LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="genre != null and genre != ''">
+                AND a.genre = #{genre}
+            </if>
+            <if test="status != null and status != ''">
+                AND a.status = #{status}
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectList" resultType="org.streamhub.api.v1.album.dto.AlbumListItem">
+        SELECT
+            a.id            AS id,
+            a.title         AS title,
+            a.artist        AS artist,
+            a.genre         AS genre,
+            a.status        AS status,
+            a.cover_key     AS cover_key,
+            a.track_count   AS track_count,
+            a.goods_item_id AS goods_item_id,
+            gi.price        AS price,
+            a.release_date  AS release_date,
+            a.created_at    AS created_at
+        FROM ALBUM a
+            LEFT JOIN GOODS_ITEM gi ON a.goods_item_id = gi.id
+        <include refid="searchWhere"/>
+        ORDER BY a.created_at DESC, a.id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*)
+        FROM ALBUM a
+        <include refid="searchWhere"/>
+    </select>
+
+    <select id="selectDetail" resultType="org.streamhub.api.v1.album.dto.AlbumDetail">
+        SELECT
+            a.id            AS id,
+            a.goods_item_id AS goods_item_id,
+            a.title         AS title,
+            a.artist        AS artist,
+            a.label         AS label,
+            a.genre         AS genre,
+            a.status        AS status,
+            a.release_date  AS release_date,
+            a.description   AS description,
+            a.cover_key     AS cover_key,
+            a.track_count   AS track_count,
+            a.view_count    AS view_count,
+            a.source        AS source,
+            gi.price        AS price,
+            gi.stock        AS stock,
+            a.created_at    AS created_at,
+            a.updated_at    AS updated_at
+        FROM ALBUM a
+            LEFT JOIN GOODS_ITEM gi ON a.goods_item_id = gi.id
+        WHERE a.id = #{id}
+    </select>
+
+</mapper>

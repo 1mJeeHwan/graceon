@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.streamhub.api.v1.order.entity.OrderStatus;
+import org.streamhub.api.v1.order.entity.PayStatus;
 
 /**
  * Full order detail. Base fields come from MyBatis; line items and receipts are
@@ -31,6 +32,8 @@ public class OrderDetail {
     private Long pointUsed;
     private Long total;
     private String payMethod;
+    private String payProvider; // PG attempted (C4 payment seam): MOCK/TOSS/...
+    private PayStatus payStatus; // payment progress state (C4 payment seam)
     private String trackingNo;
     private String shipCompany;
     private LocalDateTime orderedAt;

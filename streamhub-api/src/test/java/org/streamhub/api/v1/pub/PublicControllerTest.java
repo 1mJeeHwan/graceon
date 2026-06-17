@@ -19,6 +19,9 @@ import org.streamhub.api.v1.content.dto.ContentListItem;
 import org.streamhub.api.v1.content.entity.ContentStatus;
 import org.streamhub.api.v1.content.entity.ContentType;
 import org.streamhub.api.v1.post.PostService;
+import org.streamhub.api.v1.church.ChurchService;
+import org.streamhub.api.v1.album.AlbumService;
+import org.streamhub.api.v1.store.StoreService;
 
 /**
  * Web-layer test for the public API using a standalone MockMvc (no Spring context) — focuses on
@@ -28,11 +31,15 @@ class PublicControllerTest {
 
     private final ContentService contentService = mock(ContentService.class);
     private final PostService postService = mock(PostService.class);
+    private final ChurchService churchService = mock(ChurchService.class);
+    private final AlbumService albumService = mock(AlbumService.class);
+    private final StoreService storeService = mock(StoreService.class);
     private MockMvc mvc;
 
     @BeforeEach
     void setUp() {
-        mvc = MockMvcBuilders.standaloneSetup(new PublicController(contentService, postService)).build();
+        mvc = MockMvcBuilders.standaloneSetup(
+                new PublicController(contentService, postService, churchService, albumService, storeService)).build();
     }
 
     private ContentListItem videoItem() {

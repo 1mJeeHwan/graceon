@@ -4,6 +4,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.streamhub.api.base.exception.ApiException;
@@ -30,13 +31,19 @@ import org.streamhub.api.v1.order.mapper.OrderMapper;
 import org.streamhub.api.v1.order.repository.OrderItemRepository;
 import org.streamhub.api.v1.order.repository.OrderReceiptRepository;
 import org.streamhub.api.v1.order.repository.OrderRepository;
+import org.streamhub.api.v1.sms.SmsService;
+import org.streamhub.api.v1.sms.entity.SmsKind;
 
 /**
  * Order management: paginated search (MyBatis), detail assembly (line items + receipts),
  * and the order state machine ({@link #changeStatus}) which atomically deducts/restores
  * stock, writes payment/refund receipts, and transitions the order — all in one
  * transaction. Shipment tracking is updated by {@link #changeTracking}.
+ *
+ * <p>On {@code → PAID}/{@code → SHIPPING} a best-effort auto-notification SMS is sent via
+ * {@link SmsService} (mock — no real dispatch); a notification failure never breaks the order.
  */
+@Slf4j
 @Service
 public class OrderService {
 
@@ -57,6 +64,7 @@ public class OrderService {
     private final GoodsItemRepository goodsItemRepository;
     private final GoodsOptionRepository goodsOptionRepository;
     private final ActionLogPublisher actionLogPublisher;
+    private final SmsService smsService;
 
     public OrderService(
             OrderMapper orderMapper,
@@ -65,7 +73,8 @@ public class OrderService {
             OrderReceiptRepository orderReceiptRepository,
             GoodsItemRepository goodsItemRepository,
             GoodsOptionRepository goodsOptionRepository,
-            ActionLogPublisher actionLogPublisher) {
+            ActionLogPublisher actionLogPublisher,
+            SmsService smsService) {
         this.orderMapper = orderMapper;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -73,6 +82,7 @@ public class OrderService {
         this.goodsItemRepository = goodsItemRepository;
         this.goodsOptionRepository = goodsOptionRepository;
         this.actionLogPublisher = actionLogPublisher;
+        this.smsService = smsService;
     }
 
     @Transactional(readOnly = true)
@@ -153,7 +163,28 @@ public class OrderService {
         orderRepository.saveAndFlush(order);
         actionLogPublisher.publish(
                 "ORDER_" + to.name(), "ORDER", String.valueOf(orderId), order.getOrderNo());
+        notifyStatus(order, to);
         return getDetail(orderId);
+    }
+
+    /**
+     * Best-effort auto-notification SMS for {@code PAID}/{@code SHIPPING} transitions (C6).
+     * Swallows any failure so a notification never breaks the order transaction.
+     */
+    private void notifyStatus(Order order, OrderStatus to) {
+        SmsKind kind = switch (to) {
+            case PAID -> SmsKind.ORDER_PAID;
+            case SHIPPING -> SmsKind.ORDER_SHIPPING;
+            default -> null;
+        };
+        if (kind == null) {
+            return;
+        }
+        try {
+            smsService.sendForOrder(order, kind);
+        } catch (RuntimeException e) {
+            log.warn("Failed to send order SMS [{}] for {}: {}", kind, order.getOrderNo(), e.getMessage());
+        }
     }
 
     /**
@@ -165,12 +196,17 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
         order.setTracking(request.trackingNo(), request.shipCompany());
+        boolean promotedToShipping = false;
         if (order.getStatus() == OrderStatus.READY) {
             order.changeStatus(OrderStatus.SHIPPING);
+            promotedToShipping = true;
         }
         orderRepository.saveAndFlush(order);
         actionLogPublisher.publish(
                 "ORDER_TRACKING", "ORDER", String.valueOf(orderId), request.trackingNo());
+        if (promotedToShipping) {
+            notifyStatus(order, OrderStatus.SHIPPING);
+        }
         return getDetail(orderId);
     }
 

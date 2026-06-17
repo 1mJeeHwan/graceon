@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.streamhub.api.v1.chat.mapper.ChatMapper">
+
+    <!--
+      Order lookup requires BOTH the order number and the orderer name to match exactly,
+      preventing a caller from enumerating other members' orders (spec §3.5). All values are
+      bound via #{} (no string concatenation).
+    -->
+    <select id="selectOrderByNoAndName" resultType="org.streamhub.api.v1.chat.dto.ChatOrderRow">
+        SELECT
+            o.order_no     AS order_no,
+            o.status       AS status,
+            o.ordered_name AS ordered_name,
+            o.total        AS total,
+            o.tracking_no  AS tracking_no,
+            o.ship_company AS ship_company,
+            o.ordered_at   AS ordered_at
+        FROM ORDERS o
+        WHERE o.order_no = #{orderNo}
+          AND o.ordered_name = #{orderedName}
+        LIMIT 1
+    </select>
+
+    <select id="selectGoodsByKeyword" resultType="org.streamhub.api.v1.chat.dto.ChatGoodsRow">
+        SELECT
+            gi.id       AS id,
+            gi.name     AS name,
+            gi.price    AS price,
+            gi.stock    AS stock,
+            gi.sold_out AS sold_out
+        FROM GOODS_ITEM gi
+        WHERE gi.use_yn = 'Y'
+          AND gi.name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY gi.sale_count DESC, gi.id DESC
+        LIMIT #{size}
+    </select>
+
+</mapper>
