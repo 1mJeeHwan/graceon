@@ -3,6 +3,7 @@
 import { Clock, MapPin, Phone } from "lucide-react";
 import clsx from "clsx";
 import type { StoreDto } from "@/lib/albums";
+import { formatDistance } from "@/lib/format";
 
 /** Distance-sorted store list. Tapping a row highlights its map marker; phone is a tel: CTA. */
 export function StoreList({
@@ -28,10 +29,10 @@ export function StoreList({
               )}
             >
               <div className="flex items-start justify-between gap-2">
-                <p className="font-bold text-active">{s.name}</p>
+                <p className="ellipsis-1 min-w-0 font-bold text-active">{s.name}</p>
                 {s.distanceKm != null && (
                   <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
-                    {s.distanceKm.toFixed(1)}km
+                    {formatDistance(s.distanceKm)}
                   </span>
                 )}
               </div>

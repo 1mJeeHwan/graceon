@@ -172,12 +172,19 @@ public class AlbumService {
         actionLogPublisher.publish("ALBUM_DELETE", "ALBUM", String.valueOf(id), album.getTitle());
     }
 
-    /** Public track preview: resolves the URL via the provider seam and tags the demo flag. */
+    /**
+     * Public track preview: resolves the URL via the provider seam and tags the demo flag. A
+     * provider that yields no playable URL (null/blank) is treated as "no preview available"
+     * ({@code NOT_FOUND}) rather than shipping a broken URL to the mini-player.
+     */
     @Transactional(readOnly = true)
     public PreviewResponse getPreview(Long albumId, Long trackId) {
         Track track = trackRepository.findByIdAndAlbumId(trackId, albumId)
                 .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
         String url = musicPreviewProvider.resolvePreviewUrl(albumId, track.getTrackNo(), track.getPreviewUrl());
+        if (!StringUtils.hasText(url)) {
+            throw new ApiException(ResultCode.NOT_FOUND);
+        }
         return new PreviewResponse(
                 url, track.getPreviewStartSec(), track.getPreviewLengthSec(), musicPreviewProvider.isDemo());
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { Music, Pause, Play, X } from "lucide-react";
+import clsx from "clsx";
 import { DemoBadge } from "../DemoBadge";
 import { usePreviewPlayer } from "./PreviewPlayerProvider";
 
@@ -9,7 +10,7 @@ import { usePreviewPlayer } from "./PreviewPlayerProvider";
  * TabBar inside the phone frame. Shows cover, title/artist, a 30s progress bar, play/pause and close.
  */
 export function MiniPreviewPlayer() {
-  const { current, isPlaying, elapsed, lengthSec, toggle, stop } = usePreviewPlayer();
+  const { current, isPlaying, elapsed, lengthSec, hasError, toggle, stop } = usePreviewPlayer();
   if (!current) return null;
 
   const pct = lengthSec > 0 ? Math.min(100, (elapsed / lengthSec) * 100) : 0;
@@ -19,8 +20,11 @@ export function MiniPreviewPlayer() {
       <div className="overflow-hidden rounded-card border border-border bg-card/95 shadow-lg backdrop-blur-md">
         <div className="h-0.5 w-full bg-border">
           <div
-            className="h-full bg-primary transition-[width] duration-200 ease-linear"
-            style={{ width: `${pct}%` }}
+            className={clsx(
+              "h-full transition-[width] duration-200 ease-linear",
+              hasError ? "bg-point" : "bg-primary",
+            )}
+            style={{ width: hasError ? "100%" : `${pct}%` }}
           />
         </div>
         <div className="flex items-center gap-3 px-3 py-2.5">
@@ -40,15 +44,18 @@ export function MiniPreviewPlayer() {
               <p className="ellipsis-1 text-[13px] font-bold text-active">{current.track.title}</p>
               <DemoBadge className="shrink-0" label="데모" />
             </div>
-            <p className="ellipsis-1 text-[11px] text-inactive">
-              {current.artist} · {Math.floor(elapsed)}초 / {lengthSec}초
+            <p className={clsx("ellipsis-1 text-[11px]", hasError ? "text-point" : "text-inactive")}>
+              {hasError
+                ? "미리듣기를 불러오지 못했습니다"
+                : `${current.artist} · ${Math.floor(elapsed)}초 / ${lengthSec}초`}
             </p>
           </div>
 
           <button
             onClick={toggle}
+            disabled={hasError}
             aria-label={isPlaying ? "일시정지" : "재생"}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-bg active:scale-95"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-bg transition active:scale-95 disabled:opacity-40"
           >
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="ml-0.5 h-4 w-4" />}
           </button>

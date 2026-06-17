@@ -26,6 +26,8 @@ interface PreviewContextValue {
   /** elapsed seconds into the 30s preview window (0..lengthSec). */
   elapsed: number;
   lengthSec: number;
+  /** True when the loaded preview source failed (e.g. sample CDN unreachable). */
+  hasError: boolean;
   /** Start (or restart) preview for a track. Replaces any track already playing. */
   play: (next: PreviewTrack) => void;
   toggle: () => void;
@@ -49,6 +51,7 @@ export function PreviewPlayerProvider({ children }: { children: React.ReactNode 
   const [current, setCurrent] = useState<PreviewTrack | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [hasError, setHasError] = useState(false);
 
   // Latest current track kept in a ref so the long-lived audio listeners read fresh values.
   const currentRef = useRef<PreviewTrack | null>(null);
@@ -77,6 +80,11 @@ export function PreviewPlayerProvider({ children }: { children: React.ReactNode 
     audio.addEventListener("play", () => setIsPlaying(true));
     audio.addEventListener("pause", () => setIsPlaying(false));
     audio.addEventListener("ended", () => setIsPlaying(false));
+    // Sample audio is loaded from an external host; surface load failures instead of hanging at 0초.
+    audio.addEventListener("error", () => {
+      setIsPlaying(false);
+      setHasError(true);
+    });
 
     audioRef.current = audio;
     return audio;
@@ -91,6 +99,7 @@ export function PreviewPlayerProvider({ children }: { children: React.ReactNode 
       currentRef.current = next;
       setCurrent(next);
       setElapsed(0);
+      setHasError(false);
 
       if (!sameTrack && next.track.previewUrl) {
         audio.src = next.track.previewUrl;
@@ -132,6 +141,7 @@ export function PreviewPlayerProvider({ children }: { children: React.ReactNode 
     setCurrent(null);
     setElapsed(0);
     setIsPlaying(false);
+    setHasError(false);
   }, []);
 
   const isCurrent = useCallback(
@@ -154,12 +164,13 @@ export function PreviewPlayerProvider({ children }: { children: React.ReactNode 
       isPlaying,
       elapsed,
       lengthSec: current?.track.previewLengthSec || DEFAULT_LENGTH,
+      hasError,
       play,
       toggle,
       stop,
       isCurrent,
     }),
-    [current, isPlaying, elapsed, play, toggle, stop, isCurrent],
+    [current, isPlaying, elapsed, hasError, play, toggle, stop, isCurrent],
   );
 
   return <PreviewContext.Provider value={value}>{children}</PreviewContext.Provider>;

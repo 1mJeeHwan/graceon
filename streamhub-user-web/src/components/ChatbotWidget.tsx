@@ -9,6 +9,7 @@ import {
   INITIAL_QUICK_REPLIES,
   type ChatMessage,
 } from "@/lib/chat";
+import { usePreviewPlayer } from "./preview/PreviewPlayerProvider";
 
 /** localStorage key for the front-generated chat session id (UUID). */
 const SESSION_STORAGE_KEY = "streamhub.chat.sessionKey";
@@ -44,6 +45,8 @@ export function ChatbotWidget() {
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Lift the launcher above the mini preview player when a track is loaded, so they never overlap.
+  const { current: previewTrack } = usePreviewPlayer();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -87,7 +90,10 @@ export function ChatbotWidget() {
               type="button"
               aria-label="챗봇 열기"
               onClick={() => setOpen(true)}
-              className="pointer-events-auto absolute bottom-[100px] right-4 grid h-14 w-14 place-items-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 transition active:scale-95"
+              className={clsx(
+                "pointer-events-auto absolute right-4 grid h-14 w-14 place-items-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 transition-all active:scale-95",
+                previewTrack ? "bottom-[164px]" : "bottom-[100px]",
+              )}
             >
               <MessageCircle className="h-6 w-6" />
               <span className="absolute -right-1 -top-1 flex h-5 items-center rounded-full bg-point px-1.5 text-[9px] font-bold text-white">

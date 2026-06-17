@@ -107,7 +107,7 @@ export function ChurchFinderView() {
 
       {/* Map */}
       <div className="mt-4 h-56">
-        {coords && (
+        {coords ? (
           <MapProvider
             center={coords}
             markers={markers}
@@ -115,13 +115,17 @@ export function ChurchFinderView() {
             onSelect={setHoveredId}
             heightClass="h-56"
           />
+        ) : (
+          <div className="skeleton h-56 w-full rounded-card" aria-busy="true" aria-label="지도 불러오는 중" />
         )}
       </div>
 
       {/* List */}
       <div className="mt-5">
         {isLoading || coords == null ? (
-          <CardSkeletonGrid count={4} square />
+          <div aria-busy="true" aria-label="교회 목록 불러오는 중">
+            <CardSkeletonGrid count={4} square />
+          </div>
         ) : isError ? (
           <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
         ) : churches.length === 0 ? (

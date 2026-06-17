@@ -51,6 +51,7 @@ import org.streamhub.api.v1.order.entity.PayStatus;
 import org.streamhub.api.v1.order.repository.OrderItemRepository;
 import org.streamhub.api.v1.order.repository.OrderReceiptRepository;
 import org.streamhub.api.v1.order.repository.OrderRepository;
+import org.streamhub.api.v1.sms.SmsChannelPolicy;
 import org.streamhub.api.v1.sms.entity.SmsChannel;
 import org.streamhub.api.v1.sms.entity.SmsKind;
 import org.streamhub.api.v1.sms.entity.SmsMessage;
@@ -65,9 +66,12 @@ import org.streamhub.api.v1.store.repository.StoreRepository;
  *
  * <p>Runs after {@code DataInitializer} (which is {@code @Order(1)}) so the church / member /
  * content rows already exist. Every seed step is idempotent — it skips when its target table
- * already holds rows — and fully deterministic: each step draws from a fixed-seed
- * {@link Random} so a fresh database always materialises the identical "six months of
- * operations" picture. All media URLs use verified hosts only (Picsum {@code seed} URLs for
+ * already holds rows. Each step also draws from a per-step fixed-seed {@link Random}, so the
+ * <em>shape</em> of the dataset (counts, status mix, Pareto sale distribution, line selection) is
+ * reproducible across runs. The absolute timestamps are <em>not</em> fixed: every row is anchored
+ * to {@link LocalDateTime#now()} at seed time, so the window rolls forward to keep "the most recent
+ * {@value #WINDOW_DAYS} days of operations" current relative to today (a fresh seed tomorrow shifts
+ * every date one day later). All media URLs use verified hosts only (Picsum {@code seed} URLs for
  * goods thumbnails); existing content media URLs are left untouched.
  */
 @Slf4j
@@ -1111,9 +1115,9 @@ public class PortfolioSeeder implements CommandLineRunner {
     /** Builds one SMS log row (mock: testMode=Y, sender=MOCK, status=SENT). */
     private SmsMessage buildSms(String content, SmsKind kind, String toNumber, Long memberId,
                                 String refType, String refId, LocalDateTime sentAt) {
-        // LMS when the body exceeds 90 bytes (UTF-8), else SMS.
-        SmsChannel channel = content.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 90
-                ? SmsChannel.LMS : SmsChannel.SMS;
+        // Classify through the shared runtime policy (EUC-KR > 90 bytes ⇒ LMS) so a seeded row
+        // carries the exact channel a live send would have produced — no UTF-8 vs EUC-KR drift.
+        SmsChannel channel = SmsChannelPolicy.resolve(content);
         return SmsMessage.builder()
                 .toNumber(toNumber)
                 .content(content)

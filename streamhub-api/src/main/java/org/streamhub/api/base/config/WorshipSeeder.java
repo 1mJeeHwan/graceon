@@ -27,8 +27,11 @@ import org.streamhub.api.v1.worship.repository.WorshipRegistrationRepository;
  * Seeds the worship/new-family registration demo dataset (C2) on top of the churches produced
  * by {@link DataInitializer}. Runs after {@code DataInitializer} (@Order(1)) and
  * {@code PortfolioSeeder} (@Order(2)). Idempotent (skips when the registration table already
- * holds rows) and fully deterministic (fixed-seed {@link Random}). All PII is virtual/masked
- * and every row is {@code test_mode='Y'}.
+ * holds rows). The fixed-seed {@link Random} makes the dataset <em>shape</em> (status mix, family
+ * counts, field values) reproducible across runs; the absolute dates are <em>not</em> fixed —
+ * every row is anchored to {@link LocalDateTime#now()}, so the {@value #WINDOW_DAYS}-day window
+ * rolls forward to stay current relative to today. All PII is virtual/masked and every row is
+ * {@code test_mode='Y'}.
  */
 @Slf4j
 @Component

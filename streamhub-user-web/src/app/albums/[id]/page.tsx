@@ -43,7 +43,7 @@ export default function AlbumDetailPage({ params }: { params: { id: string } }) 
         <article className="pt-3">
           {/* Cover + meta */}
           <div className="px-5">
-            <div className="mx-auto aspect-square w-full max-w-[280px] overflow-hidden rounded-card bg-gradient-to-br from-primary/25 via-surface to-bg">
+            <div className="mx-auto aspect-square w-full max-w-[280px] overflow-hidden rounded-card bg-gradient-to-br from-card to-surface">
               {data.coverUrl && !coverFailed ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

@@ -7,6 +7,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.streamhub.api.base.exception.ApiException;
@@ -53,6 +54,9 @@ public class WorshipService {
 
     private static final DateTimeFormatter REG_NO_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
 
+    /** How many times a {@code reg_no} collision is retried before giving up (spec §2.3 robustness). */
+    static final int REG_NO_MAX_ATTEMPTS = 5;
+
     private final WorshipMapper worshipMapper;
     private final WorshipRegistrationRepository worshipRegistrationRepository;
     private final RegistrationFamilyRepository registrationFamilyRepository;
@@ -60,6 +64,7 @@ public class WorshipService {
     private final PostcodeProvider postcodeProvider;
     private final SmsNotifier smsNotifier;
     private final ActionLogPublisher actionLogPublisher;
+    private final WorshipRegistrationWriter worshipRegistrationWriter;
 
     public WorshipService(
             WorshipMapper worshipMapper,
@@ -68,7 +73,8 @@ public class WorshipService {
             ChurchRepository churchRepository,
             PostcodeProvider postcodeProvider,
             SmsNotifier smsNotifier,
-            ActionLogPublisher actionLogPublisher) {
+            ActionLogPublisher actionLogPublisher,
+            WorshipRegistrationWriter worshipRegistrationWriter) {
         this.worshipMapper = worshipMapper;
         this.worshipRegistrationRepository = worshipRegistrationRepository;
         this.registrationFamilyRepository = registrationFamilyRepository;
@@ -76,6 +82,7 @@ public class WorshipService {
         this.postcodeProvider = postcodeProvider;
         this.smsNotifier = smsNotifier;
         this.actionLogPublisher = actionLogPublisher;
+        this.worshipRegistrationWriter = worshipRegistrationWriter;
     }
 
     /** Open churches for the public form's church selector (only {@code openYn='Y'}). */
@@ -92,10 +99,15 @@ public class WorshipService {
      * the (no-op) received notification and an action log. Public/unauthenticated: there is no
      * security context, so the action log is published with an explicit "신청자" operator.
      *
+     * <p>The persistence step is delegated to {@link WorshipRegistrationWriter} so a {@code reg_no}
+     * unique collision (concurrent same-day applicants, public + unauthenticated) is retried with a
+     * fresh number up to {@link #REG_NO_MAX_ATTEMPTS} times instead of surfacing as a 500.
+     *
      * @throws ApiException {@code NOT_FOUND} if the church is missing, or {@code INVALID_PARAMETER}
-     *                      for a closed church, missing privacy consent, or &gt;5 family rows
+     *                      for a closed church, missing privacy consent, or &gt;5 family rows;
+     *                      {@code INTERNAL_ERROR} if a unique number could not be allocated after
+     *                      {@link #REG_NO_MAX_ATTEMPTS} attempts
      */
-    @Transactional
     public WorshipRegisterResponse create(WorshipRegisterRequest request) {
         Church church = churchRepository.findById(request.churchId())
                 .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
@@ -114,9 +126,48 @@ public class WorshipService {
         PostcodeProvider.PostcodeResult address =
                 postcodeProvider.resolve(request.zipcode(), request.addr1());
 
-        WorshipRegistration registration = WorshipRegistration.builder()
+        WorshipRegistration saved = saveWithUniqueRegNo(request, address, families);
+
+        // Notification seam — demo/test no-op (no real SMS dispatched).
+        smsNotifier.notifyRegistrationReceived(saved.getPhone(), saved.getRegNo());
+        // Public call: no security context, so attribute the action to the applicant explicitly.
+        actionLogPublisher.publishAs(null, "신청자", "WORSHIP_RECEIVED", "WORSHIP",
+                String.valueOf(saved.getId()), saved.getName());
+
+        return new WorshipRegisterResponse(saved.getId(), saved.getRegNo());
+    }
+
+    /**
+     * Persists the registration + family rows, regenerating the {@code reg_no} and re-attempting
+     * (each in its own transaction) on a {@link DataIntegrityViolationException} unique collision.
+     */
+    private WorshipRegistration saveWithUniqueRegNo(
+            WorshipRegisterRequest request,
+            PostcodeProvider.PostcodeResult address,
+            List<RegistrationFamilyDto> families) {
+        for (int attempt = 1; attempt <= REG_NO_MAX_ATTEMPTS; attempt++) {
+            String regNo = buildRegNo(LocalDateTime.now());
+            try {
+                return worshipRegistrationWriter.insertWithRegNo(
+                        regNo,
+                        assignedRegNo -> buildRegistration(request, address, assignedRegNo),
+                        registrationId -> buildFamilyRows(registrationId, families));
+            } catch (DataIntegrityViolationException collision) {
+                if (attempt == REG_NO_MAX_ATTEMPTS) {
+                    throw new ApiException(ResultCode.INTERNAL_ERROR, "접수번호 발급에 실패했습니다. 잠시 후 다시 시도해 주세요");
+                }
+                // Same-day race: another applicant took this number — regenerate and retry.
+            }
+        }
+        // Unreachable: the loop either returns or throws on the final attempt.
+        throw new ApiException(ResultCode.INTERNAL_ERROR);
+    }
+
+    private WorshipRegistration buildRegistration(
+            WorshipRegisterRequest request, PostcodeProvider.PostcodeResult address, String regNo) {
+        return WorshipRegistration.builder()
                 .churchId(request.churchId())
-                .regNo(buildRegNo(LocalDateTime.now()))
+                .regNo(regNo)
                 .status(RegistrationStatus.RECEIVED)
                 .name(request.name())
                 .gender(request.gender())
@@ -135,28 +186,21 @@ public class WorshipService {
                 .privacyAgreed("Y")
                 .testMode("Y")
                 .build();
-        WorshipRegistration saved = worshipRegistrationRepository.save(registration);
+    }
 
+    private List<RegistrationFamily> buildFamilyRows(Long registrationId, List<RegistrationFamilyDto> families) {
         List<RegistrationFamily> familyRows = new ArrayList<>();
         for (int i = 0; i < families.size(); i++) {
             RegistrationFamilyDto family = families.get(i);
             familyRows.add(RegistrationFamily.builder()
-                    .registrationId(saved.getId())
+                    .registrationId(registrationId)
                     .name(family.name())
                     .relation(family.relation())
                     .birthDate(family.birthDate())
                     .sort(i + 1)
                     .build());
         }
-        registrationFamilyRepository.saveAll(familyRows);
-
-        // Notification seam — demo/test no-op (no real SMS dispatched).
-        smsNotifier.notifyRegistrationReceived(saved.getPhone(), saved.getRegNo());
-        // Public call: no security context, so attribute the action to the applicant explicitly.
-        actionLogPublisher.publishAs(null, "신청자", "WORSHIP_RECEIVED", "WORSHIP",
-                String.valueOf(saved.getId()), saved.getName());
-
-        return new WorshipRegisterResponse(saved.getId(), saved.getRegNo());
+        return familyRows;
     }
 
     @Transactional(readOnly = true)
@@ -221,7 +265,12 @@ public class WorshipService {
 
     // --- helpers -----------------------------------------------------------
 
-    /** Builds a unique {@code WR-yyyyMMdd-NNNN}, incrementing the suffix on collision. */
+    /**
+     * Builds a {@code WR-yyyyMMdd-NNNN} candidate, advancing the suffix past any number already
+     * persisted today. This closes single-threaded collisions; concurrent same-day races (two
+     * threads reading the same max before either commits) are handled by the insert-retry in
+     * {@link #saveWithUniqueRegNo}.
+     */
     private String buildRegNo(LocalDateTime now) {
         String day = now.format(REG_NO_DATE);
         int seq = 1;

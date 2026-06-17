@@ -5,12 +5,7 @@ import { MapPin, Navigation, Phone } from "lucide-react";
 import clsx from "clsx";
 import type { ChurchNearbyItem } from "@/lib/churchTypes";
 import { denominationLabel } from "@/lib/churchTypes";
-
-function distanceText(km: number | null): string | null {
-  if (km == null) return null;
-  if (km < 1) return `${Math.round(km * 1000)}m`;
-  return `${km.toFixed(1)}km`;
-}
+import { formatDistance } from "@/lib/format";
 
 /**
  * Distance-sorted church row. Whole card links to the detail page; hovering/focusing
@@ -25,7 +20,7 @@ export function ChurchCard({
   active?: boolean;
   onHover?: (id: number | undefined) => void;
 }) {
-  const dist = distanceText(church.distanceKm);
+  const dist = formatDistance(church.distanceKm);
   return (
     <Link
       href={`/churches/${church.id}`}

@@ -1,6 +1,5 @@
 package org.streamhub.api.v1.sms;
 
-import java.nio.charset.Charset;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,10 +30,6 @@ import org.streamhub.api.v1.sms.repository.SmsMessageRepository;
  */
 @Service
 public class SmsService {
-
-    /** EUC-KR byte threshold separating SMS from LMS (Korean carrier convention). */
-    private static final int LMS_THRESHOLD_BYTES = 90;
-    private static final Charset EUC_KR = Charset.forName("EUC-KR");
 
     private final SmsMapper smsMapper;
     private final SmsMessageRepository smsMessageRepository;
@@ -121,12 +116,9 @@ public class SmsService {
                 .build());
     }
 
-    /** {@code >90} EUC-KR bytes ⇒ LMS, else SMS. */
+    /** {@code >90} EUC-KR bytes ⇒ LMS, else SMS (delegates to {@link SmsChannelPolicy}). */
     SmsChannel resolveChannel(String content) {
-        if (content == null) {
-            return SmsChannel.SMS;
-        }
-        return content.getBytes(EUC_KR).length > LMS_THRESHOLD_BYTES ? SmsChannel.LMS : SmsChannel.SMS;
+        return SmsChannelPolicy.resolve(content);
     }
 
     /** Masks the last 4 digits of a phone number ({@code 010-1234-****}); null/blank ⇒ placeholder. */

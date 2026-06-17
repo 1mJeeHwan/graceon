@@ -28,6 +28,13 @@ export function formatDate(iso: string | null | undefined): string {
   return `${y}.${m}.${day}`;
 }
 
+/** Distance in km → "850m" (under 1km) or "1.2km". Returns "" for null. */
+export function formatDistance(km: number | null | undefined): string {
+  if (km == null) return "";
+  if (km < 1) return `${Math.round(km * 1000)}m`;
+  return `${km.toFixed(1)}km`;
+}
+
 /** Comma-joined hashtag string → trimmed array (list items carry a string). */
 export function splitHashtags(s: string | null | undefined): string[] {
   if (!s) return [];

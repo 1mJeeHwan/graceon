@@ -49,16 +49,20 @@ export default function StoresPage() {
         {usingFallback && " 위치 권한이 없어 서울시청 기준으로 정렬합니다."}
       </p>
 
-      {coords && (
-        <div className="mt-4">
+      <div className="mt-4">
+        {coords ? (
           <StoreMap
             stores={stores}
             center={center}
             selectedId={selectedId}
             onSelect={setSelectedId}
           />
-        </div>
-      )}
+        ) : (
+          <div className="px-5">
+            <div className="skeleton h-64 w-full rounded-card" aria-busy="true" aria-label="지도 불러오는 중" />
+          </div>
+        )}
+      </div>
 
       <div className="mt-4">
         {isLoading || coords == null ? (

@@ -53,13 +53,39 @@ const INITIAL: FormState = {
   families: [],
 };
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+/**
+ * Labelled form field. Wraps a single control in a <label> for click-to-focus; for button groups
+ * (multiple buttons) pass `group` so it renders a <div role="group"> instead — buttons must not be
+ * nested inside a <label>.
+ */
+function Field({
+  label,
+  required,
+  group,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  group?: boolean;
+  children: React.ReactNode;
+}) {
+  const head = (
+    <span className="mb-1 block text-xs font-medium text-inactive">
+      {label}
+      {required && <span className="ml-0.5 text-point">*</span>}
+    </span>
+  );
+  if (group) {
+    return (
+      <div role="group" aria-label={label} className="block">
+        {head}
+        {children}
+      </div>
+    );
+  }
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-inactive">
-        {label}
-        {required && <span className="ml-0.5 text-point">*</span>}
-      </span>
+      {head}
       {children}
     </label>
   );
@@ -149,13 +175,14 @@ export default function WorshipRegisterPage({ params }: { params: { id: string }
         <Field label="이름" required>
           <input value={form.name} onChange={(e) => set("name", e.target.value)} className="input !pl-3" />
         </Field>
-        <Field label="성별" required>
+        <Field label="성별" required group>
           <div className="flex gap-2">
             {GENDER_OPTIONS.map((g) => (
               <button
                 key={g.value}
                 type="button"
                 onClick={() => set("gender", g.value)}
+                aria-pressed={form.gender === g.value}
                 className="pill flex-1"
                 data-active={form.gender === g.value}
               >
@@ -232,7 +259,7 @@ export default function WorshipRegisterPage({ params }: { params: { id: string }
             ))}
           </select>
         </Field>
-        <Field label="교회 출석 경험">
+        <Field label="교회 출석 경험" group>
           <div className="flex gap-2">
             {[
               { value: "N", label: "없음" },
@@ -242,6 +269,7 @@ export default function WorshipRegisterPage({ params }: { params: { id: string }
                 key={o.value}
                 type="button"
                 onClick={() => set("churchExperience", o.value)}
+                aria-pressed={form.churchExperience === o.value}
                 className="pill flex-1"
                 data-active={form.churchExperience === o.value}
               >
@@ -312,7 +340,11 @@ export default function WorshipRegisterPage({ params }: { params: { id: string }
         </span>
       </label>
 
-      {submitError && <p className="mt-4 text-sm text-point">{submitError}</p>}
+      {submitError && (
+        <p role="alert" className="mt-4 text-sm text-point">
+          {submitError}
+        </p>
+      )}
 
       <button type="submit" disabled={!valid || register.isPending} className="btn-primary mt-6 w-full !py-3.5 disabled:opacity-50">
         {register.isPending ? "신청 중…" : "신청하기"}

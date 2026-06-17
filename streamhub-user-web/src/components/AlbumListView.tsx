@@ -38,12 +38,23 @@ export function AlbumListView() {
         <SearchBar value={keyword} onChange={setKeyword} placeholder="음반·아티스트 검색" />
       </div>
 
-      <div className="hrow px-5 pb-3 pt-1">
-        <button className="pill" data-active={genre === undefined} onClick={() => setGenre(undefined)}>
+      <div className="hrow px-5 pb-3 pt-1" role="group" aria-label="장르 필터">
+        <button
+          className="pill"
+          data-active={genre === undefined}
+          aria-pressed={genre === undefined}
+          onClick={() => setGenre(undefined)}
+        >
           전체
         </button>
         {GENRE_ORDER.map((g) => (
-          <button key={g} className="pill" data-active={genre === g} onClick={() => setGenre(g)}>
+          <button
+            key={g}
+            className="pill"
+            data-active={genre === g}
+            aria-pressed={genre === g}
+            onClick={() => setGenre(g)}
+          >
             {GENRE_LABELS[g]}
           </button>
         ))}

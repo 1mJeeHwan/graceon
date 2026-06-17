@@ -6,6 +6,7 @@ import { ChevronRight, MapPin, Navigation } from "lucide-react";
 import { useNearbyChurches } from "@/lib/churches";
 import { getCurrentPosition, type Coords } from "@/lib/geolocation";
 import { denominationLabel } from "@/lib/churchTypes";
+import { formatDistance } from "@/lib/format";
 
 /**
  * Compact "near me" widget: geolocation → top 3 nearby churches. Designed to be
@@ -71,7 +72,7 @@ export function NearbyChurchesSection() {
               </div>
               {c.distanceKm != null && (
                 <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary">
-                  {c.distanceKm < 1 ? `${Math.round(c.distanceKm * 1000)}m` : `${c.distanceKm.toFixed(1)}km`}
+                  {formatDistance(c.distanceKm)}
                 </span>
               )}
             </Link>

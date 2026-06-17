@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatDuration, formatViews, splitHashtags } from "../format";
+import { formatDate, formatDistance, formatDuration, formatViews, splitHashtags } from "../format";
 
 describe("formatDuration", () => {
   it("returns empty for null/zero", () => {
@@ -37,6 +37,21 @@ describe("formatDate", () => {
   it("returns empty for null/invalid", () => {
     expect(formatDate(null)).toBe("");
     expect(formatDate("not-a-date")).toBe("");
+  });
+});
+
+describe("formatDistance", () => {
+  it("returns empty for null", () => {
+    expect(formatDistance(null)).toBe("");
+    expect(formatDistance(undefined)).toBe("");
+  });
+  it("shows metres under 1km", () => {
+    expect(formatDistance(0.85)).toBe("850m");
+    expect(formatDistance(0.2)).toBe("200m");
+  });
+  it("shows one-decimal km at or above 1km", () => {
+    expect(formatDistance(1)).toBe("1.0km");
+    expect(formatDistance(3.24)).toBe("3.2km");
   });
 });
 

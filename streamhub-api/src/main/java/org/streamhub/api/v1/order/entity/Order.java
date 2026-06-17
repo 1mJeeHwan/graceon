@@ -97,6 +97,13 @@ public class Order {
     @Column(name = "pay_status", nullable = false, length = 12)
     private PayStatus payStatus;
 
+    /**
+     * Transaction id issued at the payment-request step (C4 payment seam). The approve step must
+     * present the same id; a mismatch is rejected. Null until a request is recorded.
+     */
+    @Column(name = "pay_txn_id", length = 60)
+    private String payTxnId;
+
     @Column(name = "ordered_at", nullable = false)
     private LocalDateTime orderedAt;
 
@@ -159,9 +166,13 @@ public class Order {
         this.updatedAt = LocalDateTime.now();
     }
 
-    /** Records a payment request against this order (C4 payment seam). */
-    public void applyPayRequest(String payProvider, String ignoredTxnId) {
+    /**
+     * Records a payment request against this order, retaining the issued transaction id so the
+     * approve step can verify it (C4 payment seam).
+     */
+    public void applyPayRequest(String payProvider, String payTxnId) {
         this.payProvider = payProvider;
+        this.payTxnId = payTxnId;
         this.payStatus = PayStatus.REQUESTED;
         this.updatedAt = LocalDateTime.now();
     }

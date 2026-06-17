@@ -146,6 +146,11 @@ public class ChurchService {
         List<ChurchNearbyItem> hits = new ArrayList<>();
         for (ChurchNearbyItem item : candidates) {
             if (item.getLatitude() == null || item.getLongitude() == null) {
+                // Coordinate-less church (incomplete geocode): keep it in the result with a null
+                // distance so it is never NPE'd nor silently dropped — it just sorts last.
+                item.setDistanceKm(null);
+                fillItemUrl(item);
+                hits.add(item);
                 continue;
             }
             double distance = HaversineDistance.km(lat, lng, item.getLatitude(), item.getLongitude());
@@ -155,7 +160,9 @@ public class ChurchService {
                 hits.add(item);
             }
         }
-        hits.sort(Comparator.comparingDouble(ChurchNearbyItem::getDistanceKm));
+        // Nearest first; null-distance (coordinate-less) churches are ordered last.
+        hits.sort(Comparator.comparing(ChurchNearbyItem::getDistanceKm,
+                Comparator.nullsLast(Comparator.naturalOrder())));
 
         long total = hits.size();
         List<ChurchNearbyItem> page = paginate(hits, request.offset(), size);

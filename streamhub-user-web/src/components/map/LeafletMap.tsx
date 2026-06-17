@@ -146,5 +146,12 @@ export default function LeafletMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [center.lat, center.lng, markers.map((m) => `${m.id}:${m.lat}:${m.lng}`).join("|")]);
 
-  return <div ref={containerRef} className={`${heightClass} w-full overflow-hidden rounded-card`} />;
+  return (
+    <div
+      ref={containerRef}
+      role="application"
+      aria-label="지도"
+      className={`${heightClass} w-full overflow-hidden rounded-card`}
+    />
+  );
 }

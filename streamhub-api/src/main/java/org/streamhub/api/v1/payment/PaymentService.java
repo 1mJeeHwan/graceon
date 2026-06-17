@@ -89,8 +89,14 @@ public class PaymentService {
      * backfills the receipt with the PG provider/txnId, and triggers the paid-notification SMS via
      * the order service's shared hook.
      *
+     * <p>The transaction id presented here must match the one issued at the request step (stored on
+     * the order); a mismatch is rejected with {@code INVALID_PARAMETER}. Harmless for the mock
+     * provider, this closes the seam so a real PG integration cannot approve against a stale or
+     * forged transaction id.
+     *
      * @throws ApiException {@code NOT_FOUND} if missing, or {@code INVALID_PARAMETER} if the order
-     *                      is not in {@link PayStatus#REQUESTED}
+     *                      is not in {@link PayStatus#REQUESTED} or the txnId does not match the
+     *                      request-stage id
      */
     @Transactional
     public PaymentResultDto approve(PayApproveCommand command) {
@@ -98,6 +104,9 @@ public class PaymentService {
                 .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
         if (order.getPayStatus() != PayStatus.REQUESTED) {
             throw new ApiException(ResultCode.INVALID_PARAMETER, "결제요청 상태가 아닙니다");
+        }
+        if (order.getPayTxnId() != null && !order.getPayTxnId().equals(command.txnId())) {
+            throw new ApiException(ResultCode.INVALID_PARAMETER, "결제요청 거래번호가 일치하지 않습니다");
         }
 
         PaymentProvider adapter = providerRouter.resolve(order.getPayProvider());
