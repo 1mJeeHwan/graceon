@@ -121,6 +121,26 @@ export interface ResultDTOPlanResponse {
   resultObject?: PlanResponse;
 }
 
+export interface StoreDto {
+  id?: number;
+  regionId?: number;
+  name?: string;
+  address?: string;
+  phone?: string;
+  lat?: number;
+  lng?: number;
+  openHours?: string;
+  useYn?: string;
+  distanceKm?: number;
+  createdAt?: string;
+}
+
+export interface ResultDTOStoreDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: StoreDto;
+}
+
 export interface MemberUpdateRequest {
   name: string;
   phone?: string;
@@ -359,6 +379,306 @@ export interface ResultDTOContentDetail {
   resultObject?: ContentDetail;
 }
 
+export type ChurchUpsertRequestDenomination =
+  (typeof ChurchUpsertRequestDenomination)[keyof typeof ChurchUpsertRequestDenomination];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ChurchUpsertRequestDenomination = {
+  METHODIST: "METHODIST",
+  PCK: "PCK",
+  HAPDONG: "HAPDONG",
+  HOLINESS: "HOLINESS",
+  GOSPEL: "GOSPEL",
+  BAPTIST: "BAPTIST",
+  ETC: "ETC",
+} as const;
+
+export interface ChurchUpsertRequest {
+  name: string;
+  regionId: number;
+  denomination?: ChurchUpsertRequestDenomination;
+  /**
+   * @minimum -90
+   * @maximum 90
+   */
+  latitude?: number;
+  /**
+   * @minimum -180
+   * @maximum 180
+   */
+  longitude?: number;
+  address?: string;
+  addressDetail?: string;
+  zipcode?: string;
+  phone?: string;
+  pastorName?: string;
+  facilities?: string;
+  introduction?: string;
+  homepageUrl?: string;
+  thumbnailKey?: string;
+  openYn?: string;
+  useYn?: string;
+  worshipTimes?: WorshipTimeDto[];
+}
+
+export type WorshipTimeDtoKind =
+  (typeof WorshipTimeDtoKind)[keyof typeof WorshipTimeDtoKind];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipTimeDtoKind = {
+  SUNDAY: "SUNDAY",
+  DAWN: "DAWN",
+  WEDNESDAY: "WEDNESDAY",
+  FRIDAY: "FRIDAY",
+  YOUTH: "YOUTH",
+  OTHER: "OTHER",
+} as const;
+
+export interface WorshipTimeDto {
+  kind?: WorshipTimeDtoKind;
+  dayLabel?: string;
+  startTime?: string;
+  place?: string;
+  target?: string;
+  sort?: number;
+}
+
+export type ChurchDetailDenomination =
+  (typeof ChurchDetailDenomination)[keyof typeof ChurchDetailDenomination];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ChurchDetailDenomination = {
+  METHODIST: "METHODIST",
+  PCK: "PCK",
+  HAPDONG: "HAPDONG",
+  HOLINESS: "HOLINESS",
+  GOSPEL: "GOSPEL",
+  BAPTIST: "BAPTIST",
+  ETC: "ETC",
+} as const;
+
+export interface ChurchDetail {
+  id?: number;
+  name?: string;
+  denomination?: ChurchDetailDenomination;
+  regionId?: number;
+  regionName?: string;
+  address?: string;
+  addressDetail?: string;
+  zipcode?: string;
+  phone?: string;
+  pastorName?: string;
+  facilities?: string;
+  introduction?: string;
+  homepageUrl?: string;
+  latitude?: number;
+  longitude?: number;
+  thumbnailKey?: string;
+  thumbnailUrl?: string;
+  dataSource?: string;
+  openYn?: string;
+  useYn?: string;
+  demoData?: boolean;
+  worshipTimes?: WorshipTimeDto[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ResultDTOChurchDetail {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ChurchDetail;
+}
+
+export type AlbumCreateRequestGenre =
+  (typeof AlbumCreateRequestGenre)[keyof typeof AlbumCreateRequestGenre];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const AlbumCreateRequestGenre = {
+  WORSHIP: "WORSHIP",
+  HYMN: "HYMN",
+  GOSPEL: "GOSPEL",
+  CCM: "CCM",
+  CAROL: "CAROL",
+  INSTRUMENTAL: "INSTRUMENTAL",
+  KIDS: "KIDS",
+} as const;
+
+export type AlbumCreateRequestStatus =
+  (typeof AlbumCreateRequestStatus)[keyof typeof AlbumCreateRequestStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const AlbumCreateRequestStatus = {
+  ON_SALE: "ON_SALE",
+  HIDDEN: "HIDDEN",
+} as const;
+
+export interface AlbumCreateRequest {
+  title: string;
+  artist: string;
+  label?: string;
+  genre: AlbumCreateRequestGenre;
+  releaseDate?: string;
+  description?: string;
+  coverKey?: string;
+  status?: AlbumCreateRequestStatus;
+  price: number;
+  stock?: number;
+  tracks?: TrackDto[];
+}
+
+export interface TrackDto {
+  id?: number;
+  trackNo?: number;
+  title: string;
+  durationSec?: number;
+  previewUrl?: string;
+  previewStartSec?: number;
+  previewLengthSec?: number;
+}
+
+export type AlbumDetailGenre =
+  (typeof AlbumDetailGenre)[keyof typeof AlbumDetailGenre];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const AlbumDetailGenre = {
+  WORSHIP: "WORSHIP",
+  HYMN: "HYMN",
+  GOSPEL: "GOSPEL",
+  CCM: "CCM",
+  CAROL: "CAROL",
+  INSTRUMENTAL: "INSTRUMENTAL",
+  KIDS: "KIDS",
+} as const;
+
+export type AlbumDetailStatus =
+  (typeof AlbumDetailStatus)[keyof typeof AlbumDetailStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const AlbumDetailStatus = {
+  ON_SALE: "ON_SALE",
+  HIDDEN: "HIDDEN",
+} as const;
+
+export type AlbumDetailSource =
+  (typeof AlbumDetailSource)[keyof typeof AlbumDetailSource];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const AlbumDetailSource = {
+  SEED: "SEED",
+  EXTERNAL: "EXTERNAL",
+} as const;
+
+export interface AlbumDetail {
+  id?: number;
+  goodsItemId?: number;
+  title?: string;
+  artist?: string;
+  label?: string;
+  genre?: AlbumDetailGenre;
+  status?: AlbumDetailStatus;
+  releaseDate?: string;
+  description?: string;
+  coverKey?: string;
+  coverUrl?: string;
+  trackCount?: number;
+  viewCount?: number;
+  source?: AlbumDetailSource;
+  price?: number;
+  stock?: number;
+  tracks?: TrackDto[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ResultDTOAlbumDetail {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: AlbumDetail;
+}
+
+export type WorshipSearchRequestStatus =
+  (typeof WorshipSearchRequestStatus)[keyof typeof WorshipSearchRequestStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipSearchRequestStatus = {
+  RECEIVED: "RECEIVED",
+  CONTACTED: "CONTACTED",
+  COMPLETED: "COMPLETED",
+  CANCELED: "CANCELED",
+} as const;
+
+export interface WorshipSearchRequest {
+  pageNumber?: number;
+  pageSize?: number;
+  searchField?: string;
+  keyword?: string;
+  status?: WorshipSearchRequestStatus;
+  churchId?: number;
+  fromDate?: string;
+  toDate?: string;
+}
+
+export interface ResInfinityListWorshipRegistrationListItem {
+  contents?: WorshipRegistrationListItem[];
+  totalCount?: number;
+  totalPage?: number;
+}
+
+export interface ResultDTOResInfinityListWorshipRegistrationListItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ResInfinityListWorshipRegistrationListItem;
+}
+
+export type WorshipRegistrationListItemStatus =
+  (typeof WorshipRegistrationListItemStatus)[keyof typeof WorshipRegistrationListItemStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipRegistrationListItemStatus = {
+  RECEIVED: "RECEIVED",
+  CONTACTED: "CONTACTED",
+  COMPLETED: "COMPLETED",
+  CANCELED: "CANCELED",
+} as const;
+
+export type WorshipRegistrationListItemGender =
+  (typeof WorshipRegistrationListItemGender)[keyof typeof WorshipRegistrationListItemGender];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipRegistrationListItemGender = {
+  MALE: "MALE",
+  FEMALE: "FEMALE",
+} as const;
+
+export type WorshipRegistrationListItemRegisterDept =
+  (typeof WorshipRegistrationListItemRegisterDept)[keyof typeof WorshipRegistrationListItemRegisterDept];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipRegistrationListItemRegisterDept = {
+  INFANT: "INFANT",
+  CHILDREN: "CHILDREN",
+  YOUTH: "YOUTH",
+  YOUNG_ADULT: "YOUNG_ADULT",
+  ADULT: "ADULT",
+  SENIOR: "SENIOR",
+} as const;
+
+export interface WorshipRegistrationListItem {
+  id?: number;
+  regNo?: string;
+  churchId?: number;
+  churchName?: string;
+  status?: WorshipRegistrationListItemStatus;
+  name?: string;
+  gender?: WorshipRegistrationListItemGender;
+  registerDept?: WorshipRegistrationListItemRegisterDept;
+  phone?: string;
+  familyCount?: number;
+  testMode?: string;
+  createdAt?: string;
+}
+
 export type SubscriptionSearchRequestStatus =
   (typeof SubscriptionSearchRequestStatus)[keyof typeof SubscriptionSearchRequestStatus];
 
@@ -422,6 +742,106 @@ export interface SubscriptionListItem {
   billingKeyMasked?: string;
   nextBillingAt?: string;
   startedAt?: string;
+}
+
+export interface ResultDTOListStoreDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: StoreDto[];
+}
+
+export interface SmsSendRequest {
+  toNumber: string;
+  /**
+   * @minLength 0
+   * @maxLength 2000
+   */
+  content: string;
+  memberId?: number;
+}
+
+export interface ResultDTOSmsListItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: SmsListItem;
+}
+
+export type SmsListItemKind =
+  (typeof SmsListItemKind)[keyof typeof SmsListItemKind];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const SmsListItemKind = {
+  CUSTOM: "CUSTOM",
+  ORDER_PAID: "ORDER_PAID",
+  ORDER_SHIPPING: "ORDER_SHIPPING",
+  DONATION_ONCE: "DONATION_ONCE",
+} as const;
+
+export type SmsListItemChannel =
+  (typeof SmsListItemChannel)[keyof typeof SmsListItemChannel];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const SmsListItemChannel = {
+  SMS: "SMS",
+  LMS: "LMS",
+} as const;
+
+export type SmsListItemStatus =
+  (typeof SmsListItemStatus)[keyof typeof SmsListItemStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const SmsListItemStatus = {
+  QUEUED: "QUEUED",
+  SENT: "SENT",
+  FAILED: "FAILED",
+} as const;
+
+export interface SmsListItem {
+  id?: number;
+  toNumber?: string;
+  content?: string;
+  kind?: SmsListItemKind;
+  channel?: SmsListItemChannel;
+  sender?: string;
+  status?: SmsListItemStatus;
+  testMode?: string;
+  memberId?: number;
+  memberName?: string;
+  refType?: string;
+  refId?: string;
+  sentAt?: string;
+}
+
+export type SmsSearchRequestKind =
+  (typeof SmsSearchRequestKind)[keyof typeof SmsSearchRequestKind];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const SmsSearchRequestKind = {
+  CUSTOM: "CUSTOM",
+  ORDER_PAID: "ORDER_PAID",
+  ORDER_SHIPPING: "ORDER_SHIPPING",
+  DONATION_ONCE: "DONATION_ONCE",
+} as const;
+
+export interface SmsSearchRequest {
+  pageNumber?: number;
+  pageSize?: number;
+  keyword?: string;
+  kind?: SmsSearchRequestKind;
+  from?: string;
+  to?: string;
+}
+
+export interface ResInfinityListSmsListItem {
+  contents?: SmsListItem[];
+  totalCount?: number;
+  totalPage?: number;
+}
+
+export interface ResultDTOResInfinityListSmsListItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ResInfinityListSmsListItem;
 }
 
 export interface PointLedgerSearchRequest {
@@ -489,6 +909,46 @@ export interface ResultDTOPointLedgerListItem {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: PointLedgerListItem;
+}
+
+export interface PayRequestCommand {
+  orderId: number;
+  provider?: string;
+}
+
+export type PaymentResultDtoStatus =
+  (typeof PaymentResultDtoStatus)[keyof typeof PaymentResultDtoStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PaymentResultDtoStatus = {
+  NONE: "NONE",
+  REQUESTED: "REQUESTED",
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  FAILED: "FAILED",
+  CANCELED: "CANCELED",
+} as const;
+
+export interface PaymentResultDto {
+  orderId?: number;
+  provider?: string;
+  status?: PaymentResultDtoStatus;
+  txnId?: string;
+  amount?: number;
+  memo?: string;
+  testMode?: boolean;
+}
+
+export interface ResultDTOPaymentResultDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: PaymentResultDto;
+}
+
+export interface PayApproveCommand {
+  orderId: number;
+  txnId: string;
+  cardNo?: string;
 }
 
 export type OrderSearchRequestStatus =
@@ -876,6 +1336,192 @@ export interface ResultDTOResInfinityListContentListItem {
   resultObject?: ResInfinityListContentListItem;
 }
 
+export type ChurchSearchRequestDenomination =
+  (typeof ChurchSearchRequestDenomination)[keyof typeof ChurchSearchRequestDenomination];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ChurchSearchRequestDenomination = {
+  METHODIST: "METHODIST",
+  PCK: "PCK",
+  HAPDONG: "HAPDONG",
+  HOLINESS: "HOLINESS",
+  GOSPEL: "GOSPEL",
+  BAPTIST: "BAPTIST",
+  ETC: "ETC",
+} as const;
+
+export interface ChurchSearchRequest {
+  pageNumber?: number;
+  pageSize?: number;
+  keyword?: string;
+  regionId?: number;
+  denomination?: ChurchSearchRequestDenomination;
+  useYn?: string;
+}
+
+export type ChurchListItemDenomination =
+  (typeof ChurchListItemDenomination)[keyof typeof ChurchListItemDenomination];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ChurchListItemDenomination = {
+  METHODIST: "METHODIST",
+  PCK: "PCK",
+  HAPDONG: "HAPDONG",
+  HOLINESS: "HOLINESS",
+  GOSPEL: "GOSPEL",
+  BAPTIST: "BAPTIST",
+  ETC: "ETC",
+} as const;
+
+export interface ChurchListItem {
+  id?: number;
+  name?: string;
+  denomination?: ChurchListItemDenomination;
+  regionId?: number;
+  regionName?: string;
+  address?: string;
+  phone?: string;
+  pastorName?: string;
+  latitude?: number;
+  longitude?: number;
+  thumbnailKey?: string;
+  thumbnailUrl?: string;
+  dataSource?: string;
+  openYn?: string;
+  useYn?: string;
+  createdAt?: string;
+}
+
+export interface ResInfinityListChurchListItem {
+  contents?: ChurchListItem[];
+  totalCount?: number;
+  totalPage?: number;
+}
+
+export interface ResultDTOResInfinityListChurchListItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ResInfinityListChurchListItem;
+}
+
+export interface ChatSendRequest {
+  /**
+   * @minLength 0
+   * @maxLength 40
+   */
+  sessionKey: string;
+  /**
+   * @minLength 0
+   * @maxLength 2000
+   */
+  message: string;
+}
+
+export type ChatReplyDtoIntent =
+  (typeof ChatReplyDtoIntent)[keyof typeof ChatReplyDtoIntent];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ChatReplyDtoIntent = {
+  PRODUCT_INQUIRY: "PRODUCT_INQUIRY",
+  ORDER_LOOKUP: "ORDER_LOOKUP",
+  FAQ: "FAQ",
+  FALLBACK: "FALLBACK",
+} as const;
+
+export interface ChatReplyDto {
+  text?: string;
+  intent?: ChatReplyDtoIntent;
+  quickReplies?: string[];
+  testMode?: boolean;
+}
+
+export interface ResultDTOChatReplyDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ChatReplyDto;
+}
+
+export type AlbumSearchRequestGenre =
+  (typeof AlbumSearchRequestGenre)[keyof typeof AlbumSearchRequestGenre];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const AlbumSearchRequestGenre = {
+  WORSHIP: "WORSHIP",
+  HYMN: "HYMN",
+  GOSPEL: "GOSPEL",
+  CCM: "CCM",
+  CAROL: "CAROL",
+  INSTRUMENTAL: "INSTRUMENTAL",
+  KIDS: "KIDS",
+} as const;
+
+export type AlbumSearchRequestStatus =
+  (typeof AlbumSearchRequestStatus)[keyof typeof AlbumSearchRequestStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const AlbumSearchRequestStatus = {
+  ON_SALE: "ON_SALE",
+  HIDDEN: "HIDDEN",
+} as const;
+
+export interface AlbumSearchRequest {
+  pageNumber?: number;
+  pageSize?: number;
+  keyword?: string;
+  genre?: AlbumSearchRequestGenre;
+  status?: AlbumSearchRequestStatus;
+}
+
+export type AlbumListItemGenre =
+  (typeof AlbumListItemGenre)[keyof typeof AlbumListItemGenre];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const AlbumListItemGenre = {
+  WORSHIP: "WORSHIP",
+  HYMN: "HYMN",
+  GOSPEL: "GOSPEL",
+  CCM: "CCM",
+  CAROL: "CAROL",
+  INSTRUMENTAL: "INSTRUMENTAL",
+  KIDS: "KIDS",
+} as const;
+
+export type AlbumListItemStatus =
+  (typeof AlbumListItemStatus)[keyof typeof AlbumListItemStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const AlbumListItemStatus = {
+  ON_SALE: "ON_SALE",
+  HIDDEN: "HIDDEN",
+} as const;
+
+export interface AlbumListItem {
+  id?: number;
+  title?: string;
+  artist?: string;
+  genre?: AlbumListItemGenre;
+  status?: AlbumListItemStatus;
+  coverKey?: string;
+  coverUrl?: string;
+  trackCount?: number;
+  goodsItemId?: number;
+  price?: number;
+  releaseDate?: string;
+  createdAt?: string;
+}
+
+export interface ResInfinityListAlbumListItem {
+  contents?: AlbumListItem[];
+  totalCount?: number;
+  totalPage?: number;
+}
+
+export interface ResultDTOResInfinityListAlbumListItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ResInfinityListAlbumListItem;
+}
+
 export interface ActionLogSearchRequest {
   pageNumber?: number;
   pageSize?: number;
@@ -904,6 +1550,128 @@ export interface ResultDTOResInfinityListActionLogItem {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: ResInfinityListActionLogItem;
+}
+
+export interface RegistrationFamilyDto {
+  /**
+   * @minLength 0
+   * @maxLength 50
+   */
+  name: string;
+  /**
+   * @minLength 0
+   * @maxLength 20
+   */
+  relation: string;
+  birthDate?: string;
+}
+
+export type WorshipRegisterRequestGender =
+  (typeof WorshipRegisterRequestGender)[keyof typeof WorshipRegisterRequestGender];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipRegisterRequestGender = {
+  MALE: "MALE",
+  FEMALE: "FEMALE",
+} as const;
+
+export type WorshipRegisterRequestRegisterDept =
+  (typeof WorshipRegisterRequestRegisterDept)[keyof typeof WorshipRegisterRequestRegisterDept];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipRegisterRequestRegisterDept = {
+  INFANT: "INFANT",
+  CHILDREN: "CHILDREN",
+  YOUTH: "YOUTH",
+  YOUNG_ADULT: "YOUNG_ADULT",
+  ADULT: "ADULT",
+  SENIOR: "SENIOR",
+} as const;
+
+export type WorshipRegisterRequestBaptismType =
+  (typeof WorshipRegisterRequestBaptismType)[keyof typeof WorshipRegisterRequestBaptismType];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipRegisterRequestBaptismType = {
+  NONE: "NONE",
+  BAPTISM: "BAPTISM",
+  CONFIRMATION: "CONFIRMATION",
+  INFANT_BAPTISM: "INFANT_BAPTISM",
+} as const;
+
+export interface WorshipRegisterRequest {
+  churchId: number;
+  /**
+   * @minLength 0
+   * @maxLength 50
+   */
+  name: string;
+  gender: WorshipRegisterRequestGender;
+  birthDate: string;
+  /**
+   * @minLength 0
+   * @maxLength 20
+   */
+  phone: string;
+  /**
+   * @minLength 0
+   * @maxLength 120
+   */
+  email?: string;
+  /**
+   * @minLength 0
+   * @maxLength 10
+   */
+  zipcode?: string;
+  /**
+   * @minLength 0
+   * @maxLength 200
+   */
+  addr1?: string;
+  /**
+   * @minLength 0
+   * @maxLength 200
+   */
+  addr2?: string;
+  registerDept: WorshipRegisterRequestRegisterDept;
+  /**
+   * @minLength 0
+   * @maxLength 1
+   */
+  churchExperience?: string;
+  /**
+   * @minLength 0
+   * @maxLength 100
+   */
+  prevChurch?: string;
+  baptismType?: WorshipRegisterRequestBaptismType;
+  /**
+   * @minLength 0
+   * @maxLength 50
+   */
+  leaderName?: string;
+  /**
+   * @minLength 0
+   * @maxLength 20
+   */
+  leaderPhone?: string;
+  /**
+   * @minLength 0
+   * @maxLength 1
+   */
+  privacyAgreed: string;
+  families?: RegistrationFamilyDto[];
+}
+
+export interface ResultDTOWorshipRegisterResponse {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: WorshipRegisterResponse;
+}
+
+export interface WorshipRegisterResponse {
+  id?: number;
+  regNo?: string;
 }
 
 export interface MemberLoginRequest {
@@ -961,6 +1729,100 @@ export interface LoginRequest {
   password: string;
 }
 
+export type WorshipStatusChangeRequestStatus =
+  (typeof WorshipStatusChangeRequestStatus)[keyof typeof WorshipStatusChangeRequestStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipStatusChangeRequestStatus = {
+  RECEIVED: "RECEIVED",
+  CONTACTED: "CONTACTED",
+  COMPLETED: "COMPLETED",
+  CANCELED: "CANCELED",
+} as const;
+
+export interface WorshipStatusChangeRequest {
+  status: WorshipStatusChangeRequestStatus;
+  memo?: string;
+}
+
+export interface ResultDTOWorshipRegistrationDetail {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: WorshipRegistrationDetail;
+}
+
+export type WorshipRegistrationDetailStatus =
+  (typeof WorshipRegistrationDetailStatus)[keyof typeof WorshipRegistrationDetailStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipRegistrationDetailStatus = {
+  RECEIVED: "RECEIVED",
+  CONTACTED: "CONTACTED",
+  COMPLETED: "COMPLETED",
+  CANCELED: "CANCELED",
+} as const;
+
+export type WorshipRegistrationDetailGender =
+  (typeof WorshipRegistrationDetailGender)[keyof typeof WorshipRegistrationDetailGender];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipRegistrationDetailGender = {
+  MALE: "MALE",
+  FEMALE: "FEMALE",
+} as const;
+
+export type WorshipRegistrationDetailRegisterDept =
+  (typeof WorshipRegistrationDetailRegisterDept)[keyof typeof WorshipRegistrationDetailRegisterDept];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipRegistrationDetailRegisterDept = {
+  INFANT: "INFANT",
+  CHILDREN: "CHILDREN",
+  YOUTH: "YOUTH",
+  YOUNG_ADULT: "YOUNG_ADULT",
+  ADULT: "ADULT",
+  SENIOR: "SENIOR",
+} as const;
+
+export type WorshipRegistrationDetailBaptismType =
+  (typeof WorshipRegistrationDetailBaptismType)[keyof typeof WorshipRegistrationDetailBaptismType];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const WorshipRegistrationDetailBaptismType = {
+  NONE: "NONE",
+  BAPTISM: "BAPTISM",
+  CONFIRMATION: "CONFIRMATION",
+  INFANT_BAPTISM: "INFANT_BAPTISM",
+} as const;
+
+export interface WorshipRegistrationDetail {
+  id?: number;
+  regNo?: string;
+  churchId?: number;
+  churchName?: string;
+  status?: WorshipRegistrationDetailStatus;
+  name?: string;
+  gender?: WorshipRegistrationDetailGender;
+  birthDate?: string;
+  phone?: string;
+  email?: string;
+  zipcode?: string;
+  addr1?: string;
+  addr2?: string;
+  registerDept?: WorshipRegistrationDetailRegisterDept;
+  churchExperience?: string;
+  prevChurch?: string;
+  baptismType?: WorshipRegistrationDetailBaptismType;
+  leaderName?: string;
+  leaderPhone?: string;
+  privacyAgreed?: string;
+  memo?: string;
+  testMode?: string;
+  families?: RegistrationFamilyDto[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface OrderTrackingRequest {
   trackingNo: string;
   shipCompany?: string;
@@ -980,6 +1842,19 @@ export const OrderDetailStatus = {
   RETURN: "RETURN",
 } as const;
 
+export type OrderDetailPayStatus =
+  (typeof OrderDetailPayStatus)[keyof typeof OrderDetailPayStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const OrderDetailPayStatus = {
+  NONE: "NONE",
+  REQUESTED: "REQUESTED",
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  FAILED: "FAILED",
+  CANCELED: "CANCELED",
+} as const;
+
 export interface OrderDetail {
   id?: number;
   orderNo?: string;
@@ -997,6 +1872,8 @@ export interface OrderDetail {
   pointUsed?: number;
   total?: number;
   payMethod?: string;
+  payProvider?: string;
+  payStatus?: OrderDetailPayStatus;
   trackingNo?: string;
   shipCompany?: string;
   orderedAt?: string;
@@ -1113,6 +1990,33 @@ export interface TrendPoint {
   count?: number;
 }
 
+export type PaymentReceiptDtoKind =
+  (typeof PaymentReceiptDtoKind)[keyof typeof PaymentReceiptDtoKind];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PaymentReceiptDtoKind = {
+  PAY: "PAY",
+  REFUND: "REFUND",
+} as const;
+
+export interface PaymentReceiptDto {
+  id?: number;
+  orderId?: number;
+  kind?: PaymentReceiptDtoKind;
+  amount?: number;
+  method?: string;
+  memo?: string;
+  provider?: string;
+  txnId?: string;
+  createdAt?: string;
+}
+
+export interface ResultDTOPaymentReceiptDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: PaymentReceiptDto;
+}
+
 export interface GoodsCategoryDto {
   id?: number;
   parentId?: number;
@@ -1190,6 +2094,50 @@ export interface ResultDTOListChannelDto {
   resultObject?: ChannelDto[];
 }
 
+export interface CodeLabel {
+  code?: string;
+  label?: string;
+}
+
+export interface ResultDTOListCodeLabel {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: CodeLabel[];
+}
+
+export type ChatHistoryItemRole =
+  (typeof ChatHistoryItemRole)[keyof typeof ChatHistoryItemRole];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ChatHistoryItemRole = {
+  USER: "USER",
+  BOT: "BOT",
+} as const;
+
+export type ChatHistoryItemIntent =
+  (typeof ChatHistoryItemIntent)[keyof typeof ChatHistoryItemIntent];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ChatHistoryItemIntent = {
+  PRODUCT_INQUIRY: "PRODUCT_INQUIRY",
+  ORDER_LOOKUP: "ORDER_LOOKUP",
+  FAQ: "FAQ",
+  FALLBACK: "FALLBACK",
+} as const;
+
+export interface ChatHistoryItem {
+  role?: ChatHistoryItemRole;
+  intent?: ChatHistoryItemIntent;
+  content?: string;
+  createdAt?: string;
+}
+
+export interface ResultDTOListChatHistoryItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ChatHistoryItem[];
+}
+
 export interface MeResponse {
   id?: number;
   loginId?: string;
@@ -1202,6 +2150,17 @@ export interface ResultDTOMeResponse {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: MeResponse;
+}
+
+export interface ChurchOptionDto {
+  id?: number;
+  name?: string;
+}
+
+export interface ResultDTOListChurchOptionDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ChurchOptionDto[];
 }
 
 export interface PostListItem {
@@ -1253,10 +2212,67 @@ export interface ResultDTOPublicHomeResponse {
   resultObject?: PublicHomeResponse;
 }
 
+export type ChurchNearbyItemDenomination =
+  (typeof ChurchNearbyItemDenomination)[keyof typeof ChurchNearbyItemDenomination];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ChurchNearbyItemDenomination = {
+  METHODIST: "METHODIST",
+  PCK: "PCK",
+  HAPDONG: "HAPDONG",
+  HOLINESS: "HOLINESS",
+  GOSPEL: "GOSPEL",
+  BAPTIST: "BAPTIST",
+  ETC: "ETC",
+} as const;
+
+export interface ChurchNearbyItem {
+  id?: number;
+  name?: string;
+  denomination?: ChurchNearbyItemDenomination;
+  regionId?: number;
+  regionName?: string;
+  address?: string;
+  phone?: string;
+  pastorName?: string;
+  facilities?: string;
+  latitude?: number;
+  longitude?: number;
+  thumbnailKey?: string;
+  thumbnailUrl?: string;
+  dataSource?: string;
+  distanceKm?: number;
+}
+
+export interface ResInfinityListChurchNearbyItem {
+  contents?: ChurchNearbyItem[];
+  totalCount?: number;
+  totalPage?: number;
+}
+
+export interface ResultDTOResInfinityListChurchNearbyItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ResInfinityListChurchNearbyItem;
+}
+
 export interface ResultDTOMemberInfo {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: MemberInfo;
+}
+
+export interface PreviewResponse {
+  previewUrl?: string;
+  startSec?: number;
+  lengthSec?: number;
+  demo?: boolean;
+}
+
+export interface ResultDTOPreviewResponse {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: PreviewResponse;
 }
 
 export type GoodsUploadBody = {
@@ -1264,6 +2280,14 @@ export type GoodsUploadBody = {
 };
 
 export type ContentUploadBody = {
+  file: Blob;
+};
+
+export type ChurchChurchesUploadBody = {
+  file: Blob;
+};
+
+export type AlbumUploadBody = {
   file: Blob;
 };
 
@@ -1288,6 +2312,12 @@ export type DashboardFeedParams = {
   limit?: number;
 };
 
+export type PublicStoresParams = {
+  lat?: number;
+  lng?: number;
+  regionId?: number;
+};
+
 export type PublicPostsParams = {
   keyword?: string;
   pageNumber?: number;
@@ -1308,4 +2338,50 @@ export type PublicContentsType =
 export const PublicContentsType = {
   VIDEO: "VIDEO",
   SOUND: "SOUND",
+} as const;
+
+export type PublicChurchesParams = {
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  denomination?: PublicChurchesDenomination;
+  keyword?: string;
+  regionId?: number;
+  pageNumber?: number;
+  pageSize?: number;
+};
+
+export type PublicChurchesDenomination =
+  (typeof PublicChurchesDenomination)[keyof typeof PublicChurchesDenomination];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PublicChurchesDenomination = {
+  METHODIST: "METHODIST",
+  PCK: "PCK",
+  HAPDONG: "HAPDONG",
+  HOLINESS: "HOLINESS",
+  GOSPEL: "GOSPEL",
+  BAPTIST: "BAPTIST",
+  ETC: "ETC",
+} as const;
+
+export type PublicAlbumsParams = {
+  genre?: PublicAlbumsGenre;
+  keyword?: string;
+  pageNumber?: number;
+  pageSize?: number;
+};
+
+export type PublicAlbumsGenre =
+  (typeof PublicAlbumsGenre)[keyof typeof PublicAlbumsGenre];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PublicAlbumsGenre = {
+  WORSHIP: "WORSHIP",
+  HYMN: "HYMN",
+  GOSPEL: "GOSPEL",
+  CCM: "CCM",
+  CAROL: "CAROL",
+  INSTRUMENTAL: "INSTRUMENTAL",
+  KIDS: "KIDS",
 } as const;

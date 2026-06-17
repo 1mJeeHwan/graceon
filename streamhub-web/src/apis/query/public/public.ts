@@ -19,16 +19,164 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  PublicAlbumsParams,
+  PublicChurchesParams,
   PublicContentsParams,
   PublicPostsParams,
+  PublicStoresParams,
+  ResultDTOAlbumDetail,
+  ResultDTOChurchDetail,
   ResultDTOContentDetail,
+  ResultDTOListStoreDto,
   ResultDTOPostDetail,
+  ResultDTOPreviewResponse,
   ResultDTOPublicHomeResponse,
+  ResultDTOResInfinityListAlbumListItem,
+  ResultDTOResInfinityListChurchNearbyItem,
   ResultDTOResInfinityListContentListItem,
   ResultDTOResInfinityListPostListItem,
 } from "../streamHubAdminAPI.schemas";
 
 import { customInstance } from "../../custom-instance";
+
+/**
+ * 현위치(lat/lng) 기준 거리순. 좌표 미제공 시 지역 필터만 적용. 데모 가상 매장.
+ * @summary 공개 매장찾기
+ */
+export const publicStores = (
+  params?: PublicStoresParams,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOListStoreDto>({
+    url: `/pub/v1/stores`,
+    method: "GET",
+    params,
+    signal,
+  });
+};
+
+export const getPublicStoresQueryKey = (params?: PublicStoresParams) => {
+  return [`/pub/v1/stores`, ...(params ? [params] : [])] as const;
+};
+
+export const getPublicStoresQueryOptions = <
+  TData = Awaited<ReturnType<typeof publicStores>>,
+  TError = unknown
+>(
+  params?: PublicStoresParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicStores>>, TError, TData>
+    >;
+  }
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPublicStoresQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof publicStores>>> = ({
+    signal,
+  }) => publicStores(params, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof publicStores>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PublicStoresQueryResult = NonNullable<
+  Awaited<ReturnType<typeof publicStores>>
+>;
+export type PublicStoresQueryError = unknown;
+
+export function usePublicStores<
+  TData = Awaited<ReturnType<typeof publicStores>>,
+  TError = unknown
+>(
+  params: undefined | PublicStoresParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicStores>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicStores>>,
+          TError,
+          Awaited<ReturnType<typeof publicStores>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePublicStores<
+  TData = Awaited<ReturnType<typeof publicStores>>,
+  TError = unknown
+>(
+  params?: PublicStoresParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicStores>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicStores>>,
+          TError,
+          Awaited<ReturnType<typeof publicStores>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePublicStores<
+  TData = Awaited<ReturnType<typeof publicStores>>,
+  TError = unknown
+>(
+  params?: PublicStoresParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicStores>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 공개 매장찾기
+ */
+
+export function usePublicStores<
+  TData = Awaited<ReturnType<typeof publicStores>>,
+  TError = unknown
+>(
+  params?: PublicStoresParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicStores>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getPublicStoresQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
 
 /**
  * PUBLISHED 게시글 목록(검색·페이지네이션).
@@ -745,6 +893,783 @@ export function usePublicContentsDetail<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getPublicContentsDetailQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * 현위치(lat/lng) 기준 거리순. 좌표 미제공 시 지역/교단/키워드 필터만 적용.
+ * @summary 교회 위치검색
+ */
+export const publicChurches = (
+  params?: PublicChurchesParams,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOResInfinityListChurchNearbyItem>({
+    url: `/pub/v1/churches`,
+    method: "GET",
+    params,
+    signal,
+  });
+};
+
+export const getPublicChurchesQueryKey = (params?: PublicChurchesParams) => {
+  return [`/pub/v1/churches`, ...(params ? [params] : [])] as const;
+};
+
+export const getPublicChurchesQueryOptions = <
+  TData = Awaited<ReturnType<typeof publicChurches>>,
+  TError = unknown
+>(
+  params?: PublicChurchesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicChurches>>, TError, TData>
+    >;
+  }
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPublicChurchesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof publicChurches>>> = ({
+    signal,
+  }) => publicChurches(params, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof publicChurches>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PublicChurchesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof publicChurches>>
+>;
+export type PublicChurchesQueryError = unknown;
+
+export function usePublicChurches<
+  TData = Awaited<ReturnType<typeof publicChurches>>,
+  TError = unknown
+>(
+  params: undefined | PublicChurchesParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicChurches>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicChurches>>,
+          TError,
+          Awaited<ReturnType<typeof publicChurches>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePublicChurches<
+  TData = Awaited<ReturnType<typeof publicChurches>>,
+  TError = unknown
+>(
+  params?: PublicChurchesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicChurches>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicChurches>>,
+          TError,
+          Awaited<ReturnType<typeof publicChurches>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePublicChurches<
+  TData = Awaited<ReturnType<typeof publicChurches>>,
+  TError = unknown
+>(
+  params?: PublicChurchesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicChurches>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 교회 위치검색
+ */
+
+export function usePublicChurches<
+  TData = Awaited<ReturnType<typeof publicChurches>>,
+  TError = unknown
+>(
+  params?: PublicChurchesParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicChurches>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getPublicChurchesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * 노출(use_yn=Y) 교회만 반환하며 예배시간을 포함한다.
+ * @summary 공개 교회 상세
+ */
+export const publicChurchesDetail = (id: number, signal?: AbortSignal) => {
+  return customInstance<ResultDTOChurchDetail>({
+    url: `/pub/v1/churches/${id}`,
+    method: "GET",
+    signal,
+  });
+};
+
+export const getPublicChurchesDetailQueryKey = (id?: number) => {
+  return [`/pub/v1/churches/${id}`] as const;
+};
+
+export const getPublicChurchesDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof publicChurchesDetail>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicChurchesDetail>>,
+        TError,
+        TData
+      >
+    >;
+  }
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getPublicChurchesDetailQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof publicChurchesDetail>>
+  > = ({ signal }) => publicChurchesDetail(id, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof publicChurchesDetail>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PublicChurchesDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof publicChurchesDetail>>
+>;
+export type PublicChurchesDetailQueryError = unknown;
+
+export function usePublicChurchesDetail<
+  TData = Awaited<ReturnType<typeof publicChurchesDetail>>,
+  TError = unknown
+>(
+  id: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicChurchesDetail>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicChurchesDetail>>,
+          TError,
+          Awaited<ReturnType<typeof publicChurchesDetail>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePublicChurchesDetail<
+  TData = Awaited<ReturnType<typeof publicChurchesDetail>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicChurchesDetail>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicChurchesDetail>>,
+          TError,
+          Awaited<ReturnType<typeof publicChurchesDetail>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePublicChurchesDetail<
+  TData = Awaited<ReturnType<typeof publicChurchesDetail>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicChurchesDetail>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 공개 교회 상세
+ */
+
+export function usePublicChurchesDetail<
+  TData = Awaited<ReturnType<typeof publicChurchesDetail>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicChurchesDetail>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getPublicChurchesDetailQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * ON_SALE 음반 목록(장르 필터·검색·페이지네이션).
+ * @summary 공개 앨범 목록
+ */
+export const publicAlbums = (
+  params?: PublicAlbumsParams,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOResInfinityListAlbumListItem>({
+    url: `/pub/v1/albums`,
+    method: "GET",
+    params,
+    signal,
+  });
+};
+
+export const getPublicAlbumsQueryKey = (params?: PublicAlbumsParams) => {
+  return [`/pub/v1/albums`, ...(params ? [params] : [])] as const;
+};
+
+export const getPublicAlbumsQueryOptions = <
+  TData = Awaited<ReturnType<typeof publicAlbums>>,
+  TError = unknown
+>(
+  params?: PublicAlbumsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicAlbums>>, TError, TData>
+    >;
+  }
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPublicAlbumsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof publicAlbums>>> = ({
+    signal,
+  }) => publicAlbums(params, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof publicAlbums>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PublicAlbumsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof publicAlbums>>
+>;
+export type PublicAlbumsQueryError = unknown;
+
+export function usePublicAlbums<
+  TData = Awaited<ReturnType<typeof publicAlbums>>,
+  TError = unknown
+>(
+  params: undefined | PublicAlbumsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicAlbums>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicAlbums>>,
+          TError,
+          Awaited<ReturnType<typeof publicAlbums>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePublicAlbums<
+  TData = Awaited<ReturnType<typeof publicAlbums>>,
+  TError = unknown
+>(
+  params?: PublicAlbumsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicAlbums>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicAlbums>>,
+          TError,
+          Awaited<ReturnType<typeof publicAlbums>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePublicAlbums<
+  TData = Awaited<ReturnType<typeof publicAlbums>>,
+  TError = unknown
+>(
+  params?: PublicAlbumsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicAlbums>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 공개 앨범 목록
+ */
+
+export function usePublicAlbums<
+  TData = Awaited<ReturnType<typeof publicAlbums>>,
+  TError = unknown
+>(
+  params?: PublicAlbumsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof publicAlbums>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getPublicAlbumsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * ON_SALE만 반환하며 트랙리스트를 포함하고 조회수를 1 증가시킨다.
+ * @summary 공개 앨범 상세
+ */
+export const publicAlbumsDetail = (id: number, signal?: AbortSignal) => {
+  return customInstance<ResultDTOAlbumDetail>({
+    url: `/pub/v1/albums/${id}`,
+    method: "GET",
+    signal,
+  });
+};
+
+export const getPublicAlbumsDetailQueryKey = (id?: number) => {
+  return [`/pub/v1/albums/${id}`] as const;
+};
+
+export const getPublicAlbumsDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof publicAlbumsDetail>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicAlbumsDetail>>,
+        TError,
+        TData
+      >
+    >;
+  }
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPublicAlbumsDetailQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof publicAlbumsDetail>>
+  > = ({ signal }) => publicAlbumsDetail(id, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof publicAlbumsDetail>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PublicAlbumsDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof publicAlbumsDetail>>
+>;
+export type PublicAlbumsDetailQueryError = unknown;
+
+export function usePublicAlbumsDetail<
+  TData = Awaited<ReturnType<typeof publicAlbumsDetail>>,
+  TError = unknown
+>(
+  id: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicAlbumsDetail>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicAlbumsDetail>>,
+          TError,
+          Awaited<ReturnType<typeof publicAlbumsDetail>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePublicAlbumsDetail<
+  TData = Awaited<ReturnType<typeof publicAlbumsDetail>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicAlbumsDetail>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicAlbumsDetail>>,
+          TError,
+          Awaited<ReturnType<typeof publicAlbumsDetail>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePublicAlbumsDetail<
+  TData = Awaited<ReturnType<typeof publicAlbumsDetail>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicAlbumsDetail>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 공개 앨범 상세
+ */
+
+export function usePublicAlbumsDetail<
+  TData = Awaited<ReturnType<typeof publicAlbumsDetail>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicAlbumsDetail>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getPublicAlbumsDetailQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * 30초 미리듣기 음원 URL·구간·데모 플래그를 반환한다.
+ * @summary 트랙 미리듣기
+ */
+export const publicAlbumsTracksPreview = (
+  albumId: number,
+  trackId: number,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOPreviewResponse>({
+    url: `/pub/v1/albums/${albumId}/tracks/${trackId}/preview`,
+    method: "GET",
+    signal,
+  });
+};
+
+export const getPublicAlbumsTracksPreviewQueryKey = (
+  albumId?: number,
+  trackId?: number
+) => {
+  return [`/pub/v1/albums/${albumId}/tracks/${trackId}/preview`] as const;
+};
+
+export const getPublicAlbumsTracksPreviewQueryOptions = <
+  TData = Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+  TError = unknown
+>(
+  albumId: number,
+  trackId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+        TError,
+        TData
+      >
+    >;
+  }
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getPublicAlbumsTracksPreviewQueryKey(albumId, trackId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof publicAlbumsTracksPreview>>
+  > = ({ signal }) => publicAlbumsTracksPreview(albumId, trackId, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(albumId && trackId),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type PublicAlbumsTracksPreviewQueryResult = NonNullable<
+  Awaited<ReturnType<typeof publicAlbumsTracksPreview>>
+>;
+export type PublicAlbumsTracksPreviewQueryError = unknown;
+
+export function usePublicAlbumsTracksPreview<
+  TData = Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+  TError = unknown
+>(
+  albumId: number,
+  trackId: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+          TError,
+          Awaited<ReturnType<typeof publicAlbumsTracksPreview>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePublicAlbumsTracksPreview<
+  TData = Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+  TError = unknown
+>(
+  albumId: number,
+  trackId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+          TError,
+          Awaited<ReturnType<typeof publicAlbumsTracksPreview>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function usePublicAlbumsTracksPreview<
+  TData = Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+  TError = unknown
+>(
+  albumId: number,
+  trackId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 트랙 미리듣기
+ */
+
+export function usePublicAlbumsTracksPreview<
+  TData = Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+  TError = unknown
+>(
+  albumId: number,
+  trackId: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicAlbumsTracksPreview>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getPublicAlbumsTracksPreviewQueryOptions(
+    albumId,
+    trackId,
+    options
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
