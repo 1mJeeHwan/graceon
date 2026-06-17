@@ -1,0 +1,61 @@
+# docker-compose.deploy.yml — run the WHOLE backend on a single free always-on VM
+# (e.g. Oracle Cloud "Always Free"), $0/month. Reuses the infra in docker-compose.yml
+# and adds the API container + a Caddy reverse proxy that terminates HTTPS automatically
+# (Let's Encrypt) so the Vercel (HTTPS) frontends can call it without mixed-content errors.
+#
+# The app self-seeds on boot (DataInitializer + PortfolioSeeder), so no managed database is
+# needed — the bundled MySQL container is enough. Data is deterministic and re-created on each
+# fresh boot, which is exactly what a portfolio demo wants.
+#
+# On the VM:
+#   export PUBLIC_DOMAIN=streamhub-demo.duckdns.org
+#   export APP_CORS_ALLOWED_ORIGINS=https://your-admin.vercel.app,https://your-userweb.vercel.app
+#   export JWT_SECRET="$(openssl rand -base64 48)"
+#   docker compose -f docker-compose.yml -f docker-compose.deploy.yml up -d --build
+#
+# Then open https://$PUBLIC_DOMAIN/v3/api-docs  (and point the Vercel frontends at it).
+
+include:
+  - docker-compose.yml
+
+services:
+  api:
+    build:
+      context: ./streamhub-api
+    container_name: streamhub-api
+    restart: unless-stopped
+    environment:
+      # 'docker' profile = compose service hostnames (mysql/redis/minio/localstack).
+      # ddl-auto=update comes from the base application.yml, so the schema + seed are created
+      # automatically on first boot.
+      SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET (e.g. openssl rand -base64 48)}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      TZ: Asia/Seoul
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8080"          # internal only — Caddy fronts it on 443
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: streamhub-caddy
+    restart: unless-stopped
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?set PUBLIC_DOMAIN (a DNS name pointing at this VM)}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+
+volumes:
+  caddy-data:
+  caddy-config:

@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.streamhub.api.base.jwt.JwtAuthenticationFilter;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.response.ResultDTO;
@@ -35,6 +36,14 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/actuator/health"
     };
+
+    /**
+     * Comma-separated allowed origins for CORS. Defaults to the local dev frontends; in a deploy
+     * set {@code APP_CORS_ALLOWED_ORIGINS} to the Vercel domains (e.g. https://app.vercel.app).
+     * Credentials are allowed, so wildcards are not permitted — list explicit origins.
+     */
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:3001}")
+    private String corsAllowedOrigins;
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ObjectMapper objectMapper;
@@ -71,7 +80,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001"));
+        List<String> origins = java.util.Arrays.stream(corsAllowedOrigins.split(","))
+                .map(String::trim).filter(s -> !s.isEmpty()).toList();
+        config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

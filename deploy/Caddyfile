@@ -1,0 +1,8 @@
+# Caddy reverse proxy — automatic HTTPS (Let's Encrypt) for the API.
+# PUBLIC_DOMAIN must be a real DNS name pointing at this VM (e.g. a free DuckDNS subdomain),
+# and ports 80 + 443 must be open. Caddy obtains and renews the certificate on its own.
+
+{$PUBLIC_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy api:8080
+}
