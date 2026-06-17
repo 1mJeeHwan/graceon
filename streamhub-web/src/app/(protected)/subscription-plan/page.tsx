@@ -6,10 +6,10 @@ import { Loader2, Plus, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import {
-  list8,
-  useCreate,
-  useDelete,
-  useUpdate,
+  subscriptionPlanList,
+  useSubscriptionPlanCreate,
+  useSubscriptionPlanDelete,
+  useSubscriptionPlanUpdate,
 } from "@/apis/query/subscription-plan/subscription-plan";
 import type {
   PlanCreateRequest,
@@ -38,13 +38,13 @@ export default function SubscriptionPlanPage() {
 
   const listQuery = useQuery({
     queryKey: PLAN_LIST_KEY,
-    queryFn: ({ signal }) => list8(signal),
+    queryFn: ({ signal }) => subscriptionPlanList(signal),
   });
   const plans = listQuery.data?.resultObject ?? [];
 
-  const createMutation = useCreate();
-  const updateMutation = useUpdate();
-  const deleteMutation = useDelete();
+  const createMutation = useSubscriptionPlanCreate();
+  const updateMutation = useSubscriptionPlanUpdate();
+  const deleteMutation = useSubscriptionPlanDelete();
 
   const closeModal = () => {
     setModal({ mode: "closed" });

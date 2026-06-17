@@ -26,7 +26,7 @@ import { customInstance } from "../../custom-instance";
  * 현재 인증된 운영자 정보를 반환한다.
  * @summary 내 정보
  */
-export const me = (signal?: AbortSignal) => {
+export const adminMe = (signal?: AbortSignal) => {
   return customInstance<ResultDTOMeResponse>({
     url: `/v1/admin/me`,
     method: "GET",
@@ -34,45 +34,51 @@ export const me = (signal?: AbortSignal) => {
   });
 };
 
-export const getMeQueryKey = () => {
+export const getAdminMeQueryKey = () => {
   return [`/v1/admin/me`] as const;
 };
 
-export const getMeQueryOptions = <
-  TData = Awaited<ReturnType<typeof me>>,
+export const getAdminMeQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminMe>>,
   TError = unknown
 >(options?: {
   query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>
+    UseQueryOptions<Awaited<ReturnType<typeof adminMe>>, TError, TData>
   >;
 }) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getMeQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getAdminMeQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof me>>> = ({ signal }) =>
-    me(signal);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof adminMe>>> = ({
+    signal,
+  }) => adminMe(signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof me>>,
+    Awaited<ReturnType<typeof adminMe>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type MeQueryResult = NonNullable<Awaited<ReturnType<typeof me>>>;
-export type MeQueryError = unknown;
+export type AdminMeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminMe>>
+>;
+export type AdminMeQueryError = unknown;
 
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
+export function useAdminMe<
+  TData = Awaited<ReturnType<typeof adminMe>>,
+  TError = unknown
+>(
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof adminMe>>, TError, TData>
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof me>>,
+          Awaited<ReturnType<typeof adminMe>>,
           TError,
-          Awaited<ReturnType<typeof me>>
+          Awaited<ReturnType<typeof adminMe>>
         >,
         "initialData"
       >;
@@ -81,16 +87,19 @@ export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
+export function useAdminMe<
+  TData = Awaited<ReturnType<typeof adminMe>>,
+  TError = unknown
+>(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof adminMe>>, TError, TData>
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof me>>,
+          Awaited<ReturnType<typeof adminMe>>,
           TError,
-          Awaited<ReturnType<typeof me>>
+          Awaited<ReturnType<typeof adminMe>>
         >,
         "initialData"
       >;
@@ -99,10 +108,13 @@ export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
+export function useAdminMe<
+  TData = Awaited<ReturnType<typeof adminMe>>,
+  TError = unknown
+>(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof adminMe>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
@@ -113,17 +125,20 @@ export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
  * @summary 내 정보
  */
 
-export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = unknown>(
+export function useAdminMe<
+  TData = Awaited<ReturnType<typeof adminMe>>,
+  TError = unknown
+>(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof adminMe>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getMeQueryOptions(options);
+  const queryOptions = getAdminMeQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

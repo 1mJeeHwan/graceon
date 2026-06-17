@@ -24,7 +24,7 @@ import { customInstance } from "../../custom-instance";
  * 관리자 액션 기록을 검색/페이지네이션 조회한다.
  * @summary 감사 로그 목록
  */
-export const list7 = (
+export const actionLogList = (
   actionLogSearchRequest: ActionLogSearchRequest,
   signal?: AbortSignal
 ) => {
@@ -37,23 +37,23 @@ export const list7 = (
   });
 };
 
-export const getList7MutationOptions = <
+export const getActionLogListMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof list7>>,
+    Awaited<ReturnType<typeof actionLogList>>,
     TError,
     { data: ActionLogSearchRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof list7>>,
+  Awaited<ReturnType<typeof actionLogList>>,
   TError,
   { data: ActionLogSearchRequest },
   TContext
 > => {
-  const mutationKey = ["list7"];
+  const mutationKey = ["actionLogList"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -63,30 +63,30 @@ export const getList7MutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof list7>>,
+    Awaited<ReturnType<typeof actionLogList>>,
     { data: ActionLogSearchRequest }
   > = (props) => {
     const { data } = props ?? {};
 
-    return list7(data);
+    return actionLogList(data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type List7MutationResult = NonNullable<
-  Awaited<ReturnType<typeof list7>>
+export type ActionLogListMutationResult = NonNullable<
+  Awaited<ReturnType<typeof actionLogList>>
 >;
-export type List7MutationBody = ActionLogSearchRequest;
-export type List7MutationError = unknown;
+export type ActionLogListMutationBody = ActionLogSearchRequest;
+export type ActionLogListMutationError = unknown;
 
 /**
  * @summary 감사 로그 목록
  */
-export const useList7 = <TError = unknown, TContext = unknown>(
+export const useActionLogList = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof list7>>,
+      Awaited<ReturnType<typeof actionLogList>>,
       TError,
       { data: ActionLogSearchRequest },
       TContext
@@ -94,12 +94,12 @@ export const useList7 = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof list7>>,
+  Awaited<ReturnType<typeof actionLogList>>,
   TError,
   { data: ActionLogSearchRequest },
   TContext
 > => {
-  const mutationOptions = getList7MutationOptions(options);
+  const mutationOptions = getActionLogListMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };

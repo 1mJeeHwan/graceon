@@ -2,7 +2,7 @@
 
 import type { ApexOptions } from "apexcharts";
 
-import { useWatchByChannel } from "@/apis/query/statistics/statistics";
+import { useStatisticsWatchByChannel } from "@/apis/query/statistics/statistics";
 import { secondsToHours } from "@/lib/format";
 
 import ApexChart from "./ApexChart";
@@ -24,7 +24,7 @@ const CHANNEL_COLORS = [
  * converting the endpoint's seconds into hours for display.
  */
 export default function WatchByChannelChart() {
-  const { data, isPending, isError } = useWatchByChannel();
+  const { data, isPending, isError } = useStatisticsWatchByChannel();
 
   const items = data?.resultObject ?? [];
   const labels = items.map((item) => item.channelName ?? "-");

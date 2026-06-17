@@ -80,6 +80,9 @@ async function refreshRequest(
  * Node-only imports so it can also be consumed by the Edge middleware.
  */
 export const authConfig: NextAuthConfig = {
+  // Auth.js v5 rejects the request host in production (next start / behind a proxy)
+  // unless the host is explicitly trusted. Dev auto-trusts; prod does not.
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",

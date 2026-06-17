@@ -26,7 +26,7 @@ import { customInstance } from "../../custom-instance";
  * refresh 토큰으로 새 토큰 쌍을 발급한다.
  * @summary 토큰 갱신
  */
-export const refresh = (
+export const authRefresh = (
   refreshRequest: RefreshRequest,
   signal?: AbortSignal
 ) => {
@@ -39,23 +39,23 @@ export const refresh = (
   });
 };
 
-export const getRefreshMutationOptions = <
+export const getAuthRefreshMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof refresh>>,
+    Awaited<ReturnType<typeof authRefresh>>,
     TError,
     { data: RefreshRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof refresh>>,
+  Awaited<ReturnType<typeof authRefresh>>,
   TError,
   { data: RefreshRequest },
   TContext
 > => {
-  const mutationKey = ["refresh"];
+  const mutationKey = ["authRefresh"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -65,30 +65,30 @@ export const getRefreshMutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof refresh>>,
+    Awaited<ReturnType<typeof authRefresh>>,
     { data: RefreshRequest }
   > = (props) => {
     const { data } = props ?? {};
 
-    return refresh(data);
+    return authRefresh(data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type RefreshMutationResult = NonNullable<
-  Awaited<ReturnType<typeof refresh>>
+export type AuthRefreshMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authRefresh>>
 >;
-export type RefreshMutationBody = RefreshRequest;
-export type RefreshMutationError = unknown;
+export type AuthRefreshMutationBody = RefreshRequest;
+export type AuthRefreshMutationError = unknown;
 
 /**
  * @summary 토큰 갱신
  */
-export const useRefresh = <TError = unknown, TContext = unknown>(
+export const useAuthRefresh = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof refresh>>,
+      Awaited<ReturnType<typeof authRefresh>>,
       TError,
       { data: RefreshRequest },
       TContext
@@ -96,12 +96,12 @@ export const useRefresh = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof refresh>>,
+  Awaited<ReturnType<typeof authRefresh>>,
   TError,
   { data: RefreshRequest },
   TContext
 > => {
-  const mutationOptions = getRefreshMutationOptions(options);
+  const mutationOptions = getAuthRefreshMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -109,7 +109,7 @@ export const useRefresh = <TError = unknown, TContext = unknown>(
  * refresh 토큰을 무효화한다.
  * @summary 로그아웃
  */
-export const logout = (
+export const authLogout = (
   refreshRequest: RefreshRequest,
   signal?: AbortSignal
 ) => {
@@ -122,23 +122,23 @@ export const logout = (
   });
 };
 
-export const getLogoutMutationOptions = <
+export const getAuthLogoutMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof logout>>,
+    Awaited<ReturnType<typeof authLogout>>,
     TError,
     { data: RefreshRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof logout>>,
+  Awaited<ReturnType<typeof authLogout>>,
   TError,
   { data: RefreshRequest },
   TContext
 > => {
-  const mutationKey = ["logout"];
+  const mutationKey = ["authLogout"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -148,30 +148,30 @@ export const getLogoutMutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof logout>>,
+    Awaited<ReturnType<typeof authLogout>>,
     { data: RefreshRequest }
   > = (props) => {
     const { data } = props ?? {};
 
-    return logout(data);
+    return authLogout(data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type LogoutMutationResult = NonNullable<
-  Awaited<ReturnType<typeof logout>>
+export type AuthLogoutMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authLogout>>
 >;
-export type LogoutMutationBody = RefreshRequest;
-export type LogoutMutationError = unknown;
+export type AuthLogoutMutationBody = RefreshRequest;
+export type AuthLogoutMutationError = unknown;
 
 /**
  * @summary 로그아웃
  */
-export const useLogout = <TError = unknown, TContext = unknown>(
+export const useAuthLogout = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof logout>>,
+      Awaited<ReturnType<typeof authLogout>>,
       TError,
       { data: RefreshRequest },
       TContext
@@ -179,12 +179,12 @@ export const useLogout = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof logout>>,
+  Awaited<ReturnType<typeof authLogout>>,
   TError,
   { data: RefreshRequest },
   TContext
 > => {
-  const mutationOptions = getLogoutMutationOptions(options);
+  const mutationOptions = getAuthLogoutMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -192,7 +192,7 @@ export const useLogout = <TError = unknown, TContext = unknown>(
  * 아이디/비밀번호로 access/refresh 토큰을 발급한다.
  * @summary 로그인
  */
-export const login1 = (loginRequest: LoginRequest, signal?: AbortSignal) => {
+export const authLogin = (loginRequest: LoginRequest, signal?: AbortSignal) => {
   return customInstance<ResultDTOTokenResponse>({
     url: `/auth/login`,
     method: "POST",
@@ -202,23 +202,23 @@ export const login1 = (loginRequest: LoginRequest, signal?: AbortSignal) => {
   });
 };
 
-export const getLogin1MutationOptions = <
+export const getAuthLoginMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof login1>>,
+    Awaited<ReturnType<typeof authLogin>>,
     TError,
     { data: LoginRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof login1>>,
+  Awaited<ReturnType<typeof authLogin>>,
   TError,
   { data: LoginRequest },
   TContext
 > => {
-  const mutationKey = ["login1"];
+  const mutationKey = ["authLogin"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -228,30 +228,30 @@ export const getLogin1MutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof login1>>,
+    Awaited<ReturnType<typeof authLogin>>,
     { data: LoginRequest }
   > = (props) => {
     const { data } = props ?? {};
 
-    return login1(data);
+    return authLogin(data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type Login1MutationResult = NonNullable<
-  Awaited<ReturnType<typeof login1>>
+export type AuthLoginMutationResult = NonNullable<
+  Awaited<ReturnType<typeof authLogin>>
 >;
-export type Login1MutationBody = LoginRequest;
-export type Login1MutationError = unknown;
+export type AuthLoginMutationBody = LoginRequest;
+export type AuthLoginMutationError = unknown;
 
 /**
  * @summary 로그인
  */
-export const useLogin1 = <TError = unknown, TContext = unknown>(
+export const useAuthLogin = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof login1>>,
+      Awaited<ReturnType<typeof authLogin>>,
       TError,
       { data: LoginRequest },
       TContext
@@ -259,12 +259,12 @@ export const useLogin1 = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof login1>>,
+  Awaited<ReturnType<typeof authLogin>>,
   TError,
   { data: LoginRequest },
   TContext
 > => {
-  const mutationOptions = getLogin1MutationOptions(options);
+  const mutationOptions = getAuthLoginMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };

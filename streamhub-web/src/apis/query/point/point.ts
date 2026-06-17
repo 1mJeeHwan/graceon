@@ -22,9 +22,9 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
-  MemberLedgerParams,
   PointGrantRequest,
   PointLedgerSearchRequest,
+  PointMemberDetailParams,
   ResultDTOPointLedgerListItem,
   ResultDTOResInfinityListPointLedgerListItem,
 } from "../streamHubAdminAPI.schemas";
@@ -35,7 +35,7 @@ import { customInstance } from "../../custom-instance";
  * 검색/필터/페이지네이션된 포인트 원장 목록을 반환한다.
  * @summary 포인트 원장 목록
  */
-export const list1 = (
+export const pointList = (
   pointLedgerSearchRequest: PointLedgerSearchRequest,
   signal?: AbortSignal
 ) => {
@@ -48,23 +48,23 @@ export const list1 = (
   });
 };
 
-export const getList1MutationOptions = <
+export const getPointListMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof list1>>,
+    Awaited<ReturnType<typeof pointList>>,
     TError,
     { data: PointLedgerSearchRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof list1>>,
+  Awaited<ReturnType<typeof pointList>>,
   TError,
   { data: PointLedgerSearchRequest },
   TContext
 > => {
-  const mutationKey = ["list1"];
+  const mutationKey = ["pointList"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -74,30 +74,30 @@ export const getList1MutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof list1>>,
+    Awaited<ReturnType<typeof pointList>>,
     { data: PointLedgerSearchRequest }
   > = (props) => {
     const { data } = props ?? {};
 
-    return list1(data);
+    return pointList(data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type List1MutationResult = NonNullable<
-  Awaited<ReturnType<typeof list1>>
+export type PointListMutationResult = NonNullable<
+  Awaited<ReturnType<typeof pointList>>
 >;
-export type List1MutationBody = PointLedgerSearchRequest;
-export type List1MutationError = unknown;
+export type PointListMutationBody = PointLedgerSearchRequest;
+export type PointListMutationError = unknown;
 
 /**
  * @summary 포인트 원장 목록
  */
-export const useList1 = <TError = unknown, TContext = unknown>(
+export const usePointList = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof list1>>,
+      Awaited<ReturnType<typeof pointList>>,
       TError,
       { data: PointLedgerSearchRequest },
       TContext
@@ -105,12 +105,12 @@ export const useList1 = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof list1>>,
+  Awaited<ReturnType<typeof pointList>>,
   TError,
   { data: PointLedgerSearchRequest },
   TContext
 > => {
-  const mutationOptions = getList1MutationOptions(options);
+  const mutationOptions = getPointListMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -118,7 +118,7 @@ export const useList1 = <TError = unknown, TContext = unknown>(
  * 원장 기록과 회원 누적 포인트를 한 트랜잭션에서 동기화한다. delta 음수는 차감.
  * @summary 포인트 수동 지급/차감
  */
-export const grant = (
+export const pointGrant = (
   pointGrantRequest: PointGrantRequest,
   signal?: AbortSignal
 ) => {
@@ -131,23 +131,23 @@ export const grant = (
   });
 };
 
-export const getGrantMutationOptions = <
+export const getPointGrantMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof grant>>,
+    Awaited<ReturnType<typeof pointGrant>>,
     TError,
     { data: PointGrantRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof grant>>,
+  Awaited<ReturnType<typeof pointGrant>>,
   TError,
   { data: PointGrantRequest },
   TContext
 > => {
-  const mutationKey = ["grant"];
+  const mutationKey = ["pointGrant"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -157,30 +157,30 @@ export const getGrantMutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof grant>>,
+    Awaited<ReturnType<typeof pointGrant>>,
     { data: PointGrantRequest }
   > = (props) => {
     const { data } = props ?? {};
 
-    return grant(data);
+    return pointGrant(data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type GrantMutationResult = NonNullable<
-  Awaited<ReturnType<typeof grant>>
+export type PointGrantMutationResult = NonNullable<
+  Awaited<ReturnType<typeof pointGrant>>
 >;
-export type GrantMutationBody = PointGrantRequest;
-export type GrantMutationError = unknown;
+export type PointGrantMutationBody = PointGrantRequest;
+export type PointGrantMutationError = unknown;
 
 /**
  * @summary 포인트 수동 지급/차감
  */
-export const useGrant = <TError = unknown, TContext = unknown>(
+export const usePointGrant = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof grant>>,
+      Awaited<ReturnType<typeof pointGrant>>,
       TError,
       { data: PointGrantRequest },
       TContext
@@ -188,12 +188,12 @@ export const useGrant = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof grant>>,
+  Awaited<ReturnType<typeof pointGrant>>,
   TError,
   { data: PointGrantRequest },
   TContext
 > => {
-  const mutationOptions = getGrantMutationOptions(options);
+  const mutationOptions = getPointGrantMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -201,9 +201,9 @@ export const useGrant = <TError = unknown, TContext = unknown>(
  * 회원 상세 포인트 탭용. 해당 회원의 원장을 페이지네이션해 반환한다.
  * @summary 회원별 포인트 원장
  */
-export const memberLedger = (
+export const pointMemberDetail = (
   memberId: number,
-  params?: MemberLedgerParams,
+  params?: PointMemberDetailParams,
   signal?: AbortSignal
 ) => {
   return customInstance<ResultDTOResInfinityListPointLedgerListItem>({
@@ -214,33 +214,37 @@ export const memberLedger = (
   });
 };
 
-export const getMemberLedgerQueryKey = (
+export const getPointMemberDetailQueryKey = (
   memberId?: number,
-  params?: MemberLedgerParams
+  params?: PointMemberDetailParams
 ) => {
   return [`/v1/point/member/${memberId}`, ...(params ? [params] : [])] as const;
 };
 
-export const getMemberLedgerQueryOptions = <
-  TData = Awaited<ReturnType<typeof memberLedger>>,
+export const getPointMemberDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof pointMemberDetail>>,
   TError = unknown
 >(
   memberId: number,
-  params?: MemberLedgerParams,
+  params?: PointMemberDetailParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof memberLedger>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof pointMemberDetail>>,
+        TError,
+        TData
+      >
     >;
   }
 ) => {
   const { query: queryOptions } = options ?? {};
 
   const queryKey =
-    queryOptions?.queryKey ?? getMemberLedgerQueryKey(memberId, params);
+    queryOptions?.queryKey ?? getPointMemberDetailQueryKey(memberId, params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof memberLedger>>> = ({
-    signal,
-  }) => memberLedger(memberId, params, signal);
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof pointMemberDetail>>
+  > = ({ signal }) => pointMemberDetail(memberId, params, signal);
 
   return {
     queryKey,
@@ -248,32 +252,36 @@ export const getMemberLedgerQueryOptions = <
     enabled: !!memberId,
     ...queryOptions,
   } as UseQueryOptions<
-    Awaited<ReturnType<typeof memberLedger>>,
+    Awaited<ReturnType<typeof pointMemberDetail>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type MemberLedgerQueryResult = NonNullable<
-  Awaited<ReturnType<typeof memberLedger>>
+export type PointMemberDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof pointMemberDetail>>
 >;
-export type MemberLedgerQueryError = unknown;
+export type PointMemberDetailQueryError = unknown;
 
-export function useMemberLedger<
-  TData = Awaited<ReturnType<typeof memberLedger>>,
+export function usePointMemberDetail<
+  TData = Awaited<ReturnType<typeof pointMemberDetail>>,
   TError = unknown
 >(
   memberId: number,
-  params: undefined | MemberLedgerParams,
+  params: undefined | PointMemberDetailParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof memberLedger>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof pointMemberDetail>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof memberLedger>>,
+          Awaited<ReturnType<typeof pointMemberDetail>>,
           TError,
-          Awaited<ReturnType<typeof memberLedger>>
+          Awaited<ReturnType<typeof pointMemberDetail>>
         >,
         "initialData"
       >;
@@ -282,21 +290,25 @@ export function useMemberLedger<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useMemberLedger<
-  TData = Awaited<ReturnType<typeof memberLedger>>,
+export function usePointMemberDetail<
+  TData = Awaited<ReturnType<typeof pointMemberDetail>>,
   TError = unknown
 >(
   memberId: number,
-  params?: MemberLedgerParams,
+  params?: PointMemberDetailParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof memberLedger>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof pointMemberDetail>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof memberLedger>>,
+          Awaited<ReturnType<typeof pointMemberDetail>>,
           TError,
-          Awaited<ReturnType<typeof memberLedger>>
+          Awaited<ReturnType<typeof pointMemberDetail>>
         >,
         "initialData"
       >;
@@ -305,15 +317,19 @@ export function useMemberLedger<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useMemberLedger<
-  TData = Awaited<ReturnType<typeof memberLedger>>,
+export function usePointMemberDetail<
+  TData = Awaited<ReturnType<typeof pointMemberDetail>>,
   TError = unknown
 >(
   memberId: number,
-  params?: MemberLedgerParams,
+  params?: PointMemberDetailParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof memberLedger>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof pointMemberDetail>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
@@ -324,22 +340,30 @@ export function useMemberLedger<
  * @summary 회원별 포인트 원장
  */
 
-export function useMemberLedger<
-  TData = Awaited<ReturnType<typeof memberLedger>>,
+export function usePointMemberDetail<
+  TData = Awaited<ReturnType<typeof pointMemberDetail>>,
   TError = unknown
 >(
   memberId: number,
-  params?: MemberLedgerParams,
+  params?: PointMemberDetailParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof memberLedger>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof pointMemberDetail>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getMemberLedgerQueryOptions(memberId, params, options);
+  const queryOptions = getPointMemberDetailQueryOptions(
+    memberId,
+    params,
+    options
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

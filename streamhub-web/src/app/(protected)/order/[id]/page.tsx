@@ -6,9 +6,9 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 import {
-  useChangeStatus1,
-  useChangeTracking,
-  useDetail5,
+  useOrderStatus,
+  useOrderTracking,
+  useOrderDetail,
 } from "@/apis/query/order/order";
 import {
   OrderReceiptDtoKind,
@@ -70,11 +70,11 @@ export default function OrderDetailPage() {
   const [trackingNo, setTrackingNo] = useState("");
   const [shipCompany, setShipCompany] = useState("");
 
-  const detailQuery = useDetail5(orderId, {
+  const detailQuery = useOrderDetail(orderId, {
     query: { enabled: Number.isFinite(orderId) },
   });
-  const changeStatusMutation = useChangeStatus1();
-  const changeTrackingMutation = useChangeTracking();
+  const changeStatusMutation = useOrderStatus();
+  const changeTrackingMutation = useOrderTracking();
 
   const detail: OrderDetail | undefined = detailQuery.data?.resultObject;
   const status = detail?.status as OrderStatus | undefined;

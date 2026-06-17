@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Loader2, Plus } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { list1 } from "@/apis/query/point/point";
+import { pointList } from "@/apis/query/point/point";
 import type {
   PointLedgerListItem,
   PointLedgerSearchRequest,
@@ -53,7 +53,7 @@ export default function PointPage() {
   // stay visible (no flicker).
   const listQuery = useQuery({
     queryKey: ["point-list", searchRequest],
-    queryFn: ({ signal }) => list1(searchRequest, signal),
+    queryFn: ({ signal }) => pointList(searchRequest, signal),
     placeholderData: keepPreviousData,
   });
 

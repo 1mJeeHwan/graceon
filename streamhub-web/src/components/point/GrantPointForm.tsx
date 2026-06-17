@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 
-import { useGrant } from "@/apis/query/point/point";
+import { usePointGrant } from "@/apis/query/point/point";
 import type { PointGrantRequest } from "@/apis/query/streamHubAdminAPI.schemas";
 import { FIELD_CLASS, grantSchema, type GrantFormValues } from "@/lib/point-form";
 import { SUCCESS_CODE } from "@/types/api";
@@ -24,7 +24,7 @@ export default function GrantPointForm({
   onSuccess,
   onCancel,
 }: GrantPointFormProps) {
-  const grantMutation = useGrant();
+  const grantMutation = usePointGrant();
 
   const {
     register,

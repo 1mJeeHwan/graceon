@@ -19,11 +19,11 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
-  FeedParams,
+  DashboardFeedParams,
+  DashboardTimeseriesParams,
   ResultDTODashboardSummaryResponse,
   ResultDTOListFeedItem,
   ResultDTOTimeseriesResponse,
-  TimeseriesParams,
 } from "../streamHubAdminAPI.schemas";
 
 import { customInstance } from "../../custom-instance";
@@ -32,7 +32,10 @@ import { customInstance } from "../../custom-instance";
  * 최근 N일 굿즈매출/정기후원/단건후원 스택 시계열(빈 날짜 0 채움). Redis 캐싱(60s).
  * @summary 후원·매출 추이
  */
-export const timeseries = (params?: TimeseriesParams, signal?: AbortSignal) => {
+export const dashboardTimeseries = (
+  params?: DashboardTimeseriesParams,
+  signal?: AbortSignal
+) => {
   return customInstance<ResultDTOTimeseriesResponse>({
     url: `/v1/dashboard/timeseries`,
     method: "GET",
@@ -41,55 +44,66 @@ export const timeseries = (params?: TimeseriesParams, signal?: AbortSignal) => {
   });
 };
 
-export const getTimeseriesQueryKey = (params?: TimeseriesParams) => {
+export const getDashboardTimeseriesQueryKey = (
+  params?: DashboardTimeseriesParams
+) => {
   return [`/v1/dashboard/timeseries`, ...(params ? [params] : [])] as const;
 };
 
-export const getTimeseriesQueryOptions = <
-  TData = Awaited<ReturnType<typeof timeseries>>,
+export const getDashboardTimeseriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof dashboardTimeseries>>,
   TError = unknown
 >(
-  params?: TimeseriesParams,
+  params?: DashboardTimeseriesParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof timeseries>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof dashboardTimeseries>>,
+        TError,
+        TData
+      >
     >;
   }
 ) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getTimeseriesQueryKey(params);
+  const queryKey =
+    queryOptions?.queryKey ?? getDashboardTimeseriesQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof timeseries>>> = ({
-    signal,
-  }) => timeseries(params, signal);
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof dashboardTimeseries>>
+  > = ({ signal }) => dashboardTimeseries(params, signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof timeseries>>,
+    Awaited<ReturnType<typeof dashboardTimeseries>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type TimeseriesQueryResult = NonNullable<
-  Awaited<ReturnType<typeof timeseries>>
+export type DashboardTimeseriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof dashboardTimeseries>>
 >;
-export type TimeseriesQueryError = unknown;
+export type DashboardTimeseriesQueryError = unknown;
 
-export function useTimeseries<
-  TData = Awaited<ReturnType<typeof timeseries>>,
+export function useDashboardTimeseries<
+  TData = Awaited<ReturnType<typeof dashboardTimeseries>>,
   TError = unknown
 >(
-  params: undefined | TimeseriesParams,
+  params: undefined | DashboardTimeseriesParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof timeseries>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof dashboardTimeseries>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof timeseries>>,
+          Awaited<ReturnType<typeof dashboardTimeseries>>,
           TError,
-          Awaited<ReturnType<typeof timeseries>>
+          Awaited<ReturnType<typeof dashboardTimeseries>>
         >,
         "initialData"
       >;
@@ -98,20 +112,24 @@ export function useTimeseries<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useTimeseries<
-  TData = Awaited<ReturnType<typeof timeseries>>,
+export function useDashboardTimeseries<
+  TData = Awaited<ReturnType<typeof dashboardTimeseries>>,
   TError = unknown
 >(
-  params?: TimeseriesParams,
+  params?: DashboardTimeseriesParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof timeseries>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof dashboardTimeseries>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof timeseries>>,
+          Awaited<ReturnType<typeof dashboardTimeseries>>,
           TError,
-          Awaited<ReturnType<typeof timeseries>>
+          Awaited<ReturnType<typeof dashboardTimeseries>>
         >,
         "initialData"
       >;
@@ -120,14 +138,18 @@ export function useTimeseries<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useTimeseries<
-  TData = Awaited<ReturnType<typeof timeseries>>,
+export function useDashboardTimeseries<
+  TData = Awaited<ReturnType<typeof dashboardTimeseries>>,
   TError = unknown
 >(
-  params?: TimeseriesParams,
+  params?: DashboardTimeseriesParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof timeseries>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof dashboardTimeseries>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
@@ -138,21 +160,25 @@ export function useTimeseries<
  * @summary 후원·매출 추이
  */
 
-export function useTimeseries<
-  TData = Awaited<ReturnType<typeof timeseries>>,
+export function useDashboardTimeseries<
+  TData = Awaited<ReturnType<typeof dashboardTimeseries>>,
   TError = unknown
 >(
-  params?: TimeseriesParams,
+  params?: DashboardTimeseriesParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof timeseries>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof dashboardTimeseries>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getTimeseriesQueryOptions(params, options);
+  const queryOptions = getDashboardTimeseriesQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -168,7 +194,7 @@ export function useTimeseries<
  * 오늘 후원·매출/신규구독/진행중주문/미답변문의/재고경고/활성구독자. Redis 캐싱(60s).
  * @summary KPI 요약
  */
-export const summary1 = (signal?: AbortSignal) => {
+export const dashboardSummary = (signal?: AbortSignal) => {
   return customInstance<ResultDTODashboardSummaryResponse>({
     url: `/v1/dashboard/summary`,
     method: "GET",
@@ -176,51 +202,55 @@ export const summary1 = (signal?: AbortSignal) => {
   });
 };
 
-export const getSummary1QueryKey = () => {
+export const getDashboardSummaryQueryKey = () => {
   return [`/v1/dashboard/summary`] as const;
 };
 
-export const getSummary1QueryOptions = <
-  TData = Awaited<ReturnType<typeof summary1>>,
+export const getDashboardSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof dashboardSummary>>,
   TError = unknown
 >(options?: {
   query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof summary1>>, TError, TData>
+    UseQueryOptions<Awaited<ReturnType<typeof dashboardSummary>>, TError, TData>
   >;
 }) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getSummary1QueryKey();
+  const queryKey = queryOptions?.queryKey ?? getDashboardSummaryQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof summary1>>> = ({
-    signal,
-  }) => summary1(signal);
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof dashboardSummary>>
+  > = ({ signal }) => dashboardSummary(signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof summary1>>,
+    Awaited<ReturnType<typeof dashboardSummary>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type Summary1QueryResult = NonNullable<
-  Awaited<ReturnType<typeof summary1>>
+export type DashboardSummaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof dashboardSummary>>
 >;
-export type Summary1QueryError = unknown;
+export type DashboardSummaryQueryError = unknown;
 
-export function useSummary1<
-  TData = Awaited<ReturnType<typeof summary1>>,
+export function useDashboardSummary<
+  TData = Awaited<ReturnType<typeof dashboardSummary>>,
   TError = unknown
 >(
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof summary1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof dashboardSummary>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof summary1>>,
+          Awaited<ReturnType<typeof dashboardSummary>>,
           TError,
-          Awaited<ReturnType<typeof summary1>>
+          Awaited<ReturnType<typeof dashboardSummary>>
         >,
         "initialData"
       >;
@@ -229,19 +259,23 @@ export function useSummary1<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useSummary1<
-  TData = Awaited<ReturnType<typeof summary1>>,
+export function useDashboardSummary<
+  TData = Awaited<ReturnType<typeof dashboardSummary>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof summary1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof dashboardSummary>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof summary1>>,
+          Awaited<ReturnType<typeof dashboardSummary>>,
           TError,
-          Awaited<ReturnType<typeof summary1>>
+          Awaited<ReturnType<typeof dashboardSummary>>
         >,
         "initialData"
       >;
@@ -250,13 +284,17 @@ export function useSummary1<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useSummary1<
-  TData = Awaited<ReturnType<typeof summary1>>,
+export function useDashboardSummary<
+  TData = Awaited<ReturnType<typeof dashboardSummary>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof summary1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof dashboardSummary>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
@@ -267,20 +305,24 @@ export function useSummary1<
  * @summary KPI 요약
  */
 
-export function useSummary1<
-  TData = Awaited<ReturnType<typeof summary1>>,
+export function useDashboardSummary<
+  TData = Awaited<ReturnType<typeof dashboardSummary>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof summary1>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof dashboardSummary>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getSummary1QueryOptions(options);
+  const queryOptions = getDashboardSummaryQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -296,7 +338,10 @@ export function useSummary1<
  * 최근 활동 N건(주문·구독·후원 union, 최신순). 캐시 없음.
  * @summary 실시간 활동 피드
  */
-export const feed = (params?: FeedParams, signal?: AbortSignal) => {
+export const dashboardFeed = (
+  params?: DashboardFeedParams,
+  signal?: AbortSignal
+) => {
   return customInstance<ResultDTOListFeedItem>({
     url: `/v1/dashboard/feed`,
     method: "GET",
@@ -305,53 +350,55 @@ export const feed = (params?: FeedParams, signal?: AbortSignal) => {
   });
 };
 
-export const getFeedQueryKey = (params?: FeedParams) => {
+export const getDashboardFeedQueryKey = (params?: DashboardFeedParams) => {
   return [`/v1/dashboard/feed`, ...(params ? [params] : [])] as const;
 };
 
-export const getFeedQueryOptions = <
-  TData = Awaited<ReturnType<typeof feed>>,
+export const getDashboardFeedQueryOptions = <
+  TData = Awaited<ReturnType<typeof dashboardFeed>>,
   TError = unknown
 >(
-  params?: FeedParams,
+  params?: DashboardFeedParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof feed>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof dashboardFeed>>, TError, TData>
     >;
   }
 ) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getFeedQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getDashboardFeedQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof feed>>> = ({
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof dashboardFeed>>> = ({
     signal,
-  }) => feed(params, signal);
+  }) => dashboardFeed(params, signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof feed>>,
+    Awaited<ReturnType<typeof dashboardFeed>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type FeedQueryResult = NonNullable<Awaited<ReturnType<typeof feed>>>;
-export type FeedQueryError = unknown;
+export type DashboardFeedQueryResult = NonNullable<
+  Awaited<ReturnType<typeof dashboardFeed>>
+>;
+export type DashboardFeedQueryError = unknown;
 
-export function useFeed<
-  TData = Awaited<ReturnType<typeof feed>>,
+export function useDashboardFeed<
+  TData = Awaited<ReturnType<typeof dashboardFeed>>,
   TError = unknown
 >(
-  params: undefined | FeedParams,
+  params: undefined | DashboardFeedParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof feed>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof dashboardFeed>>, TError, TData>
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof feed>>,
+          Awaited<ReturnType<typeof dashboardFeed>>,
           TError,
-          Awaited<ReturnType<typeof feed>>
+          Awaited<ReturnType<typeof dashboardFeed>>
         >,
         "initialData"
       >;
@@ -360,20 +407,20 @@ export function useFeed<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useFeed<
-  TData = Awaited<ReturnType<typeof feed>>,
+export function useDashboardFeed<
+  TData = Awaited<ReturnType<typeof dashboardFeed>>,
   TError = unknown
 >(
-  params?: FeedParams,
+  params?: DashboardFeedParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof feed>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof dashboardFeed>>, TError, TData>
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof feed>>,
+          Awaited<ReturnType<typeof dashboardFeed>>,
           TError,
-          Awaited<ReturnType<typeof feed>>
+          Awaited<ReturnType<typeof dashboardFeed>>
         >,
         "initialData"
       >;
@@ -382,14 +429,14 @@ export function useFeed<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useFeed<
-  TData = Awaited<ReturnType<typeof feed>>,
+export function useDashboardFeed<
+  TData = Awaited<ReturnType<typeof dashboardFeed>>,
   TError = unknown
 >(
-  params?: FeedParams,
+  params?: DashboardFeedParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof feed>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof dashboardFeed>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
@@ -400,21 +447,21 @@ export function useFeed<
  * @summary 실시간 활동 피드
  */
 
-export function useFeed<
-  TData = Awaited<ReturnType<typeof feed>>,
+export function useDashboardFeed<
+  TData = Awaited<ReturnType<typeof dashboardFeed>>,
   TError = unknown
 >(
-  params?: FeedParams,
+  params?: DashboardFeedParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof feed>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof dashboardFeed>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getFeedQueryOptions(params, options);
+  const queryOptions = getDashboardFeedQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

@@ -10,7 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { useSummary1 } from "@/apis/query/dashboard/dashboard";
+import { useDashboardSummary } from "@/apis/query/dashboard/dashboard";
 import type {
   DashboardSummaryResponse,
   KpiDelta,
@@ -86,7 +86,7 @@ const KPIS: KpiConfig[] = [
  * count-up, a period-over-period delta, and a sparkline.
  */
 export default function KpiStrip() {
-  const { data, isPending, isError } = useSummary1();
+  const { data, isPending, isError } = useDashboardSummary();
   const summary = data?.resultObject;
 
   return (

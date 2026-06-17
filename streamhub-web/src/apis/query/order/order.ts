@@ -35,7 +35,7 @@ import { customInstance } from "../../custom-instance";
  * 검색/상태/기간 필터 + 페이지네이션된 주문 목록.
  * @summary 주문 목록
  */
-export const list2 = (
+export const orderList = (
   orderSearchRequest: OrderSearchRequest,
   signal?: AbortSignal
 ) => {
@@ -48,23 +48,23 @@ export const list2 = (
   });
 };
 
-export const getList2MutationOptions = <
+export const getOrderListMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof list2>>,
+    Awaited<ReturnType<typeof orderList>>,
     TError,
     { data: OrderSearchRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof list2>>,
+  Awaited<ReturnType<typeof orderList>>,
   TError,
   { data: OrderSearchRequest },
   TContext
 > => {
-  const mutationKey = ["list2"];
+  const mutationKey = ["orderList"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -74,30 +74,30 @@ export const getList2MutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof list2>>,
+    Awaited<ReturnType<typeof orderList>>,
     { data: OrderSearchRequest }
   > = (props) => {
     const { data } = props ?? {};
 
-    return list2(data);
+    return orderList(data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type List2MutationResult = NonNullable<
-  Awaited<ReturnType<typeof list2>>
+export type OrderListMutationResult = NonNullable<
+  Awaited<ReturnType<typeof orderList>>
 >;
-export type List2MutationBody = OrderSearchRequest;
-export type List2MutationError = unknown;
+export type OrderListMutationBody = OrderSearchRequest;
+export type OrderListMutationError = unknown;
 
 /**
  * @summary 주문 목록
  */
-export const useList2 = <TError = unknown, TContext = unknown>(
+export const useOrderList = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof list2>>,
+      Awaited<ReturnType<typeof orderList>>,
       TError,
       { data: OrderSearchRequest },
       TContext
@@ -105,12 +105,12 @@ export const useList2 = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof list2>>,
+  Awaited<ReturnType<typeof orderList>>,
   TError,
   { data: OrderSearchRequest },
   TContext
 > => {
-  const mutationOptions = getList2MutationOptions(options);
+  const mutationOptions = getOrderListMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -118,7 +118,7 @@ export const useList2 = <TError = unknown, TContext = unknown>(
  * 운송장 입력. READY 상태면 SHIPPING으로 자동 승격.
  * @summary 운송장 등록
  */
-export const changeTracking = (
+export const orderTracking = (
   id: number,
   orderTrackingRequest: OrderTrackingRequest
 ) => {
@@ -130,23 +130,23 @@ export const changeTracking = (
   });
 };
 
-export const getChangeTrackingMutationOptions = <
+export const getOrderTrackingMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof changeTracking>>,
+    Awaited<ReturnType<typeof orderTracking>>,
     TError,
     { id: number; data: OrderTrackingRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof changeTracking>>,
+  Awaited<ReturnType<typeof orderTracking>>,
   TError,
   { id: number; data: OrderTrackingRequest },
   TContext
 > => {
-  const mutationKey = ["changeTracking"];
+  const mutationKey = ["orderTracking"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -156,30 +156,30 @@ export const getChangeTrackingMutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof changeTracking>>,
+    Awaited<ReturnType<typeof orderTracking>>,
     { id: number; data: OrderTrackingRequest }
   > = (props) => {
     const { id, data } = props ?? {};
 
-    return changeTracking(id, data);
+    return orderTracking(id, data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type ChangeTrackingMutationResult = NonNullable<
-  Awaited<ReturnType<typeof changeTracking>>
+export type OrderTrackingMutationResult = NonNullable<
+  Awaited<ReturnType<typeof orderTracking>>
 >;
-export type ChangeTrackingMutationBody = OrderTrackingRequest;
-export type ChangeTrackingMutationError = unknown;
+export type OrderTrackingMutationBody = OrderTrackingRequest;
+export type OrderTrackingMutationError = unknown;
 
 /**
  * @summary 운송장 등록
  */
-export const useChangeTracking = <TError = unknown, TContext = unknown>(
+export const useOrderTracking = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof changeTracking>>,
+      Awaited<ReturnType<typeof orderTracking>>,
       TError,
       { id: number; data: OrderTrackingRequest },
       TContext
@@ -187,12 +187,12 @@ export const useChangeTracking = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof changeTracking>>,
+  Awaited<ReturnType<typeof orderTracking>>,
   TError,
   { id: number; data: OrderTrackingRequest },
   TContext
 > => {
-  const mutationOptions = getChangeTrackingMutationOptions(options);
+  const mutationOptions = getOrderTrackingMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -200,7 +200,7 @@ export const useChangeTracking = <TError = unknown, TContext = unknown>(
  * 상태머신 전이 + 재고 차감/복원 + 입금/환불 영수증을 한 트랜잭션으로 처리.
  * @summary 주문 상태 변경
  */
-export const changeStatus1 = (
+export const orderStatus = (
   id: number,
   orderStatusChangeRequest: OrderStatusChangeRequest
 ) => {
@@ -212,23 +212,23 @@ export const changeStatus1 = (
   });
 };
 
-export const getChangeStatus1MutationOptions = <
+export const getOrderStatusMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof changeStatus1>>,
+    Awaited<ReturnType<typeof orderStatus>>,
     TError,
     { id: number; data: OrderStatusChangeRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof changeStatus1>>,
+  Awaited<ReturnType<typeof orderStatus>>,
   TError,
   { id: number; data: OrderStatusChangeRequest },
   TContext
 > => {
-  const mutationKey = ["changeStatus1"];
+  const mutationKey = ["orderStatus"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -238,30 +238,30 @@ export const getChangeStatus1MutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof changeStatus1>>,
+    Awaited<ReturnType<typeof orderStatus>>,
     { id: number; data: OrderStatusChangeRequest }
   > = (props) => {
     const { id, data } = props ?? {};
 
-    return changeStatus1(id, data);
+    return orderStatus(id, data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type ChangeStatus1MutationResult = NonNullable<
-  Awaited<ReturnType<typeof changeStatus1>>
+export type OrderStatusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof orderStatus>>
 >;
-export type ChangeStatus1MutationBody = OrderStatusChangeRequest;
-export type ChangeStatus1MutationError = unknown;
+export type OrderStatusMutationBody = OrderStatusChangeRequest;
+export type OrderStatusMutationError = unknown;
 
 /**
  * @summary 주문 상태 변경
  */
-export const useChangeStatus1 = <TError = unknown, TContext = unknown>(
+export const useOrderStatus = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof changeStatus1>>,
+      Awaited<ReturnType<typeof orderStatus>>,
       TError,
       { id: number; data: OrderStatusChangeRequest },
       TContext
@@ -269,12 +269,12 @@ export const useChangeStatus1 = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof changeStatus1>>,
+  Awaited<ReturnType<typeof orderStatus>>,
   TError,
   { id: number; data: OrderStatusChangeRequest },
   TContext
 > => {
-  const mutationOptions = getChangeStatus1MutationOptions(options);
+  const mutationOptions = getOrderStatusMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -282,7 +282,7 @@ export const useChangeStatus1 = <TError = unknown, TContext = unknown>(
  * 주문 + 주문상품 + 입금/환불 영수증.
  * @summary 주문 상세
  */
-export const detail5 = (id: number, signal?: AbortSignal) => {
+export const orderDetail = (id: number, signal?: AbortSignal) => {
   return customInstance<ResultDTOOrderDetail>({
     url: `/v1/order/${id}`,
     method: "GET",
@@ -290,58 +290,60 @@ export const detail5 = (id: number, signal?: AbortSignal) => {
   });
 };
 
-export const getDetail5QueryKey = (id?: number) => {
+export const getOrderDetailQueryKey = (id?: number) => {
   return [`/v1/order/${id}`] as const;
 };
 
-export const getDetail5QueryOptions = <
-  TData = Awaited<ReturnType<typeof detail5>>,
+export const getOrderDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof orderDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof detail5>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof orderDetail>>, TError, TData>
     >;
   }
 ) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getDetail5QueryKey(id);
+  const queryKey = queryOptions?.queryKey ?? getOrderDetailQueryKey(id);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof detail5>>> = ({
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof orderDetail>>> = ({
     signal,
-  }) => detail5(id, signal);
+  }) => orderDetail(id, signal);
 
   return {
     queryKey,
     queryFn,
     enabled: !!id,
     ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof detail5>>, TError, TData> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof orderDetail>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type Detail5QueryResult = NonNullable<
-  Awaited<ReturnType<typeof detail5>>
+export type OrderDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof orderDetail>>
 >;
-export type Detail5QueryError = unknown;
+export type OrderDetailQueryError = unknown;
 
-export function useDetail5<
-  TData = Awaited<ReturnType<typeof detail5>>,
+export function useOrderDetail<
+  TData = Awaited<ReturnType<typeof orderDetail>>,
   TError = unknown
 >(
   id: number,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof detail5>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof orderDetail>>, TError, TData>
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof detail5>>,
+          Awaited<ReturnType<typeof orderDetail>>,
           TError,
-          Awaited<ReturnType<typeof detail5>>
+          Awaited<ReturnType<typeof orderDetail>>
         >,
         "initialData"
       >;
@@ -350,20 +352,20 @@ export function useDetail5<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useDetail5<
-  TData = Awaited<ReturnType<typeof detail5>>,
+export function useOrderDetail<
+  TData = Awaited<ReturnType<typeof orderDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof detail5>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof orderDetail>>, TError, TData>
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof detail5>>,
+          Awaited<ReturnType<typeof orderDetail>>,
           TError,
-          Awaited<ReturnType<typeof detail5>>
+          Awaited<ReturnType<typeof orderDetail>>
         >,
         "initialData"
       >;
@@ -372,14 +374,14 @@ export function useDetail5<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useDetail5<
-  TData = Awaited<ReturnType<typeof detail5>>,
+export function useOrderDetail<
+  TData = Awaited<ReturnType<typeof orderDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof detail5>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof orderDetail>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
@@ -390,21 +392,21 @@ export function useDetail5<
  * @summary 주문 상세
  */
 
-export function useDetail5<
-  TData = Awaited<ReturnType<typeof detail5>>,
+export function useOrderDetail<
+  TData = Awaited<ReturnType<typeof orderDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof detail5>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof orderDetail>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getDetail5QueryOptions(id, options);
+  const queryOptions = getOrderDetailQueryOptions(id, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

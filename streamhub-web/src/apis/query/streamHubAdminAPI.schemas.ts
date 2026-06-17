@@ -1259,52 +1259,53 @@ export interface ResultDTOMemberInfo {
   resultObject?: MemberInfo;
 }
 
-export type UploadBody = {
+export type GoodsUploadBody = {
   file: Blob;
 };
 
-export type Upload1Body = {
+export type ContentUploadBody = {
   file: Blob;
 };
 
-export type TopContentsParams = {
+export type StatisticsTopContentsParams = {
   limit?: number;
 };
 
-export type MemberTrendParams = {
+export type StatisticsMemberTrendParams = {
   days?: number;
 };
 
-export type MemberLedgerParams = {
+export type PointMemberDetailParams = {
   pageNumber?: number;
   pageSize?: number;
 };
 
-export type TimeseriesParams = {
+export type DashboardTimeseriesParams = {
   days?: number;
 };
 
-export type FeedParams = {
+export type DashboardFeedParams = {
   limit?: number;
 };
 
-export type PostsParams = {
+export type PublicPostsParams = {
   keyword?: string;
   pageNumber?: number;
   pageSize?: number;
 };
 
-export type ContentsParams = {
-  type?: ContentsType;
+export type PublicContentsParams = {
+  type?: PublicContentsType;
   keyword?: string;
   pageNumber?: number;
   pageSize?: number;
 };
 
-export type ContentsType = (typeof ContentsType)[keyof typeof ContentsType];
+export type PublicContentsType =
+  (typeof PublicContentsType)[keyof typeof PublicContentsType];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ContentsType = {
+export const PublicContentsType = {
   VIDEO: "VIDEO",
   SOUND: "SOUND",
 } as const;

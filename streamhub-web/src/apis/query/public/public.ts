@@ -19,8 +19,8 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
-  ContentsParams,
-  PostsParams,
+  PublicContentsParams,
+  PublicPostsParams,
   ResultDTOContentDetail,
   ResultDTOPostDetail,
   ResultDTOPublicHomeResponse,
@@ -34,7 +34,10 @@ import { customInstance } from "../../custom-instance";
  * PUBLISHED 게시글 목록(검색·페이지네이션).
  * @summary 공개 게시글 목록
  */
-export const posts = (params?: PostsParams, signal?: AbortSignal) => {
+export const publicPosts = (
+  params?: PublicPostsParams,
+  signal?: AbortSignal
+) => {
   return customInstance<ResultDTOResInfinityListPostListItem>({
     url: `/pub/v1/posts`,
     method: "GET",
@@ -43,53 +46,55 @@ export const posts = (params?: PostsParams, signal?: AbortSignal) => {
   });
 };
 
-export const getPostsQueryKey = (params?: PostsParams) => {
+export const getPublicPostsQueryKey = (params?: PublicPostsParams) => {
   return [`/pub/v1/posts`, ...(params ? [params] : [])] as const;
 };
 
-export const getPostsQueryOptions = <
-  TData = Awaited<ReturnType<typeof posts>>,
+export const getPublicPostsQueryOptions = <
+  TData = Awaited<ReturnType<typeof publicPosts>>,
   TError = unknown
 >(
-  params?: PostsParams,
+  params?: PublicPostsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof posts>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicPosts>>, TError, TData>
     >;
   }
 ) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getPostsQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getPublicPostsQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof posts>>> = ({
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof publicPosts>>> = ({
     signal,
-  }) => posts(params, signal);
+  }) => publicPosts(params, signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof posts>>,
+    Awaited<ReturnType<typeof publicPosts>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type PostsQueryResult = NonNullable<Awaited<ReturnType<typeof posts>>>;
-export type PostsQueryError = unknown;
+export type PublicPostsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof publicPosts>>
+>;
+export type PublicPostsQueryError = unknown;
 
-export function usePosts<
-  TData = Awaited<ReturnType<typeof posts>>,
+export function usePublicPosts<
+  TData = Awaited<ReturnType<typeof publicPosts>>,
   TError = unknown
 >(
-  params: undefined | PostsParams,
+  params: undefined | PublicPostsParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof posts>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicPosts>>, TError, TData>
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof posts>>,
+          Awaited<ReturnType<typeof publicPosts>>,
           TError,
-          Awaited<ReturnType<typeof posts>>
+          Awaited<ReturnType<typeof publicPosts>>
         >,
         "initialData"
       >;
@@ -98,20 +103,20 @@ export function usePosts<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function usePosts<
-  TData = Awaited<ReturnType<typeof posts>>,
+export function usePublicPosts<
+  TData = Awaited<ReturnType<typeof publicPosts>>,
   TError = unknown
 >(
-  params?: PostsParams,
+  params?: PublicPostsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof posts>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicPosts>>, TError, TData>
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof posts>>,
+          Awaited<ReturnType<typeof publicPosts>>,
           TError,
-          Awaited<ReturnType<typeof posts>>
+          Awaited<ReturnType<typeof publicPosts>>
         >,
         "initialData"
       >;
@@ -120,14 +125,14 @@ export function usePosts<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function usePosts<
-  TData = Awaited<ReturnType<typeof posts>>,
+export function usePublicPosts<
+  TData = Awaited<ReturnType<typeof publicPosts>>,
   TError = unknown
 >(
-  params?: PostsParams,
+  params?: PublicPostsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof posts>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicPosts>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
@@ -138,21 +143,21 @@ export function usePosts<
  * @summary 공개 게시글 목록
  */
 
-export function usePosts<
-  TData = Awaited<ReturnType<typeof posts>>,
+export function usePublicPosts<
+  TData = Awaited<ReturnType<typeof publicPosts>>,
   TError = unknown
 >(
-  params?: PostsParams,
+  params?: PublicPostsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof posts>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicPosts>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getPostsQueryOptions(params, options);
+  const queryOptions = getPublicPostsQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -167,7 +172,7 @@ export function usePosts<
 /**
  * @summary 공개 게시글 상세
  */
-export const postDetail = (id: number, signal?: AbortSignal) => {
+export const publicPostsDetail = (id: number, signal?: AbortSignal) => {
   return customInstance<ResultDTOPostDetail>({
     url: `/pub/v1/posts/${id}`,
     method: "GET",
@@ -175,28 +180,32 @@ export const postDetail = (id: number, signal?: AbortSignal) => {
   });
 };
 
-export const getPostDetailQueryKey = (id?: number) => {
+export const getPublicPostsDetailQueryKey = (id?: number) => {
   return [`/pub/v1/posts/${id}`] as const;
 };
 
-export const getPostDetailQueryOptions = <
-  TData = Awaited<ReturnType<typeof postDetail>>,
+export const getPublicPostsDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof publicPostsDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof postDetail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicPostsDetail>>,
+        TError,
+        TData
+      >
     >;
   }
 ) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getPostDetailQueryKey(id);
+  const queryKey = queryOptions?.queryKey ?? getPublicPostsDetailQueryKey(id);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof postDetail>>> = ({
-    signal,
-  }) => postDetail(id, signal);
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof publicPostsDetail>>
+  > = ({ signal }) => publicPostsDetail(id, signal);
 
   return {
     queryKey,
@@ -204,31 +213,35 @@ export const getPostDetailQueryOptions = <
     enabled: !!id,
     ...queryOptions,
   } as UseQueryOptions<
-    Awaited<ReturnType<typeof postDetail>>,
+    Awaited<ReturnType<typeof publicPostsDetail>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type PostDetailQueryResult = NonNullable<
-  Awaited<ReturnType<typeof postDetail>>
+export type PublicPostsDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof publicPostsDetail>>
 >;
-export type PostDetailQueryError = unknown;
+export type PublicPostsDetailQueryError = unknown;
 
-export function usePostDetail<
-  TData = Awaited<ReturnType<typeof postDetail>>,
+export function usePublicPostsDetail<
+  TData = Awaited<ReturnType<typeof publicPostsDetail>>,
   TError = unknown
 >(
   id: number,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof postDetail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicPostsDetail>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof postDetail>>,
+          Awaited<ReturnType<typeof publicPostsDetail>>,
           TError,
-          Awaited<ReturnType<typeof postDetail>>
+          Awaited<ReturnType<typeof publicPostsDetail>>
         >,
         "initialData"
       >;
@@ -237,20 +250,24 @@ export function usePostDetail<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function usePostDetail<
-  TData = Awaited<ReturnType<typeof postDetail>>,
+export function usePublicPostsDetail<
+  TData = Awaited<ReturnType<typeof publicPostsDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof postDetail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicPostsDetail>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof postDetail>>,
+          Awaited<ReturnType<typeof publicPostsDetail>>,
           TError,
-          Awaited<ReturnType<typeof postDetail>>
+          Awaited<ReturnType<typeof publicPostsDetail>>
         >,
         "initialData"
       >;
@@ -259,14 +276,18 @@ export function usePostDetail<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function usePostDetail<
-  TData = Awaited<ReturnType<typeof postDetail>>,
+export function usePublicPostsDetail<
+  TData = Awaited<ReturnType<typeof publicPostsDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof postDetail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicPostsDetail>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
@@ -277,21 +298,25 @@ export function usePostDetail<
  * @summary 공개 게시글 상세
  */
 
-export function usePostDetail<
-  TData = Awaited<ReturnType<typeof postDetail>>,
+export function usePublicPostsDetail<
+  TData = Awaited<ReturnType<typeof publicPostsDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof postDetail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicPostsDetail>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getPostDetailQueryOptions(id, options);
+  const queryOptions = getPublicPostsDetailQueryOptions(id, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -307,7 +332,7 @@ export function usePostDetail<
  * 최신 영상/음악/게시글을 한 번에 반환.
  * @summary 홈 묶음
  */
-export const home = (signal?: AbortSignal) => {
+export const publicHome = (signal?: AbortSignal) => {
   return customInstance<ResultDTOPublicHomeResponse>({
     url: `/pub/v1/home`,
     method: "GET",
@@ -315,49 +340,51 @@ export const home = (signal?: AbortSignal) => {
   });
 };
 
-export const getHomeQueryKey = () => {
+export const getPublicHomeQueryKey = () => {
   return [`/pub/v1/home`] as const;
 };
 
-export const getHomeQueryOptions = <
-  TData = Awaited<ReturnType<typeof home>>,
+export const getPublicHomeQueryOptions = <
+  TData = Awaited<ReturnType<typeof publicHome>>,
   TError = unknown
 >(options?: {
   query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof home>>, TError, TData>
+    UseQueryOptions<Awaited<ReturnType<typeof publicHome>>, TError, TData>
   >;
 }) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getHomeQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getPublicHomeQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof home>>> = ({
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof publicHome>>> = ({
     signal,
-  }) => home(signal);
+  }) => publicHome(signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof home>>,
+    Awaited<ReturnType<typeof publicHome>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type HomeQueryResult = NonNullable<Awaited<ReturnType<typeof home>>>;
-export type HomeQueryError = unknown;
+export type PublicHomeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof publicHome>>
+>;
+export type PublicHomeQueryError = unknown;
 
-export function useHome<
-  TData = Awaited<ReturnType<typeof home>>,
+export function usePublicHome<
+  TData = Awaited<ReturnType<typeof publicHome>>,
   TError = unknown
 >(
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof home>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicHome>>, TError, TData>
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof home>>,
+          Awaited<ReturnType<typeof publicHome>>,
           TError,
-          Awaited<ReturnType<typeof home>>
+          Awaited<ReturnType<typeof publicHome>>
         >,
         "initialData"
       >;
@@ -366,19 +393,19 @@ export function useHome<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useHome<
-  TData = Awaited<ReturnType<typeof home>>,
+export function usePublicHome<
+  TData = Awaited<ReturnType<typeof publicHome>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof home>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicHome>>, TError, TData>
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof home>>,
+          Awaited<ReturnType<typeof publicHome>>,
           TError,
-          Awaited<ReturnType<typeof home>>
+          Awaited<ReturnType<typeof publicHome>>
         >,
         "initialData"
       >;
@@ -387,13 +414,13 @@ export function useHome<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useHome<
-  TData = Awaited<ReturnType<typeof home>>,
+export function usePublicHome<
+  TData = Awaited<ReturnType<typeof publicHome>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof home>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicHome>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
@@ -404,20 +431,20 @@ export function useHome<
  * @summary 홈 묶음
  */
 
-export function useHome<
-  TData = Awaited<ReturnType<typeof home>>,
+export function usePublicHome<
+  TData = Awaited<ReturnType<typeof publicHome>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof home>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicHome>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getHomeQueryOptions(options);
+  const queryOptions = getPublicHomeQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -433,7 +460,10 @@ export function useHome<
  * PUBLISHED 영상/음악 목록(검색·페이지네이션).
  * @summary 공개 콘텐츠 목록
  */
-export const contents = (params?: ContentsParams, signal?: AbortSignal) => {
+export const publicContents = (
+  params?: PublicContentsParams,
+  signal?: AbortSignal
+) => {
   return customInstance<ResultDTOResInfinityListContentListItem>({
     url: `/pub/v1/contents`,
     method: "GET",
@@ -442,55 +472,55 @@ export const contents = (params?: ContentsParams, signal?: AbortSignal) => {
   });
 };
 
-export const getContentsQueryKey = (params?: ContentsParams) => {
+export const getPublicContentsQueryKey = (params?: PublicContentsParams) => {
   return [`/pub/v1/contents`, ...(params ? [params] : [])] as const;
 };
 
-export const getContentsQueryOptions = <
-  TData = Awaited<ReturnType<typeof contents>>,
+export const getPublicContentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof publicContents>>,
   TError = unknown
 >(
-  params?: ContentsParams,
+  params?: PublicContentsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof contents>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicContents>>, TError, TData>
     >;
   }
 ) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getContentsQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getPublicContentsQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof contents>>> = ({
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof publicContents>>> = ({
     signal,
-  }) => contents(params, signal);
+  }) => publicContents(params, signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof contents>>,
+    Awaited<ReturnType<typeof publicContents>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type ContentsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof contents>>
+export type PublicContentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof publicContents>>
 >;
-export type ContentsQueryError = unknown;
+export type PublicContentsQueryError = unknown;
 
-export function useContents<
-  TData = Awaited<ReturnType<typeof contents>>,
+export function usePublicContents<
+  TData = Awaited<ReturnType<typeof publicContents>>,
   TError = unknown
 >(
-  params: undefined | ContentsParams,
+  params: undefined | PublicContentsParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof contents>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicContents>>, TError, TData>
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof contents>>,
+          Awaited<ReturnType<typeof publicContents>>,
           TError,
-          Awaited<ReturnType<typeof contents>>
+          Awaited<ReturnType<typeof publicContents>>
         >,
         "initialData"
       >;
@@ -499,20 +529,20 @@ export function useContents<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useContents<
-  TData = Awaited<ReturnType<typeof contents>>,
+export function usePublicContents<
+  TData = Awaited<ReturnType<typeof publicContents>>,
   TError = unknown
 >(
-  params?: ContentsParams,
+  params?: PublicContentsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof contents>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicContents>>, TError, TData>
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof contents>>,
+          Awaited<ReturnType<typeof publicContents>>,
           TError,
-          Awaited<ReturnType<typeof contents>>
+          Awaited<ReturnType<typeof publicContents>>
         >,
         "initialData"
       >;
@@ -521,14 +551,14 @@ export function useContents<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useContents<
-  TData = Awaited<ReturnType<typeof contents>>,
+export function usePublicContents<
+  TData = Awaited<ReturnType<typeof publicContents>>,
   TError = unknown
 >(
-  params?: ContentsParams,
+  params?: PublicContentsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof contents>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicContents>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
@@ -539,21 +569,21 @@ export function useContents<
  * @summary 공개 콘텐츠 목록
  */
 
-export function useContents<
-  TData = Awaited<ReturnType<typeof contents>>,
+export function usePublicContents<
+  TData = Awaited<ReturnType<typeof publicContents>>,
   TError = unknown
 >(
-  params?: ContentsParams,
+  params?: PublicContentsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof contents>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof publicContents>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getContentsQueryOptions(params, options);
+  const queryOptions = getPublicContentsQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -569,7 +599,7 @@ export function useContents<
  * PUBLISHED만 반환하며 조회수를 1 증가시킨다.
  * @summary 공개 콘텐츠 상세
  */
-export const contentDetail = (id: number, signal?: AbortSignal) => {
+export const publicContentsDetail = (id: number, signal?: AbortSignal) => {
   return customInstance<ResultDTOContentDetail>({
     url: `/pub/v1/contents/${id}`,
     method: "GET",
@@ -577,28 +607,33 @@ export const contentDetail = (id: number, signal?: AbortSignal) => {
   });
 };
 
-export const getContentDetailQueryKey = (id?: number) => {
+export const getPublicContentsDetailQueryKey = (id?: number) => {
   return [`/pub/v1/contents/${id}`] as const;
 };
 
-export const getContentDetailQueryOptions = <
-  TData = Awaited<ReturnType<typeof contentDetail>>,
+export const getPublicContentsDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof publicContentsDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof contentDetail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicContentsDetail>>,
+        TError,
+        TData
+      >
     >;
   }
 ) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getContentDetailQueryKey(id);
+  const queryKey =
+    queryOptions?.queryKey ?? getPublicContentsDetailQueryKey(id);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof contentDetail>>> = ({
-    signal,
-  }) => contentDetail(id, signal);
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof publicContentsDetail>>
+  > = ({ signal }) => publicContentsDetail(id, signal);
 
   return {
     queryKey,
@@ -606,31 +641,35 @@ export const getContentDetailQueryOptions = <
     enabled: !!id,
     ...queryOptions,
   } as UseQueryOptions<
-    Awaited<ReturnType<typeof contentDetail>>,
+    Awaited<ReturnType<typeof publicContentsDetail>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type ContentDetailQueryResult = NonNullable<
-  Awaited<ReturnType<typeof contentDetail>>
+export type PublicContentsDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof publicContentsDetail>>
 >;
-export type ContentDetailQueryError = unknown;
+export type PublicContentsDetailQueryError = unknown;
 
-export function useContentDetail<
-  TData = Awaited<ReturnType<typeof contentDetail>>,
+export function usePublicContentsDetail<
+  TData = Awaited<ReturnType<typeof publicContentsDetail>>,
   TError = unknown
 >(
   id: number,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof contentDetail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicContentsDetail>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof contentDetail>>,
+          Awaited<ReturnType<typeof publicContentsDetail>>,
           TError,
-          Awaited<ReturnType<typeof contentDetail>>
+          Awaited<ReturnType<typeof publicContentsDetail>>
         >,
         "initialData"
       >;
@@ -639,20 +678,24 @@ export function useContentDetail<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useContentDetail<
-  TData = Awaited<ReturnType<typeof contentDetail>>,
+export function usePublicContentsDetail<
+  TData = Awaited<ReturnType<typeof publicContentsDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof contentDetail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicContentsDetail>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof contentDetail>>,
+          Awaited<ReturnType<typeof publicContentsDetail>>,
           TError,
-          Awaited<ReturnType<typeof contentDetail>>
+          Awaited<ReturnType<typeof publicContentsDetail>>
         >,
         "initialData"
       >;
@@ -661,14 +704,18 @@ export function useContentDetail<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useContentDetail<
-  TData = Awaited<ReturnType<typeof contentDetail>>,
+export function usePublicContentsDetail<
+  TData = Awaited<ReturnType<typeof publicContentsDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof contentDetail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicContentsDetail>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
@@ -679,21 +726,25 @@ export function useContentDetail<
  * @summary 공개 콘텐츠 상세
  */
 
-export function useContentDetail<
-  TData = Awaited<ReturnType<typeof contentDetail>>,
+export function usePublicContentsDetail<
+  TData = Awaited<ReturnType<typeof publicContentsDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof contentDetail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof publicContentsDetail>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getContentDetailQueryOptions(id, options);
+  const queryOptions = getPublicContentsDetailQueryOptions(id, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

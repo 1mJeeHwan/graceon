@@ -2,7 +2,7 @@
 
 import type { ApexOptions } from "apexcharts";
 
-import { useSummary1 } from "@/apis/query/dashboard/dashboard";
+import { useDashboardSummary } from "@/apis/query/dashboard/dashboard";
 import { formatNumber } from "@/lib/format";
 
 import ApexChart from "./ApexChart";
@@ -19,7 +19,7 @@ const SLICE_COLORS = ["#2563eb", "#10b981", "#0ea5e9"];
  * than a dedicated membership endpoint.
  */
 export default function MembershipDonutChart() {
-  const { data, isPending, isError } = useSummary1();
+  const { data, isPending, isError } = useDashboardSummary();
   const summary = data?.resultObject;
 
   const slices = [

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 
-import { useList3, useApprove, useDeny } from "@/apis/query/member/member";
+import { useMemberList, useMemberApprove, useMemberDeny } from "@/apis/query/member/member";
 import {
   MemberSearchRequestUserStatus,
   type MemberListItem,
@@ -45,9 +45,9 @@ export default function MemberPage() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
-  const listMutation = useList3();
-  const approveMutation = useApprove();
-  const denyMutation = useDeny();
+  const listMutation = useMemberList();
+  const approveMutation = useMemberApprove();
+  const denyMutation = useMemberDeny();
 
   const { mutate: fetchList } = listMutation;
 

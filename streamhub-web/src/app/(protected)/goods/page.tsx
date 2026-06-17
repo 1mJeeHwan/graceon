@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Loader2, Plus, Save } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { list4, useBulkUpdate, useCategories } from "@/apis/query/goods/goods";
+import { goodsList, useGoodsBulk, useGoodsCategories } from "@/apis/query/goods/goods";
 import {
   GoodsSearchRequestStatus,
   type GoodsListItem,
@@ -61,7 +61,7 @@ export default function GoodsPage() {
   const dirtyIdsRef = useRef<Set<number>>(new Set());
   const [dirtyCount, setDirtyCount] = useState(0);
 
-  const categoriesQuery = useCategories();
+  const categoriesQuery = useGoodsCategories();
   const categories = categoriesQuery.data?.resultObject ?? [];
 
   const searchRequest = useMemo<GoodsSearchRequest>(
@@ -81,11 +81,11 @@ export default function GoodsPage() {
   // the criteria so page/filter changes refetch and prior results stay visible.
   const listQuery = useQuery({
     queryKey: ["goods-list", searchRequest],
-    queryFn: ({ signal }) => list4(searchRequest, signal),
+    queryFn: ({ signal }) => goodsList(searchRequest, signal),
     placeholderData: keepPreviousData,
   });
 
-  const bulkMutation = useBulkUpdate();
+  const bulkMutation = useGoodsBulk();
 
   const result = listQuery.data?.resultObject;
   const rows: GoodsListItem[] = result?.contents ?? [];

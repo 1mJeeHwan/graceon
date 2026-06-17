@@ -6,8 +6,8 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, Loader2, Pause, Play, XCircle } from "lucide-react";
 
 import {
-  useChangeStatus,
-  useDetail4,
+  useSubscriptionStatus,
+  useSubscriptionDetail,
 } from "@/apis/query/subscription/subscription";
 import {
   SubscriptionStatusRequestStatus,
@@ -39,10 +39,10 @@ export default function SubscriptionDetailPage() {
 
   const [message, setMessage] = useState<string | null>(null);
 
-  const detailQuery = useDetail4(subscriptionId, {
+  const detailQuery = useSubscriptionDetail(subscriptionId, {
     query: { enabled: Number.isFinite(subscriptionId) },
   });
-  const changeStatusMutation = useChangeStatus();
+  const changeStatusMutation = useSubscriptionStatus();
 
   const detail: SubscriptionDetail | undefined =
     detailQuery.data?.resultObject;

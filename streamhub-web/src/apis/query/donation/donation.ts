@@ -29,7 +29,7 @@ import { customInstance } from "../../custom-instance";
  * 데모용 — 도래한 구독을 즉시 청구하고 처리 건수를 반환한다(SYSTEM 전용).
  * @summary 정기청구 수동 실행
  */
-export const runBilling = (signal?: AbortSignal) => {
+export const donationRunBilling = (signal?: AbortSignal) => {
   return customInstance<ResultDTOInteger>({
     url: `/v1/donation/run-billing`,
     method: "POST",
@@ -37,23 +37,23 @@ export const runBilling = (signal?: AbortSignal) => {
   });
 };
 
-export const getRunBillingMutationOptions = <
+export const getDonationRunBillingMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof runBilling>>,
+    Awaited<ReturnType<typeof donationRunBilling>>,
     TError,
     void,
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof runBilling>>,
+  Awaited<ReturnType<typeof donationRunBilling>>,
   TError,
   void,
   TContext
 > => {
-  const mutationKey = ["runBilling"];
+  const mutationKey = ["donationRunBilling"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -63,28 +63,28 @@ export const getRunBillingMutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof runBilling>>,
+    Awaited<ReturnType<typeof donationRunBilling>>,
     void
   > = () => {
-    return runBilling();
+    return donationRunBilling();
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type RunBillingMutationResult = NonNullable<
-  Awaited<ReturnType<typeof runBilling>>
+export type DonationRunBillingMutationResult = NonNullable<
+  Awaited<ReturnType<typeof donationRunBilling>>
 >;
 
-export type RunBillingMutationError = unknown;
+export type DonationRunBillingMutationError = unknown;
 
 /**
  * @summary 정기청구 수동 실행
  */
-export const useRunBilling = <TError = unknown, TContext = unknown>(
+export const useDonationRunBilling = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof runBilling>>,
+      Awaited<ReturnType<typeof donationRunBilling>>,
       TError,
       void,
       TContext
@@ -92,12 +92,12 @@ export const useRunBilling = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof runBilling>>,
+  Awaited<ReturnType<typeof donationRunBilling>>,
   TError,
   void,
   TContext
 > => {
-  const mutationOptions = getRunBillingMutationOptions(options);
+  const mutationOptions = getDonationRunBillingMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -105,7 +105,7 @@ export const useRunBilling = <TError = unknown, TContext = unknown>(
  * 수기 단건 후원 등록(테스트 모드).
  * @summary 단건 후원 등록
  */
-export const createOnce = (
+export const donationOnce = (
   onceDonationRequest: OnceDonationRequest,
   signal?: AbortSignal
 ) => {
@@ -118,23 +118,23 @@ export const createOnce = (
   });
 };
 
-export const getCreateOnceMutationOptions = <
+export const getDonationOnceMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createOnce>>,
+    Awaited<ReturnType<typeof donationOnce>>,
     TError,
     { data: OnceDonationRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof createOnce>>,
+  Awaited<ReturnType<typeof donationOnce>>,
   TError,
   { data: OnceDonationRequest },
   TContext
 > => {
-  const mutationKey = ["createOnce"];
+  const mutationKey = ["donationOnce"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -144,30 +144,30 @@ export const getCreateOnceMutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createOnce>>,
+    Awaited<ReturnType<typeof donationOnce>>,
     { data: OnceDonationRequest }
   > = (props) => {
     const { data } = props ?? {};
 
-    return createOnce(data);
+    return donationOnce(data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type CreateOnceMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createOnce>>
+export type DonationOnceMutationResult = NonNullable<
+  Awaited<ReturnType<typeof donationOnce>>
 >;
-export type CreateOnceMutationBody = OnceDonationRequest;
-export type CreateOnceMutationError = unknown;
+export type DonationOnceMutationBody = OnceDonationRequest;
+export type DonationOnceMutationError = unknown;
 
 /**
  * @summary 단건 후원 등록
  */
-export const useCreateOnce = <TError = unknown, TContext = unknown>(
+export const useDonationOnce = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof createOnce>>,
+      Awaited<ReturnType<typeof donationOnce>>,
       TError,
       { data: OnceDonationRequest },
       TContext
@@ -175,12 +175,12 @@ export const useCreateOnce = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof createOnce>>,
+  Awaited<ReturnType<typeof donationOnce>>,
   TError,
   { data: OnceDonationRequest },
   TContext
 > => {
-  const mutationOptions = getCreateOnceMutationOptions(options);
+  const mutationOptions = getDonationOnceMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -188,7 +188,7 @@ export const useCreateOnce = <TError = unknown, TContext = unknown>(
  * 유형/상태/기간 필터 + 페이지네이션.
  * @summary 후원 내역 목록
  */
-export const list5 = (
+export const donationList = (
   donationSearchRequest: DonationSearchRequest,
   signal?: AbortSignal
 ) => {
@@ -201,23 +201,23 @@ export const list5 = (
   });
 };
 
-export const getList5MutationOptions = <
+export const getDonationListMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof list5>>,
+    Awaited<ReturnType<typeof donationList>>,
     TError,
     { data: DonationSearchRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof list5>>,
+  Awaited<ReturnType<typeof donationList>>,
   TError,
   { data: DonationSearchRequest },
   TContext
 > => {
-  const mutationKey = ["list5"];
+  const mutationKey = ["donationList"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -227,30 +227,30 @@ export const getList5MutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof list5>>,
+    Awaited<ReturnType<typeof donationList>>,
     { data: DonationSearchRequest }
   > = (props) => {
     const { data } = props ?? {};
 
-    return list5(data);
+    return donationList(data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type List5MutationResult = NonNullable<
-  Awaited<ReturnType<typeof list5>>
+export type DonationListMutationResult = NonNullable<
+  Awaited<ReturnType<typeof donationList>>
 >;
-export type List5MutationBody = DonationSearchRequest;
-export type List5MutationError = unknown;
+export type DonationListMutationBody = DonationSearchRequest;
+export type DonationListMutationError = unknown;
 
 /**
  * @summary 후원 내역 목록
  */
-export const useList5 = <TError = unknown, TContext = unknown>(
+export const useDonationList = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof list5>>,
+      Awaited<ReturnType<typeof donationList>>,
       TError,
       { data: DonationSearchRequest },
       TContext
@@ -258,12 +258,12 @@ export const useList5 = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof list5>>,
+  Awaited<ReturnType<typeof donationList>>,
   TError,
   { data: DonationSearchRequest },
   TContext
 > => {
-  const mutationOptions = getList5MutationOptions(options);
+  const mutationOptions = getDonationListMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -271,7 +271,7 @@ export const useList5 = <TError = unknown, TContext = unknown>(
  * 활성 구독의 월별 청구 예정 집계(날짜별 건수·금액).
  * @summary 결제일정 캘린더
  */
-export const calendar = (
+export const donationCalendar = (
   billingCalendarRequest: BillingCalendarRequest,
   signal?: AbortSignal
 ) => {
@@ -284,23 +284,23 @@ export const calendar = (
   });
 };
 
-export const getCalendarMutationOptions = <
+export const getDonationCalendarMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof calendar>>,
+    Awaited<ReturnType<typeof donationCalendar>>,
     TError,
     { data: BillingCalendarRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof calendar>>,
+  Awaited<ReturnType<typeof donationCalendar>>,
   TError,
   { data: BillingCalendarRequest },
   TContext
 > => {
-  const mutationKey = ["calendar"];
+  const mutationKey = ["donationCalendar"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -310,30 +310,30 @@ export const getCalendarMutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof calendar>>,
+    Awaited<ReturnType<typeof donationCalendar>>,
     { data: BillingCalendarRequest }
   > = (props) => {
     const { data } = props ?? {};
 
-    return calendar(data);
+    return donationCalendar(data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type CalendarMutationResult = NonNullable<
-  Awaited<ReturnType<typeof calendar>>
+export type DonationCalendarMutationResult = NonNullable<
+  Awaited<ReturnType<typeof donationCalendar>>
 >;
-export type CalendarMutationBody = BillingCalendarRequest;
-export type CalendarMutationError = unknown;
+export type DonationCalendarMutationBody = BillingCalendarRequest;
+export type DonationCalendarMutationError = unknown;
 
 /**
  * @summary 결제일정 캘린더
  */
-export const useCalendar = <TError = unknown, TContext = unknown>(
+export const useDonationCalendar = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof calendar>>,
+      Awaited<ReturnType<typeof donationCalendar>>,
       TError,
       { data: BillingCalendarRequest },
       TContext
@@ -341,12 +341,12 @@ export const useCalendar = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof calendar>>,
+  Awaited<ReturnType<typeof donationCalendar>>,
   TError,
   { data: BillingCalendarRequest },
   TContext
 > => {
-  const mutationOptions = getCalendarMutationOptions(options);
+  const mutationOptions = getDonationCalendarMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };

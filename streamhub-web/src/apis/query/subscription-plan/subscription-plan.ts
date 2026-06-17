@@ -33,7 +33,7 @@ import { customInstance } from "../../custom-instance";
 /**
  * @summary 멤버십 플랜 상세
  */
-export const detail = (id: number, signal?: AbortSignal) => {
+export const subscriptionPlanDetail = (id: number, signal?: AbortSignal) => {
   return customInstance<ResultDTOPlanResponse>({
     url: `/v1/subscription-plan/${id}`,
     method: "GET",
@@ -41,56 +41,69 @@ export const detail = (id: number, signal?: AbortSignal) => {
   });
 };
 
-export const getDetailQueryKey = (id?: number) => {
+export const getSubscriptionPlanDetailQueryKey = (id?: number) => {
   return [`/v1/subscription-plan/${id}`] as const;
 };
 
-export const getDetailQueryOptions = <
-  TData = Awaited<ReturnType<typeof detail>>,
+export const getSubscriptionPlanDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof subscriptionPlanDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof detail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof subscriptionPlanDetail>>,
+        TError,
+        TData
+      >
     >;
   }
 ) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getDetailQueryKey(id);
+  const queryKey =
+    queryOptions?.queryKey ?? getSubscriptionPlanDetailQueryKey(id);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof detail>>> = ({
-    signal,
-  }) => detail(id, signal);
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof subscriptionPlanDetail>>
+  > = ({ signal }) => subscriptionPlanDetail(id, signal);
 
   return {
     queryKey,
     queryFn,
     enabled: !!id,
     ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof detail>>, TError, TData> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof subscriptionPlanDetail>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type DetailQueryResult = NonNullable<Awaited<ReturnType<typeof detail>>>;
-export type DetailQueryError = unknown;
+export type SubscriptionPlanDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof subscriptionPlanDetail>>
+>;
+export type SubscriptionPlanDetailQueryError = unknown;
 
-export function useDetail<
-  TData = Awaited<ReturnType<typeof detail>>,
+export function useSubscriptionPlanDetail<
+  TData = Awaited<ReturnType<typeof subscriptionPlanDetail>>,
   TError = unknown
 >(
   id: number,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof detail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof subscriptionPlanDetail>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof detail>>,
+          Awaited<ReturnType<typeof subscriptionPlanDetail>>,
           TError,
-          Awaited<ReturnType<typeof detail>>
+          Awaited<ReturnType<typeof subscriptionPlanDetail>>
         >,
         "initialData"
       >;
@@ -99,20 +112,24 @@ export function useDetail<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useDetail<
-  TData = Awaited<ReturnType<typeof detail>>,
+export function useSubscriptionPlanDetail<
+  TData = Awaited<ReturnType<typeof subscriptionPlanDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof detail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof subscriptionPlanDetail>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof detail>>,
+          Awaited<ReturnType<typeof subscriptionPlanDetail>>,
           TError,
-          Awaited<ReturnType<typeof detail>>
+          Awaited<ReturnType<typeof subscriptionPlanDetail>>
         >,
         "initialData"
       >;
@@ -121,14 +138,18 @@ export function useDetail<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useDetail<
-  TData = Awaited<ReturnType<typeof detail>>,
+export function useSubscriptionPlanDetail<
+  TData = Awaited<ReturnType<typeof subscriptionPlanDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof detail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof subscriptionPlanDetail>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
@@ -139,21 +160,25 @@ export function useDetail<
  * @summary 멤버십 플랜 상세
  */
 
-export function useDetail<
-  TData = Awaited<ReturnType<typeof detail>>,
+export function useSubscriptionPlanDetail<
+  TData = Awaited<ReturnType<typeof subscriptionPlanDetail>>,
   TError = unknown
 >(
   id: number,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof detail>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof subscriptionPlanDetail>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getDetailQueryOptions(id, options);
+  const queryOptions = getSubscriptionPlanDetailQueryOptions(id, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -168,7 +193,10 @@ export function useDetail<
 /**
  * @summary 멤버십 플랜 수정
  */
-export const update = (id: number, planCreateRequest: PlanCreateRequest) => {
+export const subscriptionPlanUpdate = (
+  id: number,
+  planCreateRequest: PlanCreateRequest
+) => {
   return customInstance<ResultDTOPlanResponse>({
     url: `/v1/subscription-plan/${id}`,
     method: "PUT",
@@ -177,23 +205,23 @@ export const update = (id: number, planCreateRequest: PlanCreateRequest) => {
   });
 };
 
-export const getUpdateMutationOptions = <
+export const getSubscriptionPlanUpdateMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof update>>,
+    Awaited<ReturnType<typeof subscriptionPlanUpdate>>,
     TError,
     { id: number; data: PlanCreateRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof update>>,
+  Awaited<ReturnType<typeof subscriptionPlanUpdate>>,
   TError,
   { id: number; data: PlanCreateRequest },
   TContext
 > => {
-  const mutationKey = ["update"];
+  const mutationKey = ["subscriptionPlanUpdate"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -203,30 +231,30 @@ export const getUpdateMutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof update>>,
+    Awaited<ReturnType<typeof subscriptionPlanUpdate>>,
     { id: number; data: PlanCreateRequest }
   > = (props) => {
     const { id, data } = props ?? {};
 
-    return update(id, data);
+    return subscriptionPlanUpdate(id, data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type UpdateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof update>>
+export type SubscriptionPlanUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof subscriptionPlanUpdate>>
 >;
-export type UpdateMutationBody = PlanCreateRequest;
-export type UpdateMutationError = unknown;
+export type SubscriptionPlanUpdateMutationBody = PlanCreateRequest;
+export type SubscriptionPlanUpdateMutationError = unknown;
 
 /**
  * @summary 멤버십 플랜 수정
  */
-export const useUpdate = <TError = unknown, TContext = unknown>(
+export const useSubscriptionPlanUpdate = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof update>>,
+      Awaited<ReturnType<typeof subscriptionPlanUpdate>>,
       TError,
       { id: number; data: PlanCreateRequest },
       TContext
@@ -234,12 +262,12 @@ export const useUpdate = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof update>>,
+  Awaited<ReturnType<typeof subscriptionPlanUpdate>>,
   TError,
   { id: number; data: PlanCreateRequest },
   TContext
 > => {
-  const mutationOptions = getUpdateMutationOptions(options);
+  const mutationOptions = getSubscriptionPlanUpdateMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -247,30 +275,30 @@ export const useUpdate = <TError = unknown, TContext = unknown>(
  * 파괴적 액션 — SYSTEM 전용.
  * @summary 멤버십 플랜 삭제
  */
-export const _delete = (id: number) => {
+export const subscriptionPlanDelete = (id: number) => {
   return customInstance<ResultDTOVoid>({
     url: `/v1/subscription-plan/${id}`,
     method: "DELETE",
   });
 };
 
-export const getDeleteMutationOptions = <
+export const getSubscriptionPlanDeleteMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof _delete>>,
+    Awaited<ReturnType<typeof subscriptionPlanDelete>>,
     TError,
     { id: number },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof _delete>>,
+  Awaited<ReturnType<typeof subscriptionPlanDelete>>,
   TError,
   { id: number },
   TContext
 > => {
-  const mutationKey = ["_delete"];
+  const mutationKey = ["subscriptionPlanDelete"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -280,30 +308,30 @@ export const getDeleteMutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof _delete>>,
+    Awaited<ReturnType<typeof subscriptionPlanDelete>>,
     { id: number }
   > = (props) => {
     const { id } = props ?? {};
 
-    return _delete(id);
+    return subscriptionPlanDelete(id);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type _DeleteMutationResult = NonNullable<
-  Awaited<ReturnType<typeof _delete>>
+export type SubscriptionPlanDeleteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof subscriptionPlanDelete>>
 >;
 
-export type _DeleteMutationError = unknown;
+export type SubscriptionPlanDeleteMutationError = unknown;
 
 /**
  * @summary 멤버십 플랜 삭제
  */
-export const useDelete = <TError = unknown, TContext = unknown>(
+export const useSubscriptionPlanDelete = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof _delete>>,
+      Awaited<ReturnType<typeof subscriptionPlanDelete>>,
       TError,
       { id: number },
       TContext
@@ -311,19 +339,19 @@ export const useDelete = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof _delete>>,
+  Awaited<ReturnType<typeof subscriptionPlanDelete>>,
   TError,
   { id: number },
   TContext
 > => {
-  const mutationOptions = getDeleteMutationOptions(options);
+  const mutationOptions = getSubscriptionPlanDeleteMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
 /**
  * @summary 멤버십 플랜 등록
  */
-export const create = (
+export const subscriptionPlanCreate = (
   planCreateRequest: PlanCreateRequest,
   signal?: AbortSignal
 ) => {
@@ -336,23 +364,23 @@ export const create = (
   });
 };
 
-export const getCreateMutationOptions = <
+export const getSubscriptionPlanCreateMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof create>>,
+    Awaited<ReturnType<typeof subscriptionPlanCreate>>,
     TError,
     { data: PlanCreateRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof create>>,
+  Awaited<ReturnType<typeof subscriptionPlanCreate>>,
   TError,
   { data: PlanCreateRequest },
   TContext
 > => {
-  const mutationKey = ["create"];
+  const mutationKey = ["subscriptionPlanCreate"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -362,30 +390,30 @@ export const getCreateMutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof create>>,
+    Awaited<ReturnType<typeof subscriptionPlanCreate>>,
     { data: PlanCreateRequest }
   > = (props) => {
     const { data } = props ?? {};
 
-    return create(data);
+    return subscriptionPlanCreate(data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type CreateMutationResult = NonNullable<
-  Awaited<ReturnType<typeof create>>
+export type SubscriptionPlanCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof subscriptionPlanCreate>>
 >;
-export type CreateMutationBody = PlanCreateRequest;
-export type CreateMutationError = unknown;
+export type SubscriptionPlanCreateMutationBody = PlanCreateRequest;
+export type SubscriptionPlanCreateMutationError = unknown;
 
 /**
  * @summary 멤버십 플랜 등록
  */
-export const useCreate = <TError = unknown, TContext = unknown>(
+export const useSubscriptionPlanCreate = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof create>>,
+      Awaited<ReturnType<typeof subscriptionPlanCreate>>,
       TError,
       { data: PlanCreateRequest },
       TContext
@@ -393,12 +421,12 @@ export const useCreate = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof create>>,
+  Awaited<ReturnType<typeof subscriptionPlanCreate>>,
   TError,
   { data: PlanCreateRequest },
   TContext
 > => {
-  const mutationOptions = getCreateMutationOptions(options);
+  const mutationOptions = getSubscriptionPlanCreateMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -406,7 +434,7 @@ export const useCreate = <TError = unknown, TContext = unknown>(
  * 가격 오름차순 전체 플랜 목록.
  * @summary 멤버십 플랜 목록
  */
-export const list8 = (signal?: AbortSignal) => {
+export const subscriptionPlanList = (signal?: AbortSignal) => {
   return customInstance<ResultDTOListPlanResponse>({
     url: `/v1/subscription-plan/list`,
     method: "GET",
@@ -414,49 +442,59 @@ export const list8 = (signal?: AbortSignal) => {
   });
 };
 
-export const getList8QueryKey = () => {
+export const getSubscriptionPlanListQueryKey = () => {
   return [`/v1/subscription-plan/list`] as const;
 };
 
-export const getList8QueryOptions = <
-  TData = Awaited<ReturnType<typeof list8>>,
+export const getSubscriptionPlanListQueryOptions = <
+  TData = Awaited<ReturnType<typeof subscriptionPlanList>>,
   TError = unknown
 >(options?: {
   query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof list8>>, TError, TData>
+    UseQueryOptions<
+      Awaited<ReturnType<typeof subscriptionPlanList>>,
+      TError,
+      TData
+    >
   >;
 }) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getList8QueryKey();
+  const queryKey = queryOptions?.queryKey ?? getSubscriptionPlanListQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof list8>>> = ({
-    signal,
-  }) => list8(signal);
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof subscriptionPlanList>>
+  > = ({ signal }) => subscriptionPlanList(signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof list8>>,
+    Awaited<ReturnType<typeof subscriptionPlanList>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type List8QueryResult = NonNullable<Awaited<ReturnType<typeof list8>>>;
-export type List8QueryError = unknown;
+export type SubscriptionPlanListQueryResult = NonNullable<
+  Awaited<ReturnType<typeof subscriptionPlanList>>
+>;
+export type SubscriptionPlanListQueryError = unknown;
 
-export function useList8<
-  TData = Awaited<ReturnType<typeof list8>>,
+export function useSubscriptionPlanList<
+  TData = Awaited<ReturnType<typeof subscriptionPlanList>>,
   TError = unknown
 >(
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list8>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof subscriptionPlanList>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list8>>,
+          Awaited<ReturnType<typeof subscriptionPlanList>>,
           TError,
-          Awaited<ReturnType<typeof list8>>
+          Awaited<ReturnType<typeof subscriptionPlanList>>
         >,
         "initialData"
       >;
@@ -465,19 +503,23 @@ export function useList8<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useList8<
-  TData = Awaited<ReturnType<typeof list8>>,
+export function useSubscriptionPlanList<
+  TData = Awaited<ReturnType<typeof subscriptionPlanList>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list8>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof subscriptionPlanList>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list8>>,
+          Awaited<ReturnType<typeof subscriptionPlanList>>,
           TError,
-          Awaited<ReturnType<typeof list8>>
+          Awaited<ReturnType<typeof subscriptionPlanList>>
         >,
         "initialData"
       >;
@@ -486,13 +528,17 @@ export function useList8<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useList8<
-  TData = Awaited<ReturnType<typeof list8>>,
+export function useSubscriptionPlanList<
+  TData = Awaited<ReturnType<typeof subscriptionPlanList>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list8>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof subscriptionPlanList>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
@@ -503,20 +549,24 @@ export function useList8<
  * @summary 멤버십 플랜 목록
  */
 
-export function useList8<
-  TData = Awaited<ReturnType<typeof list8>>,
+export function useSubscriptionPlanList<
+  TData = Awaited<ReturnType<typeof subscriptionPlanList>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof list8>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof subscriptionPlanList>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getList8QueryOptions(options);
+  const queryOptions = getSubscriptionPlanListQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

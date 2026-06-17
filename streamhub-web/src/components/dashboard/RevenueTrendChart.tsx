@@ -2,7 +2,7 @@
 
 import type { ApexOptions } from "apexcharts";
 
-import { useTimeseries } from "@/apis/query/dashboard/dashboard";
+import { useDashboardTimeseries } from "@/apis/query/dashboard/dashboard";
 import { formatNumber } from "@/lib/format";
 
 import ApexChart from "./ApexChart";
@@ -25,7 +25,7 @@ interface RevenueTrendChartProps {
 export default function RevenueTrendChart({
   className,
 }: RevenueTrendChartProps) {
-  const { data, isPending, isError } = useTimeseries({ days: TREND_DAYS });
+  const { data, isPending, isError } = useDashboardTimeseries({ days: TREND_DAYS });
 
   const trend = data?.resultObject;
   const categories = trend?.categories ?? [];

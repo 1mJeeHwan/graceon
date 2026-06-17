@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { list } from "@/apis/query/subscription/subscription";
+import { subscriptionList } from "@/apis/query/subscription/subscription";
 import {
   SubscriptionSearchRequestStatus,
   type SubscriptionListItem,
@@ -61,7 +61,7 @@ export default function SubscriptionPage() {
   // prior results stay visible (no flicker).
   const listQuery = useQuery({
     queryKey: ["subscription-list", searchRequest],
-    queryFn: ({ signal }) => list(searchRequest, signal),
+    queryFn: ({ signal }) => subscriptionList(searchRequest, signal),
     placeholderData: keepPreviousData,
   });
 

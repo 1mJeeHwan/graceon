@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { list2 } from "@/apis/query/order/order";
+import { orderList } from "@/apis/query/order/order";
 import {
   OrderSearchRequestStatus,
   type OrderListItem,
@@ -92,7 +92,7 @@ export default function OrderPage() {
   // stay visible (no flicker).
   const listQuery = useQuery({
     queryKey: ["order-list", searchRequest],
-    queryFn: ({ signal }) => list2(searchRequest, signal),
+    queryFn: ({ signal }) => orderList(searchRequest, signal),
     placeholderData: keepPreviousData,
   });
 

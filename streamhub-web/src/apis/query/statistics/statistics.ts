@@ -19,12 +19,12 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
-  MemberTrendParams,
   ResultDTOListChannelWatchItem,
   ResultDTOListTopContentItem,
   ResultDTOListTrendPoint,
   ResultDTOSummaryResponse,
-  TopContentsParams,
+  StatisticsMemberTrendParams,
+  StatisticsTopContentsParams,
 } from "../streamHubAdminAPI.schemas";
 
 import { customInstance } from "../../custom-instance";
@@ -32,7 +32,7 @@ import { customInstance } from "../../custom-instance";
 /**
  * @summary 채널별 시청시간
  */
-export const watchByChannel = (signal?: AbortSignal) => {
+export const statisticsWatchByChannel = (signal?: AbortSignal) => {
   return customInstance<ResultDTOListChannelWatchItem>({
     url: `/v1/statistics/watch-by-channel`,
     method: "GET",
@@ -40,51 +40,60 @@ export const watchByChannel = (signal?: AbortSignal) => {
   });
 };
 
-export const getWatchByChannelQueryKey = () => {
+export const getStatisticsWatchByChannelQueryKey = () => {
   return [`/v1/statistics/watch-by-channel`] as const;
 };
 
-export const getWatchByChannelQueryOptions = <
-  TData = Awaited<ReturnType<typeof watchByChannel>>,
+export const getStatisticsWatchByChannelQueryOptions = <
+  TData = Awaited<ReturnType<typeof statisticsWatchByChannel>>,
   TError = unknown
 >(options?: {
   query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof watchByChannel>>, TError, TData>
+    UseQueryOptions<
+      Awaited<ReturnType<typeof statisticsWatchByChannel>>,
+      TError,
+      TData
+    >
   >;
 }) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getWatchByChannelQueryKey();
+  const queryKey =
+    queryOptions?.queryKey ?? getStatisticsWatchByChannelQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof watchByChannel>>> = ({
-    signal,
-  }) => watchByChannel(signal);
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof statisticsWatchByChannel>>
+  > = ({ signal }) => statisticsWatchByChannel(signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof watchByChannel>>,
+    Awaited<ReturnType<typeof statisticsWatchByChannel>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type WatchByChannelQueryResult = NonNullable<
-  Awaited<ReturnType<typeof watchByChannel>>
+export type StatisticsWatchByChannelQueryResult = NonNullable<
+  Awaited<ReturnType<typeof statisticsWatchByChannel>>
 >;
-export type WatchByChannelQueryError = unknown;
+export type StatisticsWatchByChannelQueryError = unknown;
 
-export function useWatchByChannel<
-  TData = Awaited<ReturnType<typeof watchByChannel>>,
+export function useStatisticsWatchByChannel<
+  TData = Awaited<ReturnType<typeof statisticsWatchByChannel>>,
   TError = unknown
 >(
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof watchByChannel>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsWatchByChannel>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof watchByChannel>>,
+          Awaited<ReturnType<typeof statisticsWatchByChannel>>,
           TError,
-          Awaited<ReturnType<typeof watchByChannel>>
+          Awaited<ReturnType<typeof statisticsWatchByChannel>>
         >,
         "initialData"
       >;
@@ -93,19 +102,23 @@ export function useWatchByChannel<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useWatchByChannel<
-  TData = Awaited<ReturnType<typeof watchByChannel>>,
+export function useStatisticsWatchByChannel<
+  TData = Awaited<ReturnType<typeof statisticsWatchByChannel>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof watchByChannel>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsWatchByChannel>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof watchByChannel>>,
+          Awaited<ReturnType<typeof statisticsWatchByChannel>>,
           TError,
-          Awaited<ReturnType<typeof watchByChannel>>
+          Awaited<ReturnType<typeof statisticsWatchByChannel>>
         >,
         "initialData"
       >;
@@ -114,13 +127,17 @@ export function useWatchByChannel<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useWatchByChannel<
-  TData = Awaited<ReturnType<typeof watchByChannel>>,
+export function useStatisticsWatchByChannel<
+  TData = Awaited<ReturnType<typeof statisticsWatchByChannel>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof watchByChannel>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsWatchByChannel>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
@@ -131,20 +148,24 @@ export function useWatchByChannel<
  * @summary 채널별 시청시간
  */
 
-export function useWatchByChannel<
-  TData = Awaited<ReturnType<typeof watchByChannel>>,
+export function useStatisticsWatchByChannel<
+  TData = Awaited<ReturnType<typeof statisticsWatchByChannel>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof watchByChannel>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsWatchByChannel>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getWatchByChannelQueryOptions(options);
+  const queryOptions = getStatisticsWatchByChannelQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -159,8 +180,8 @@ export function useWatchByChannel<
 /**
  * @summary 조회수 Top N
  */
-export const topContents = (
-  params?: TopContentsParams,
+export const statisticsTopContents = (
+  params?: StatisticsTopContentsParams,
   signal?: AbortSignal
 ) => {
   return customInstance<ResultDTOListTopContentItem>({
@@ -171,55 +192,66 @@ export const topContents = (
   });
 };
 
-export const getTopContentsQueryKey = (params?: TopContentsParams) => {
+export const getStatisticsTopContentsQueryKey = (
+  params?: StatisticsTopContentsParams
+) => {
   return [`/v1/statistics/top-contents`, ...(params ? [params] : [])] as const;
 };
 
-export const getTopContentsQueryOptions = <
-  TData = Awaited<ReturnType<typeof topContents>>,
+export const getStatisticsTopContentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof statisticsTopContents>>,
   TError = unknown
 >(
-  params?: TopContentsParams,
+  params?: StatisticsTopContentsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof topContents>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsTopContents>>,
+        TError,
+        TData
+      >
     >;
   }
 ) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getTopContentsQueryKey(params);
+  const queryKey =
+    queryOptions?.queryKey ?? getStatisticsTopContentsQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof topContents>>> = ({
-    signal,
-  }) => topContents(params, signal);
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof statisticsTopContents>>
+  > = ({ signal }) => statisticsTopContents(params, signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof topContents>>,
+    Awaited<ReturnType<typeof statisticsTopContents>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type TopContentsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof topContents>>
+export type StatisticsTopContentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof statisticsTopContents>>
 >;
-export type TopContentsQueryError = unknown;
+export type StatisticsTopContentsQueryError = unknown;
 
-export function useTopContents<
-  TData = Awaited<ReturnType<typeof topContents>>,
+export function useStatisticsTopContents<
+  TData = Awaited<ReturnType<typeof statisticsTopContents>>,
   TError = unknown
 >(
-  params: undefined | TopContentsParams,
+  params: undefined | StatisticsTopContentsParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof topContents>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsTopContents>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof topContents>>,
+          Awaited<ReturnType<typeof statisticsTopContents>>,
           TError,
-          Awaited<ReturnType<typeof topContents>>
+          Awaited<ReturnType<typeof statisticsTopContents>>
         >,
         "initialData"
       >;
@@ -228,20 +260,24 @@ export function useTopContents<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useTopContents<
-  TData = Awaited<ReturnType<typeof topContents>>,
+export function useStatisticsTopContents<
+  TData = Awaited<ReturnType<typeof statisticsTopContents>>,
   TError = unknown
 >(
-  params?: TopContentsParams,
+  params?: StatisticsTopContentsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof topContents>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsTopContents>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof topContents>>,
+          Awaited<ReturnType<typeof statisticsTopContents>>,
           TError,
-          Awaited<ReturnType<typeof topContents>>
+          Awaited<ReturnType<typeof statisticsTopContents>>
         >,
         "initialData"
       >;
@@ -250,14 +286,18 @@ export function useTopContents<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useTopContents<
-  TData = Awaited<ReturnType<typeof topContents>>,
+export function useStatisticsTopContents<
+  TData = Awaited<ReturnType<typeof statisticsTopContents>>,
   TError = unknown
 >(
-  params?: TopContentsParams,
+  params?: StatisticsTopContentsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof topContents>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsTopContents>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
@@ -268,21 +308,25 @@ export function useTopContents<
  * @summary 조회수 Top N
  */
 
-export function useTopContents<
-  TData = Awaited<ReturnType<typeof topContents>>,
+export function useStatisticsTopContents<
+  TData = Awaited<ReturnType<typeof statisticsTopContents>>,
   TError = unknown
 >(
-  params?: TopContentsParams,
+  params?: StatisticsTopContentsParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof topContents>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsTopContents>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getTopContentsQueryOptions(params, options);
+  const queryOptions = getStatisticsTopContentsQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -298,7 +342,7 @@ export function useTopContents<
  * 총 회원/신규(7일)/총 조회수/총 콘텐츠. Redis 캐싱(60s).
  * @summary 요약 카드
  */
-export const summary = (signal?: AbortSignal) => {
+export const statisticsSummary = (signal?: AbortSignal) => {
   return customInstance<ResultDTOSummaryResponse>({
     url: `/v1/statistics/summary`,
     method: "GET",
@@ -306,51 +350,59 @@ export const summary = (signal?: AbortSignal) => {
   });
 };
 
-export const getSummaryQueryKey = () => {
+export const getStatisticsSummaryQueryKey = () => {
   return [`/v1/statistics/summary`] as const;
 };
 
-export const getSummaryQueryOptions = <
-  TData = Awaited<ReturnType<typeof summary>>,
+export const getStatisticsSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof statisticsSummary>>,
   TError = unknown
 >(options?: {
   query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof summary>>, TError, TData>
+    UseQueryOptions<
+      Awaited<ReturnType<typeof statisticsSummary>>,
+      TError,
+      TData
+    >
   >;
 }) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getSummaryQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getStatisticsSummaryQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof summary>>> = ({
-    signal,
-  }) => summary(signal);
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof statisticsSummary>>
+  > = ({ signal }) => statisticsSummary(signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof summary>>,
+    Awaited<ReturnType<typeof statisticsSummary>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type SummaryQueryResult = NonNullable<
-  Awaited<ReturnType<typeof summary>>
+export type StatisticsSummaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof statisticsSummary>>
 >;
-export type SummaryQueryError = unknown;
+export type StatisticsSummaryQueryError = unknown;
 
-export function useSummary<
-  TData = Awaited<ReturnType<typeof summary>>,
+export function useStatisticsSummary<
+  TData = Awaited<ReturnType<typeof statisticsSummary>>,
   TError = unknown
 >(
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof summary>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsSummary>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof summary>>,
+          Awaited<ReturnType<typeof statisticsSummary>>,
           TError,
-          Awaited<ReturnType<typeof summary>>
+          Awaited<ReturnType<typeof statisticsSummary>>
         >,
         "initialData"
       >;
@@ -359,19 +411,23 @@ export function useSummary<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useSummary<
-  TData = Awaited<ReturnType<typeof summary>>,
+export function useStatisticsSummary<
+  TData = Awaited<ReturnType<typeof statisticsSummary>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof summary>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsSummary>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof summary>>,
+          Awaited<ReturnType<typeof statisticsSummary>>,
           TError,
-          Awaited<ReturnType<typeof summary>>
+          Awaited<ReturnType<typeof statisticsSummary>>
         >,
         "initialData"
       >;
@@ -380,13 +436,17 @@ export function useSummary<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useSummary<
-  TData = Awaited<ReturnType<typeof summary>>,
+export function useStatisticsSummary<
+  TData = Awaited<ReturnType<typeof statisticsSummary>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof summary>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsSummary>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
@@ -397,20 +457,24 @@ export function useSummary<
  * @summary 요약 카드
  */
 
-export function useSummary<
-  TData = Awaited<ReturnType<typeof summary>>,
+export function useStatisticsSummary<
+  TData = Awaited<ReturnType<typeof statisticsSummary>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof summary>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsSummary>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getSummaryQueryOptions(options);
+  const queryOptions = getStatisticsSummaryQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -425,8 +489,8 @@ export function useSummary<
 /**
  * @summary 일별 가입 추이
  */
-export const memberTrend = (
-  params?: MemberTrendParams,
+export const statisticsMemberTrend = (
+  params?: StatisticsMemberTrendParams,
   signal?: AbortSignal
 ) => {
   return customInstance<ResultDTOListTrendPoint>({
@@ -437,55 +501,66 @@ export const memberTrend = (
   });
 };
 
-export const getMemberTrendQueryKey = (params?: MemberTrendParams) => {
+export const getStatisticsMemberTrendQueryKey = (
+  params?: StatisticsMemberTrendParams
+) => {
   return [`/v1/statistics/member-trend`, ...(params ? [params] : [])] as const;
 };
 
-export const getMemberTrendQueryOptions = <
-  TData = Awaited<ReturnType<typeof memberTrend>>,
+export const getStatisticsMemberTrendQueryOptions = <
+  TData = Awaited<ReturnType<typeof statisticsMemberTrend>>,
   TError = unknown
 >(
-  params?: MemberTrendParams,
+  params?: StatisticsMemberTrendParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof memberTrend>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsMemberTrend>>,
+        TError,
+        TData
+      >
     >;
   }
 ) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getMemberTrendQueryKey(params);
+  const queryKey =
+    queryOptions?.queryKey ?? getStatisticsMemberTrendQueryKey(params);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof memberTrend>>> = ({
-    signal,
-  }) => memberTrend(params, signal);
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof statisticsMemberTrend>>
+  > = ({ signal }) => statisticsMemberTrend(params, signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof memberTrend>>,
+    Awaited<ReturnType<typeof statisticsMemberTrend>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type MemberTrendQueryResult = NonNullable<
-  Awaited<ReturnType<typeof memberTrend>>
+export type StatisticsMemberTrendQueryResult = NonNullable<
+  Awaited<ReturnType<typeof statisticsMemberTrend>>
 >;
-export type MemberTrendQueryError = unknown;
+export type StatisticsMemberTrendQueryError = unknown;
 
-export function useMemberTrend<
-  TData = Awaited<ReturnType<typeof memberTrend>>,
+export function useStatisticsMemberTrend<
+  TData = Awaited<ReturnType<typeof statisticsMemberTrend>>,
   TError = unknown
 >(
-  params: undefined | MemberTrendParams,
+  params: undefined | StatisticsMemberTrendParams,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof memberTrend>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsMemberTrend>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof memberTrend>>,
+          Awaited<ReturnType<typeof statisticsMemberTrend>>,
           TError,
-          Awaited<ReturnType<typeof memberTrend>>
+          Awaited<ReturnType<typeof statisticsMemberTrend>>
         >,
         "initialData"
       >;
@@ -494,20 +569,24 @@ export function useMemberTrend<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useMemberTrend<
-  TData = Awaited<ReturnType<typeof memberTrend>>,
+export function useStatisticsMemberTrend<
+  TData = Awaited<ReturnType<typeof statisticsMemberTrend>>,
   TError = unknown
 >(
-  params?: MemberTrendParams,
+  params?: StatisticsMemberTrendParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof memberTrend>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsMemberTrend>>,
+        TError,
+        TData
+      >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof memberTrend>>,
+          Awaited<ReturnType<typeof statisticsMemberTrend>>,
           TError,
-          Awaited<ReturnType<typeof memberTrend>>
+          Awaited<ReturnType<typeof statisticsMemberTrend>>
         >,
         "initialData"
       >;
@@ -516,14 +595,18 @@ export function useMemberTrend<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useMemberTrend<
-  TData = Awaited<ReturnType<typeof memberTrend>>,
+export function useStatisticsMemberTrend<
+  TData = Awaited<ReturnType<typeof statisticsMemberTrend>>,
   TError = unknown
 >(
-  params?: MemberTrendParams,
+  params?: StatisticsMemberTrendParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof memberTrend>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsMemberTrend>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
@@ -534,21 +617,25 @@ export function useMemberTrend<
  * @summary 일별 가입 추이
  */
 
-export function useMemberTrend<
-  TData = Awaited<ReturnType<typeof memberTrend>>,
+export function useStatisticsMemberTrend<
+  TData = Awaited<ReturnType<typeof statisticsMemberTrend>>,
   TError = unknown
 >(
-  params?: MemberTrendParams,
+  params?: StatisticsMemberTrendParams,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof memberTrend>>, TError, TData>
+      UseQueryOptions<
+        Awaited<ReturnType<typeof statisticsMemberTrend>>,
+        TError,
+        TData
+      >
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getMemberTrendQueryOptions(params, options);
+  const queryOptions = getStatisticsMemberTrendQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

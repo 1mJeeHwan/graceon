@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
-import { useCategories, useCreate1 } from "@/apis/query/goods/goods";
+import { useGoodsCategories, useGoodsCreate } from "@/apis/query/goods/goods";
 import {
   GoodsCreateRequestStatus,
   type GoodsCreateRequest,
@@ -31,10 +31,10 @@ export default function GoodsAddPage() {
     null,
   );
 
-  const categoriesQuery = useCategories();
+  const categoriesQuery = useGoodsCategories();
   const categories = categoriesQuery.data?.resultObject ?? [];
 
-  const createMutation = useCreate1();
+  const createMutation = useGoodsCreate();
 
   const {
     register,

@@ -2,7 +2,7 @@
 
 import type { ApexOptions } from "apexcharts";
 
-import { useTopContents } from "@/apis/query/statistics/statistics";
+import { useStatisticsTopContents } from "@/apis/query/statistics/statistics";
 import { formatNumber } from "@/lib/format";
 
 import ApexChart from "./ApexChart";
@@ -15,7 +15,7 @@ const TOP_LIMIT = 5;
  * using the top-contents statistics endpoint.
  */
 export default function TopContentsChart() {
-  const { data, isPending, isError } = useTopContents({ limit: TOP_LIMIT });
+  const { data, isPending, isError } = useStatisticsTopContents({ limit: TOP_LIMIT });
 
   const items = data?.resultObject ?? [];
   const categories = items.map((item) => item.title ?? "-");

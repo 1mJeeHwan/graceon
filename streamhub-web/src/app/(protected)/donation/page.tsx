@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Loader2, Plus } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { list5, useCreateOnce } from "@/apis/query/donation/donation";
+import { donationList, useDonationOnce } from "@/apis/query/donation/donation";
 import {
   DonationSearchRequestStatus,
   DonationSearchRequestType,
@@ -86,7 +86,7 @@ export default function DonationPage() {
 
   const listQuery = useQuery({
     queryKey: ["donation-list", searchRequest],
-    queryFn: ({ signal }) => list5(searchRequest, signal),
+    queryFn: ({ signal }) => donationList(searchRequest, signal),
     placeholderData: keepPreviousData,
   });
 
@@ -95,7 +95,7 @@ export default function DonationPage() {
   const totalCount = result?.totalCount ?? 0;
   const totalPage = result?.totalPage ?? 0;
 
-  const createOnceMutation = useCreateOnce();
+  const createOnceMutation = useDonationOnce();
 
   const handleSearch = () => {
     setKeyword(keywordDraft);

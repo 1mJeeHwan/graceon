@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Loader2, type LucideIcon } from "lucide-react";
 import { HelpCircle, PackageOpen, PackageX } from "lucide-react";
 
-import { useSummary1 } from "@/apis/query/dashboard/dashboard";
+import { useDashboardSummary } from "@/apis/query/dashboard/dashboard";
 import { formatNumber } from "@/lib/format";
 
 interface TodoConfig {
@@ -52,7 +52,7 @@ const TODOS: TodoConfig[] = [
  * muted.
  */
 export default function TodoQueue() {
-  const { data, isPending, isError } = useSummary1();
+  const { data, isPending, isError } = useDashboardSummary();
   const summary = data?.resultObject;
 
   return (

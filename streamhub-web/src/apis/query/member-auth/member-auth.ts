@@ -33,7 +33,7 @@ import { customInstance } from "../../custom-instance";
  * 이메일/비밀번호로 로그인하고 회원 토큰을 발급한다.
  * @summary 회원 로그인
  */
-export const login = (
+export const memberAuthLogin = (
   memberLoginRequest: MemberLoginRequest,
   signal?: AbortSignal
 ) => {
@@ -46,23 +46,23 @@ export const login = (
   });
 };
 
-export const getLoginMutationOptions = <
+export const getMemberAuthLoginMutationOptions = <
   TError = unknown,
   TContext = unknown
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof login>>,
+    Awaited<ReturnType<typeof memberAuthLogin>>,
     TError,
     { data: MemberLoginRequest },
     TContext
   >;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof login>>,
+  Awaited<ReturnType<typeof memberAuthLogin>>,
   TError,
   { data: MemberLoginRequest },
   TContext
 > => {
-  const mutationKey = ["login"];
+  const mutationKey = ["memberAuthLogin"];
   const { mutation: mutationOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -72,30 +72,30 @@ export const getLoginMutationOptions = <
     : { mutation: { mutationKey } };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof login>>,
+    Awaited<ReturnType<typeof memberAuthLogin>>,
     { data: MemberLoginRequest }
   > = (props) => {
     const { data } = props ?? {};
 
-    return login(data);
+    return memberAuthLogin(data);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type LoginMutationResult = NonNullable<
-  Awaited<ReturnType<typeof login>>
+export type MemberAuthLoginMutationResult = NonNullable<
+  Awaited<ReturnType<typeof memberAuthLogin>>
 >;
-export type LoginMutationBody = MemberLoginRequest;
-export type LoginMutationError = unknown;
+export type MemberAuthLoginMutationBody = MemberLoginRequest;
+export type MemberAuthLoginMutationError = unknown;
 
 /**
  * @summary 회원 로그인
  */
-export const useLogin = <TError = unknown, TContext = unknown>(
+export const useMemberAuthLogin = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof login>>,
+      Awaited<ReturnType<typeof memberAuthLogin>>,
       TError,
       { data: MemberLoginRequest },
       TContext
@@ -103,12 +103,12 @@ export const useLogin = <TError = unknown, TContext = unknown>(
   },
   queryClient?: QueryClient
 ): UseMutationResult<
-  Awaited<ReturnType<typeof login>>,
+  Awaited<ReturnType<typeof memberAuthLogin>>,
   TError,
   { data: MemberLoginRequest },
   TContext
 > => {
-  const mutationOptions = getLoginMutationOptions(options);
+  const mutationOptions = getMemberAuthLoginMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };
@@ -116,7 +116,7 @@ export const useLogin = <TError = unknown, TContext = unknown>(
  * 회원 토큰으로 로그인한 회원의 프로필을 반환한다.
  * @summary 내 정보
  */
-export const me1 = (signal?: AbortSignal) => {
+export const memberAuthMe = (signal?: AbortSignal) => {
   return customInstance<ResultDTOMemberInfo>({
     url: `/pub/v1/auth/me`,
     method: "GET",
@@ -124,49 +124,51 @@ export const me1 = (signal?: AbortSignal) => {
   });
 };
 
-export const getMe1QueryKey = () => {
+export const getMemberAuthMeQueryKey = () => {
   return [`/pub/v1/auth/me`] as const;
 };
 
-export const getMe1QueryOptions = <
-  TData = Awaited<ReturnType<typeof me1>>,
+export const getMemberAuthMeQueryOptions = <
+  TData = Awaited<ReturnType<typeof memberAuthMe>>,
   TError = unknown
 >(options?: {
   query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof me1>>, TError, TData>
+    UseQueryOptions<Awaited<ReturnType<typeof memberAuthMe>>, TError, TData>
   >;
 }) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getMe1QueryKey();
+  const queryKey = queryOptions?.queryKey ?? getMemberAuthMeQueryKey();
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof me1>>> = ({
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof memberAuthMe>>> = ({
     signal,
-  }) => me1(signal);
+  }) => memberAuthMe(signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof me1>>,
+    Awaited<ReturnType<typeof memberAuthMe>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type Me1QueryResult = NonNullable<Awaited<ReturnType<typeof me1>>>;
-export type Me1QueryError = unknown;
+export type MemberAuthMeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof memberAuthMe>>
+>;
+export type MemberAuthMeQueryError = unknown;
 
-export function useMe1<
-  TData = Awaited<ReturnType<typeof me1>>,
+export function useMemberAuthMe<
+  TData = Awaited<ReturnType<typeof memberAuthMe>>,
   TError = unknown
 >(
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof me1>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof memberAuthMe>>, TError, TData>
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof me1>>,
+          Awaited<ReturnType<typeof memberAuthMe>>,
           TError,
-          Awaited<ReturnType<typeof me1>>
+          Awaited<ReturnType<typeof memberAuthMe>>
         >,
         "initialData"
       >;
@@ -175,19 +177,19 @@ export function useMe1<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useMe1<
-  TData = Awaited<ReturnType<typeof me1>>,
+export function useMemberAuthMe<
+  TData = Awaited<ReturnType<typeof memberAuthMe>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof me1>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof memberAuthMe>>, TError, TData>
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof me1>>,
+          Awaited<ReturnType<typeof memberAuthMe>>,
           TError,
-          Awaited<ReturnType<typeof me1>>
+          Awaited<ReturnType<typeof memberAuthMe>>
         >,
         "initialData"
       >;
@@ -196,13 +198,13 @@ export function useMe1<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useMe1<
-  TData = Awaited<ReturnType<typeof me1>>,
+export function useMemberAuthMe<
+  TData = Awaited<ReturnType<typeof memberAuthMe>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof me1>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof memberAuthMe>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
@@ -213,20 +215,20 @@ export function useMe1<
  * @summary 내 정보
  */
 
-export function useMe1<
-  TData = Awaited<ReturnType<typeof me1>>,
+export function useMemberAuthMe<
+  TData = Awaited<ReturnType<typeof memberAuthMe>>,
   TError = unknown
 >(
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof me1>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof memberAuthMe>>, TError, TData>
     >;
   },
   queryClient?: QueryClient
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getMe1QueryOptions(options);
+  const queryOptions = getMemberAuthMeQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

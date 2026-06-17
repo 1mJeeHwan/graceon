@@ -8,10 +8,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 import {
-  useCategories,
-  useDelete1,
-  useDetail2,
-  useUpdate2,
+  useGoodsCategories,
+  useGoodsDelete,
+  useGoodsDetail,
+  useGoodsUpdate,
 } from "@/apis/query/goods/goods";
 import {
   GoodsCreateRequestStatus,
@@ -64,12 +64,12 @@ export default function GoodsDetailPage() {
     null,
   );
 
-  const detailQuery = useDetail2(goodsId, {
+  const detailQuery = useGoodsDetail(goodsId, {
     query: { enabled: Number.isFinite(goodsId) },
   });
-  const updateMutation = useUpdate2();
-  const deleteMutation = useDelete1();
-  const categoriesQuery = useCategories({ query: { enabled: isEditing } });
+  const updateMutation = useGoodsUpdate();
+  const deleteMutation = useGoodsDelete();
+  const categoriesQuery = useGoodsCategories({ query: { enabled: isEditing } });
   const categories = categoriesQuery.data?.resultObject ?? [];
 
   const detail: GoodsDetail | undefined = detailQuery.data?.resultObject;

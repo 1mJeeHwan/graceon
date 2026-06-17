@@ -2,7 +2,7 @@
 
 import type { ApexOptions } from "apexcharts";
 
-import { useMemberTrend } from "@/apis/query/statistics/statistics";
+import { useStatisticsMemberTrend } from "@/apis/query/statistics/statistics";
 
 import ApexChart from "./ApexChart";
 import ChartCard from "./ChartCard";
@@ -14,7 +14,7 @@ const TREND_DAYS = 30;
  * last 30 days using the member-trend statistics endpoint.
  */
 export default function MemberTrendChart() {
-  const { data, isPending, isError } = useMemberTrend({ days: TREND_DAYS });
+  const { data, isPending, isError } = useStatisticsMemberTrend({ days: TREND_DAYS });
 
   const points = data?.resultObject ?? [];
   const categories = points.map((point) => point.date ?? "");

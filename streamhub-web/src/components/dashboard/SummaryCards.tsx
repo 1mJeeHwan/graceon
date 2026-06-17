@@ -9,7 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { useSummary } from "@/apis/query/statistics/statistics";
+import { useStatisticsSummary } from "@/apis/query/statistics/statistics";
 import { formatNumber } from "@/lib/format";
 
 interface CardConfig {
@@ -51,7 +51,7 @@ const CARDS: CardConfig[] = [
  * views, contents) from the summary statistics endpoint.
  */
 export default function SummaryCards() {
-  const { data, isPending, isError } = useSummary();
+  const { data, isPending, isError } = useStatisticsSummary();
 
   const summary = data?.resultObject;
 

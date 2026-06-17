@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 
-import { useFeed } from "@/apis/query/dashboard/dashboard";
+import { useDashboardFeed } from "@/apis/query/dashboard/dashboard";
 import type { FeedItem } from "@/apis/query/streamHubAdminAPI.schemas";
 import { formatDateTime } from "@/lib/format";
 import { relativeTime } from "@/lib/relative-time";
@@ -40,7 +40,7 @@ function kindDotColor(kind?: string): string {
  * are computed client-side against the server's absolute `occurredAt`.
  */
 export default function ActivityFeed() {
-  const { data, isPending, isError } = useFeed(
+  const { data, isPending, isError } = useDashboardFeed(
     { limit: FEED_LIMIT },
     { query: { refetchInterval: POLL_INTERVAL_MS } },
   );

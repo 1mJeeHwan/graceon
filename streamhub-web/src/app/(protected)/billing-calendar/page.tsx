@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { calendar } from "@/apis/query/donation/donation";
+import { donationCalendar } from "@/apis/query/donation/donation";
 import { formatNumber } from "@/lib/format";
 import BillingCalendar from "@/components/billing-calendar/BillingCalendar";
 import TestModeBadge from "@/components/donation/TestModeBadge";
@@ -32,7 +32,7 @@ export default function BillingCalendarPage() {
 
   const calendarQuery = useQuery({
     queryKey: ["billing-calendar", year, month],
-    queryFn: ({ signal }) => calendar({ year, month }, signal),
+    queryFn: ({ signal }) => donationCalendar({ year, month }, signal),
     placeholderData: keepPreviousData,
   });
 
