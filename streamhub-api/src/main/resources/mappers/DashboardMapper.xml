@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.streamhub.api.v1.dashboard.mapper.DashboardMapper">
+
+    <!-- Settled order revenue in a window. Excludes CANCEL / RETURN. -->
+    <select id="sumOrderRevenue" resultType="long">
+        SELECT COALESCE(SUM(total), 0)
+        FROM ORDERS
+        WHERE ordered_at BETWEEN #{from} AND #{to}
+          AND status IN ('PAID', 'READY', 'SHIPPING', 'DONE')
+    </select>
+
+    <!-- Successfully paid donations in a window. -->
+    <select id="sumDonationAmount" resultType="long">
+        SELECT COALESCE(SUM(amount), 0)
+        FROM DONATION
+        WHERE paid_at BETWEEN #{from} AND #{to}
+          AND status = 'PAID'
+    </select>
+
+    <!-- Subscriptions started in a window. -->
+    <select id="countNewSubscriptions" resultType="long">
+        SELECT COUNT(*)
+        FROM SUBSCRIPTION
+        WHERE started_at BETWEEN #{from} AND #{to}
+    </select>
+
+    <!-- Orders still in flight (non-terminal). -->
+    <select id="countOpenOrders" resultType="long">
+        SELECT COUNT(*)
+        FROM ORDERS
+        WHERE status IN ('PLACED', 'PAID', 'READY', 'SHIPPING')
+    </select>
+
+    <!-- Goods at or below the low-stock threshold and still on sale. -->
+    <select id="countLowStock" resultType="long">
+        SELECT COUNT(*)
+        FROM GOODS_ITEM
+        WHERE use_yn = 'Y'
+          AND stock &lt;= noti_qty
+    </select>
+
+    <!-- Currently active recurring-donation subscriptions. -->
+    <select id="countActiveSubscribers" resultType="long">
+        SELECT COUNT(*)
+        FROM SUBSCRIPTION
+        WHERE status = 'ACTIVE'
+    </select>
+
+    <!--
+        Daily stacked totals across [from, to]. Sparse: only days with activity appear;
+        the service fills the gaps with zeros across the full range. One row per day,
+        each series joined by a single GROUP BY over a UNION ALL of the three sources.
+    -->
+    <select id="dailyTrend" resultType="org.streamhub.api.v1.dashboard.dto.TrendRow">
+        SELECT
+            t.day                                  AS date,
+            COALESCE(SUM(t.goods_revenue), 0)      AS goods_revenue,
+            COALESCE(SUM(t.recurring_donation), 0) AS recurring_donation,
+            COALESCE(SUM(t.once_donation), 0)      AS once_donation
+        FROM (
+            SELECT DATE_FORMAT(ordered_at, '%Y-%m-%d') AS day,
+                   total                               AS goods_revenue,
+                   0                                   AS recurring_donation,
+                   0                                   AS once_donation
+            FROM ORDERS
+            WHERE ordered_at BETWEEN #{from} AND #{to}
+              AND status IN ('PAID', 'READY', 'SHIPPING', 'DONE')
+            UNION ALL
+            SELECT DATE_FORMAT(paid_at, '%Y-%m-%d') AS day,
+                   0                                AS goods_revenue,
+                   CASE WHEN type = 'SUBSCRIPTION' THEN amount ELSE 0 END AS recurring_donation,
+                   CASE WHEN type = 'ONCE'         THEN amount ELSE 0 END AS once_donation
+            FROM DONATION
+            WHERE paid_at BETWEEN #{from} AND #{to}
+              AND status = 'PAID'
+        ) t
+        GROUP BY t.day
+        ORDER BY t.day
+    </select>
+
+    <!--
+        Most recent N activity events across orders, subscriptions and donations,
+        newest first. UNION ALL of three sources, each tagged with its kind; member
+        name joined for display.
+    -->
+    <select id="recentActivity" resultType="org.streamhub.api.v1.dashboard.dto.FeedRow">
+        SELECT u.source_id   AS source_id,
+               u.kind        AS kind,
+               u.status      AS status,
+               u.amount      AS amount,
+               m.name        AS member_name,
+               u.occurred_at AS occurred_at
+        FROM (
+            SELECT o.id          AS source_id,
+                   'ORDER'       AS kind,
+                   o.status      AS status,
+                   o.total       AS amount,
+                   o.member_id   AS member_id,
+                   o.ordered_at  AS occurred_at
+            FROM ORDERS o
+            UNION ALL
+            SELECT s.id          AS source_id,
+                   'SUBSCRIPTION' AS kind,
+                   s.status      AS status,
+                   NULL          AS amount,
+                   s.member_id   AS member_id,
+                   s.started_at  AS occurred_at
+            FROM SUBSCRIPTION s
+            UNION ALL
+            SELECT d.id          AS source_id,
+                   'DONATION'    AS kind,
+                   d.type        AS status,
+                   d.amount      AS amount,
+                   d.member_id   AS member_id,
+                   d.paid_at     AS occurred_at
+            FROM DONATION d
+            WHERE d.status = 'PAID'
+        ) u
+        LEFT JOIN MEMBER m ON u.member_id = m.id
+        ORDER BY u.occurred_at DESC, u.source_id DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

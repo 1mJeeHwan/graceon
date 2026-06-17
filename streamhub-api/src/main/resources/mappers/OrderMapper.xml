@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.streamhub.api.v1.order.mapper.OrderMapper">
+
+    <!-- Shared filter block: searchField+keyword, status, payMethod, ordered_at range. -->
+    <sql id="searchWhere">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="searchField == 'orderNo'">
+                        AND o.order_no LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchField == 'orderedName'">
+                        AND o.ordered_name LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchField == 'receiverName'">
+                        AND o.receiver_name LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchField == 'trackingNo'">
+                        AND o.tracking_no LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <otherwise>
+                        AND o.order_no LIKE CONCAT('%', #{keyword}, '%')
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="status != null and status != ''">
+                AND o.status = #{status}
+            </if>
+            <if test="payMethod != null and payMethod != ''">
+                AND o.pay_method = #{payMethod}
+            </if>
+            <if test="fromDate != null">
+                AND o.ordered_at &gt;= #{fromDate}
+            </if>
+            <if test="toDate != null">
+                AND o.ordered_at &lt; DATE_ADD(#{toDate}, INTERVAL 1 DAY)
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectList" resultType="org.streamhub.api.v1.order.dto.OrderListItem">
+        SELECT
+            o.id            AS id,
+            o.order_no      AS order_no,
+            o.member_id     AS member_id,
+            m.name          AS member_name,
+            o.status        AS status,
+            o.ordered_name  AS ordered_name,
+            o.receiver_name AS receiver_name,
+            o.total         AS total,
+            o.pay_method    AS pay_method,
+            o.tracking_no   AS tracking_no,
+            (SELECT COUNT(*) FROM ORDER_ITEM oi WHERE oi.order_id = o.id) AS item_count,
+            o.ordered_at    AS ordered_at
+        FROM ORDERS o
+            JOIN MEMBER m ON o.member_id = m.id
+        <include refid="searchWhere"/>
+        ORDER BY o.ordered_at DESC, o.id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*)
+        FROM ORDERS o
+        <include refid="searchWhere"/>
+    </select>
+
+    <select id="selectDetail" resultType="org.streamhub.api.v1.order.dto.OrderDetail">
+        SELECT
+            o.id              AS id,
+            o.order_no        AS order_no,
+            o.member_id       AS member_id,
+            m.name            AS member_name,
+            o.status          AS status,
+            o.ordered_name    AS ordered_name,
+            o.ordered_phone   AS ordered_phone,
+            o.receiver_name   AS receiver_name,
+            o.receiver_phone  AS receiver_phone,
+            o.receiver_addr   AS receiver_addr,
+            o.goods_total     AS goods_total,
+            o.ship_fee        AS ship_fee,
+            o.coupon_discount AS coupon_discount,
+            o.point_used      AS point_used,
+            o.total           AS total,
+            o.pay_method      AS pay_method,
+            o.tracking_no     AS tracking_no,
+            o.ship_company    AS ship_company,
+            o.ordered_at      AS ordered_at,
+            o.updated_at      AS updated_at
+        FROM ORDERS o
+            JOIN MEMBER m ON o.member_id = m.id
+        WHERE o.id = #{id}
+    </select>
+
+</mapper>

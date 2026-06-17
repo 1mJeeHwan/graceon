@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.streamhub.api.v1.donation.mapper.DonationMapper">
+
+    <sql id="searchWhere">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND m.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+            <if test="type != null and type != ''">
+                AND d.type = #{type}
+            </if>
+            <if test="status != null and status != ''">
+                AND d.status = #{status}
+            </if>
+            <if test="from != null">
+                AND d.paid_at &gt;= #{from}
+            </if>
+            <if test="to != null">
+                AND d.paid_at &lt;= #{to}
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectList" resultType="org.streamhub.api.v1.donation.dto.DonationListItem">
+        SELECT
+            d.id              AS id,
+            d.member_id       AS member_id,
+            m.name            AS member_name,
+            d.subscription_id AS subscription_id,
+            p.name            AS plan_name,
+            d.type            AS type,
+            d.amount          AS amount,
+            d.cycle_no        AS cycle_no,
+            d.status          AS status,
+            d.point_awarded   AS point_awarded,
+            d.test_mode       AS test_mode,
+            d.paid_at         AS paid_at
+        FROM DONATION d
+            JOIN MEMBER m            ON d.member_id = m.id
+            LEFT JOIN SUBSCRIPTION s ON d.subscription_id = s.id
+            LEFT JOIN SUBSCRIPTION_PLAN p ON s.plan_id = p.id
+        <include refid="searchWhere"/>
+        ORDER BY d.paid_at DESC, d.id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*)
+        FROM DONATION d
+            JOIN MEMBER m ON d.member_id = m.id
+        <include refid="searchWhere"/>
+    </select>
+
+    <select id="selectDetail" resultType="org.streamhub.api.v1.donation.dto.DonationListItem">
+        SELECT
+            d.id              AS id,
+            d.member_id       AS member_id,
+            m.name            AS member_name,
+            d.subscription_id AS subscription_id,
+            p.name            AS plan_name,
+            d.type            AS type,
+            d.amount          AS amount,
+            d.cycle_no        AS cycle_no,
+            d.status          AS status,
+            d.point_awarded   AS point_awarded,
+            d.test_mode       AS test_mode,
+            d.paid_at         AS paid_at
+        FROM DONATION d
+            JOIN MEMBER m            ON d.member_id = m.id
+            LEFT JOIN SUBSCRIPTION s ON d.subscription_id = s.id
+            LEFT JOIN SUBSCRIPTION_PLAN p ON s.plan_id = p.id
+        WHERE d.id = #{id}
+    </select>
+
+    <select id="billingCalendar" resultType="org.streamhub.api.v1.donation.dto.BillingCalendarItem">
+        SELECT
+            DATE_FORMAT(s.next_billing_at, '%Y-%m-%d') AS date,
+            COUNT(*)                                   AS count,
+            COALESCE(SUM(p.price), 0)                  AS amount
+        FROM SUBSCRIPTION s
+            JOIN SUBSCRIPTION_PLAN p ON s.plan_id = p.id
+        WHERE s.status = 'ACTIVE'
+          AND s.next_billing_at BETWEEN #{from} AND #{to}
+        GROUP BY DATE_FORMAT(s.next_billing_at, '%Y-%m-%d')
+        ORDER BY date
+    </select>
+
+</mapper>

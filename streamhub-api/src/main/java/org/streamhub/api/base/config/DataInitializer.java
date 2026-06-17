@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.streamhub.api.v1.admin.entity.AdminAccount;
@@ -45,6 +46,7 @@ import org.streamhub.api.v1.post.repository.PostRepository;
  */
 @Slf4j
 @Component
+@Order(1)
 public class DataInitializer implements CommandLineRunner {
 
     private static final String[] SURNAMES = {"김", "이", "박", "최", "정", "강", "조", "윤", "장", "임"};

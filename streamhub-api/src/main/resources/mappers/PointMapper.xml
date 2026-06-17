@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.streamhub.api.v1.member.mapper.PointMapper">
+
+    <!-- Shared filter block: keyword (member name/email or reason), member, church. -->
+    <sql id="searchWhere">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (mb.name LIKE CONCAT('%', #{keyword}, '%')
+                     OR mb.email LIKE CONCAT('%', #{keyword}, '%')
+                     OR pl.reason LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="memberId != null">
+                AND pl.member_id = #{memberId}
+            </if>
+            <if test="churchId != null">
+                AND mb.church_id = #{churchId}
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectList" resultType="org.streamhub.api.v1.member.dto.PointLedgerListItem">
+        SELECT
+            pl.id            AS id,
+            pl.member_id     AS member_id,
+            mb.name          AS member_name,
+            mb.email         AS member_email,
+            mb.church_id     AS church_id,
+            pl.delta         AS delta,
+            pl.balance_after AS balance_after,
+            pl.reason        AS reason,
+            pl.source_type   AS source_type,
+            pl.status        AS status,
+            pl.expire_at     AS expire_at,
+            pl.created_at    AS created_at
+        FROM POINT_LEDGER pl
+            JOIN MEMBER mb ON pl.member_id = mb.id
+        <include refid="searchWhere"/>
+        ORDER BY pl.created_at DESC, pl.id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*)
+        FROM POINT_LEDGER pl
+            JOIN MEMBER mb ON pl.member_id = mb.id
+        <include refid="searchWhere"/>
+    </select>
+
+    <select id="selectById" resultType="org.streamhub.api.v1.member.dto.PointLedgerListItem">
+        SELECT
+            pl.id            AS id,
+            pl.member_id     AS member_id,
+            mb.name          AS member_name,
+            mb.email         AS member_email,
+            mb.church_id     AS church_id,
+            pl.delta         AS delta,
+            pl.balance_after AS balance_after,
+            pl.reason        AS reason,
+            pl.source_type   AS source_type,
+            pl.status        AS status,
+            pl.expire_at     AS expire_at,
+            pl.created_at    AS created_at
+        FROM POINT_LEDGER pl
+            JOIN MEMBER mb ON pl.member_id = mb.id
+        WHERE pl.id = #{id}
+    </select>
+
+</mapper>

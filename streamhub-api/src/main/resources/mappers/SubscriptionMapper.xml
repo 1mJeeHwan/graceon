@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.streamhub.api.v1.donation.mapper.SubscriptionMapper">
+
+    <sql id="searchWhere">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND m.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND s.status = #{status}
+            </if>
+            <if test="planId != null">
+                AND s.plan_id = #{planId}
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectList" resultType="org.streamhub.api.v1.donation.dto.SubscriptionListItem">
+        SELECT
+            s.id                 AS id,
+            s.member_id          AS member_id,
+            m.name               AS member_name,
+            s.plan_id            AS plan_id,
+            p.name               AS plan_name,
+            p.grade              AS plan_grade,
+            s.status             AS status,
+            s.cycle_no           AS cycle_no,
+            s.billing_key_masked AS billing_key_masked,
+            s.next_billing_at    AS next_billing_at,
+            s.started_at         AS started_at
+        FROM SUBSCRIPTION s
+            JOIN MEMBER m            ON s.member_id = m.id
+            JOIN SUBSCRIPTION_PLAN p ON s.plan_id = p.id
+        <include refid="searchWhere"/>
+        ORDER BY s.started_at DESC, s.id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*)
+        FROM SUBSCRIPTION s
+            JOIN MEMBER m ON s.member_id = m.id
+        <include refid="searchWhere"/>
+    </select>
+
+    <select id="selectDetail" resultType="org.streamhub.api.v1.donation.dto.SubscriptionDetail">
+        SELECT
+            s.id                 AS id,
+            s.member_id          AS member_id,
+            m.name               AS member_name,
+            s.plan_id            AS plan_id,
+            p.name               AS plan_name,
+            p.grade              AS plan_grade,
+            p.price              AS plan_price,
+            p.period_months      AS plan_period_months,
+            s.billing_key_masked AS billing_key_masked,
+            s.status             AS status,
+            s.cycle_no           AS cycle_no,
+            s.next_billing_at    AS next_billing_at,
+            s.started_at         AS started_at,
+            s.canceled_at        AS canceled_at,
+            s.created_at         AS created_at,
+            s.updated_at         AS updated_at
+        FROM SUBSCRIPTION s
+            JOIN MEMBER m            ON s.member_id = m.id
+            JOIN SUBSCRIPTION_PLAN p ON s.plan_id = p.id
+        WHERE s.id = #{id}
+    </select>
+
+</mapper>

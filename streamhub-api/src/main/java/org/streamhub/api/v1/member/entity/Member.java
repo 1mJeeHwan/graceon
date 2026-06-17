@@ -23,7 +23,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "MEMBER", indexes = {
         @Index(name = "idx_member_church", columnList = "church_id"),
         @Index(name = "idx_member_status", columnList = "user_status"),
-        @Index(name = "idx_member_created", columnList = "created_at")
+        @Index(name = "idx_member_created", columnList = "created_at"),
+        @Index(name = "idx_member_grade", columnList = "grade")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -56,6 +57,15 @@ public class Member {
     @Column(name = "live_yn", nullable = false, length = 1)
     private String liveYn;
 
+    /** Membership grade (benefit tier). Defaults to {@link MemberGrade#BRONZE}. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "grade", nullable = false, length = 20)
+    private MemberGrade grade;
+
+    /** Cached cumulative grace-point balance; the point ledger is the source of truth. */
+    @Column(name = "point_balance", nullable = false)
+    private long pointBalance;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -64,7 +74,8 @@ public class Member {
 
     @Builder
     private Member(Long churchId, String email, String password, String name,
-                   String phone, UserStatus userStatus, String liveYn, LocalDateTime createdAt) {
+                   String phone, UserStatus userStatus, String liveYn,
+                   MemberGrade grade, Long pointBalance, LocalDateTime createdAt) {
         this.churchId = churchId;
         this.email = email;
         this.password = password;
@@ -72,6 +83,8 @@ public class Member {
         this.phone = phone;
         this.userStatus = userStatus;
         this.liveYn = liveYn;
+        this.grade = grade != null ? grade : MemberGrade.BRONZE;
+        this.pointBalance = pointBalance != null ? pointBalance : 0L;
         this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
         this.updatedAt = this.createdAt;
     }
@@ -87,6 +100,27 @@ public class Member {
     /** Transitions the member's lifecycle status. */
     public void changeStatus(UserStatus userStatus) {
         this.userStatus = userStatus;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Adjusts the cached point balance by {@code delta} (negative deducts).
+     * The balance may not go below zero.
+     *
+     * @throws IllegalStateException if the resulting balance would be negative
+     */
+    public void addPoint(long delta) {
+        long next = this.pointBalance + delta;
+        if (next < 0) {
+            throw new IllegalStateException("point balance cannot go negative");
+        }
+        this.pointBalance = next;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /** Changes the membership grade. */
+    public void changeGrade(MemberGrade grade) {
+        this.grade = grade;
         this.updatedAt = LocalDateTime.now();
     }
 }

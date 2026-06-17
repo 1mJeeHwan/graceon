@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.streamhub.api.v1.goods.mapper.GoodsMapper">
+
+    <sql id="searchWhere">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (gi.name LIKE CONCAT('%', #{keyword}, '%')
+                     OR gi.code LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="categoryId != null">
+                AND gi.category_id = #{categoryId}
+            </if>
+            <if test="status != null and status != ''">
+                AND gi.status = #{status}
+            </if>
+            <if test="soldOut != null and soldOut != ''">
+                AND gi.sold_out = #{soldOut}
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectList" resultType="org.streamhub.api.v1.goods.dto.GoodsListItem">
+        SELECT
+            gi.id            AS id,
+            gi.category_id   AS category_id,
+            gc.name          AS category_name,
+            gi.name          AS name,
+            gi.code          AS code,
+            gi.price         AS price,
+            gi.list_price    AS list_price,
+            gi.stock         AS stock,
+            gi.noti_qty      AS noti_qty,
+            gi.sold_out      AS sold_out,
+            gi.use_yn        AS use_yn,
+            gi.status        AS status,
+            gi.sale_count    AS sale_count,
+            gi.view_count    AS view_count,
+            gi.thumbnail_key AS thumbnail_key,
+            gi.badges        AS badges,
+            (SELECT COUNT(*) FROM GOODS_OPTION o WHERE o.item_id = gi.id) AS option_count,
+            gi.created_at    AS created_at
+        FROM GOODS_ITEM gi
+            JOIN GOODS_CATEGORY gc ON gi.category_id = gc.id
+        <include refid="searchWhere"/>
+        ORDER BY gi.created_at DESC, gi.id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*)
+        FROM GOODS_ITEM gi
+        <include refid="searchWhere"/>
+    </select>
+
+    <select id="selectDetail" resultType="org.streamhub.api.v1.goods.dto.GoodsDetail">
+        SELECT
+            gi.id            AS id,
+            gi.category_id   AS category_id,
+            gc.name          AS category_name,
+            gi.name          AS name,
+            gi.code          AS code,
+            gi.description   AS description,
+            gi.price         AS price,
+            gi.list_price    AS list_price,
+            gi.stock         AS stock,
+            gi.noti_qty      AS noti_qty,
+            gi.sold_out      AS sold_out,
+            gi.use_yn        AS use_yn,
+            gi.status        AS status,
+            gi.sale_count    AS sale_count,
+            gi.view_count    AS view_count,
+            gi.thumbnail_key AS thumbnail_key,
+            gi.badges        AS badges,
+            gi.created_at    AS created_at,
+            gi.updated_at    AS updated_at
+        FROM GOODS_ITEM gi
+            JOIN GOODS_CATEGORY gc ON gi.category_id = gc.id
+        WHERE gi.id = #{id}
+    </select>
+
+</mapper>

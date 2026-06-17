@@ -1,0 +1,64 @@
+package org.streamhub.api.v1.order;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.streamhub.api.base.response.ResInfinityList;
+import org.streamhub.api.base.response.ResultDTO;
+import org.streamhub.api.v1.order.dto.OrderDetail;
+import org.streamhub.api.v1.order.dto.OrderListItem;
+import org.streamhub.api.v1.order.dto.OrderSearchRequest;
+import org.streamhub.api.v1.order.dto.OrderStatusChangeRequest;
+import org.streamhub.api.v1.order.dto.OrderTrackingRequest;
+
+/**
+ * Order management endpoints (SYSTEM or CHURCH_MANAGER).
+ */
+@Tag(name = "Order", description = "주문 관리")
+@RestController
+@RequestMapping("/v1/order")
+@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
+        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+public class OrderController {
+
+    private final OrderService orderService;
+
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
+
+    @Operation(summary = "주문 목록", description = "검색/상태/기간 필터 + 페이지네이션된 주문 목록.")
+    @PostMapping("/list")
+    public ResultDTO<ResInfinityList<OrderListItem>> list(@RequestBody OrderSearchRequest request) {
+        return ResultDTO.ok(orderService.list(request));
+    }
+
+    @Operation(summary = "주문 상세", description = "주문 + 주문상품 + 입금/환불 영수증.")
+    @GetMapping("/{id}")
+    public ResultDTO<OrderDetail> detail(@PathVariable Long id) {
+        return ResultDTO.ok(orderService.getDetail(id));
+    }
+
+    @Operation(summary = "주문 상태 변경",
+            description = "상태머신 전이 + 재고 차감/복원 + 입금/환불 영수증을 한 트랜잭션으로 처리.")
+    @PatchMapping("/{id}/status")
+    public ResultDTO<OrderDetail> changeStatus(
+            @PathVariable Long id, @Valid @RequestBody OrderStatusChangeRequest request) {
+        return ResultDTO.ok(orderService.changeStatus(id, request));
+    }
+
+    @Operation(summary = "운송장 등록", description = "운송장 입력. READY 상태면 SHIPPING으로 자동 승격.")
+    @PatchMapping("/{id}/tracking")
+    public ResultDTO<OrderDetail> changeTracking(
+            @PathVariable Long id, @Valid @RequestBody OrderTrackingRequest request) {
+        return ResultDTO.ok(orderService.changeTracking(id, request));
+    }
+}

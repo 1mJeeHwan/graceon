@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.streamhub.api.v1.member.entity.MemberGrade;
 import org.streamhub.api.v1.member.entity.UserStatus;
 
 /**
@@ -20,6 +21,8 @@ public class MemberDetail {
     private String phone;
     private UserStatus userStatus;
     private String liveYn;
+    private MemberGrade grade;
+    private long pointBalance;
     private Long churchId;
     private String churchName;
     private Long regionId;

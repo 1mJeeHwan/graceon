@@ -71,6 +71,10 @@ public class StorageService {
         if (!StringUtils.hasText(key)) {
             return null;
         }
+        // Already an absolute URL (e.g. seeded external image) → pass through unchanged.
+        if (key.startsWith("http://") || key.startsWith("https://")) {
+            return key;
+        }
         if (StringUtils.hasText(endpoint)) {
             return endpoint + "/" + bucket + "/" + key;
         }

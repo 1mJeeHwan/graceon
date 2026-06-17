@@ -4,6 +4,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * StreamHub Admin internal API.
@@ -14,6 +15,7 @@ import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServic
  */
 @SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
 @MapperScan("org.streamhub.api.**.mapper")
+@EnableScheduling
 public class StreamhubApiApplication {
 
     public static void main(String[] args) {
