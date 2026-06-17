@@ -84,6 +84,47 @@
 
 ---
 
+## 포트폴리오 어드민 확장 (Goods · Orders · Membership · Dashboard)
+
+그누보드5/영카트5 관리자의 **운영 기능 폭**을 PalmPlus(교회·스트리밍) 도메인으로 재해석해,
+단순 CRUD를 넘어 **주문 상태머신 · 정기빌링 · 포인트 원장 · 통합 운영 대시보드**까지 동작하는 신규 어드민 도메인을 추가했습니다.
+설계 의도·도메인 매핑·시드 전략은 [`docs/portfolio-admin-design.md`](docs/portfolio-admin-design.md) 참고.
+
+### 추가된 도메인 / 화면
+
+| 도메인 | 어필 키워드 | 라우트 |
+|---|---|---|
+| **굿즈샵** | 상품·카테고리(트리)·옵션/재고·갤러리 이미지 · Pareto 판매분포 | `/goods` · `/catalog` |
+| **주문** | **상태머신** `PLACED→PAID→READY→SHIPPING→DONE` (분기 `CANCEL`/`RETURN`), 전이 시 재고·합계 재계산 | `/order` |
+| **정기후원·멤버십 구독** | **빌링 CRON 시뮬**(`@Scheduled`, 5분 주기 스캔→회차 청구), 플랜·등급(브론즈/실버/골드/후원천사) | `/subscription` · `/subscription-plan` · `/billing-calendar` |
+| **후원 내역** | 정기/단건 후원 집계, 캠페인 연동 | `/donation` |
+| **포인트 원장** | **append-only 원장**(delta·balanceAfter), 후원 적립·만료 스케줄러 | `/point` |
+| **통합 운영 대시보드** | KPI 스트립 + ApexCharts(추이/Top N/도넛) + 실시간 활동 피드 + **할 일 큐** · MyBatis 집계 + Redis 캐시 | `/admin-ops` · `/dashboard` |
+| **기능 카탈로그** | 만든 화면 전시, `live` / `mock` 상태 **정직 배지** | `/catalog` |
+
+### 시드 데이터 규모 (실측)
+
+결정론적 `PortfolioSeeder`(고정 seed, 리셋해도 동일)가 **최근 6개월 운영 패턴**으로 생성:
+
+| 굿즈 | 주문 | 후원 | 포인트 원장 | 구독 | 멤버십 플랜 |
+|---|---|---|---|---|---|
+| 64 | 1,700 | 1,400 | 1,306 | 24 | 4 |
+
+- **현실적 분포** — 주문 70/15/10/5 (DONE/SHIPPING·READY/PAID/CANCEL·RETURN), 굿즈 Pareto 롱테일, 일부 품절·재고경고.
+- **저작권 안전 이미지** — Picsum `seed` URL(검증된 HTTP 200 호스트)만 사용.
+- **마스킹 PII** — `faker(ko)` + 마스킹(`김O준`, `010-****-1234`), 실 개인정보 0건.
+- **"데모 · 테스트 모드" 배지** — 실결제/실발송 없음을 명시.
+
+### 검증 상태
+
+- ✅ 백엔드 — 컴파일 / 부팅 / 신규 엔드포인트 200 응답.
+- ✅ 프론트 — 빌드 그린.
+- ✅ 라이브 UI 스모크 — 대시보드 차트 4종 · 굿즈 실이미지 렌더 통과.
+
+> **알려진 개선점** — 일부 today-KPI 집계가 0으로 표시되는 등 폴리시가 남아 있습니다(데모 데이터 분포 기준일 정렬).
+
+---
+
 ## 기술 스택
 
 **백엔드** — Spring Boot 3.4 · Java 21 · MySQL 8 · Redis · JPA(Hibernate) + MyBatis · Spring Security + JWT(auth0) · AWS SDK v2(S3/SQS) · spring-cloud-aws · springdoc OpenAPI · Lombok · JUnit 5 + Mockito
@@ -141,8 +182,9 @@ JUnit 5 + Mockito 단위 테스트 — JWT 발급/검증/회전 + **관리자↔
 
 ```
 streamhub-admin/
-├── streamhub-api/        # Spring Boot (org.streamhub.api: base/ · auth/ · v1/{admin,member,content,statistics,actionlog,post,pub})
-├── streamhub-web/        # 관리자 Next.js (src/app · src/apis/query[Orval] · src/components)
+├── streamhub-api/        # Spring Boot (org.streamhub.api: base/ · auth/ · v1/{admin,member,content,statistics,actionlog,post,pub,goods,order,donation,dashboard})
+│                         #   포트폴리오 확장: v1/{goods,order,donation,dashboard} + member/Point* · base/config/PortfolioSeeder
+├── streamhub-web/        # 관리자 Next.js (src/app/(protected)/{admin-ops,goods,order,donation,subscription,subscription-plan,point,catalog,billing-calendar} · src/apis/query[Orval])
 ├── streamhub-user-web/   # 사용자 Next.js (src/app · src/components · src/lib[수동 fetch+RQ])
 ├── deploy/               # Terraform IaC · 배포 스크립트 · 런북
 ├── docker-compose.yml    # MySQL · Redis · MinIO · LocalStack

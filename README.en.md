@@ -86,6 +86,50 @@ A mobile-first public media site in the tone of a real production user app.
 
 ---
 
+## Portfolio admin expansion (Goods · Orders · Membership · Dashboard)
+
+Reinterprets the **operational breadth of the gnuboard5 / youngcart5 admin** into the PalmPlus
+(church/streaming) domain — going beyond simple CRUD to working **order state machines, recurring
+billing, a point ledger, and a unified operations dashboard**. See
+[`docs/portfolio-admin-design.md`](docs/portfolio-admin-design.md) for the design intent, domain
+mapping, and seed strategy.
+
+### Domains / screens added
+
+| Domain | Highlights | Routes |
+|---|---|---|
+| **Goods shop** | products · category tree · options/stock · gallery images · Pareto sale distribution | `/goods` · `/catalog` |
+| **Orders** | **state machine** `PLACED→PAID→READY→SHIPPING→DONE` (branches `CANCEL`/`RETURN`), stock & total recompute on transition | `/order` |
+| **Recurring donation / membership subscription** | **billing CRON sim** (`@Scheduled`, 5-min scan → cycle charge), plans & grades (Bronze/Silver/Gold/Angel) | `/subscription` · `/subscription-plan` · `/billing-calendar` |
+| **Donation history** | recurring / one-off aggregation, campaign-linked | `/donation` |
+| **Point ledger** | **append-only ledger** (delta · balanceAfter), donation accrual & expiry scheduler | `/point` |
+| **Unified ops dashboard** | KPI strip + ApexCharts (trend/Top N/donut) + live activity feed + **to-do queue** · MyBatis aggregation + Redis cache | `/admin-ops` · `/dashboard` |
+| **Feature catalog** | showcases built screens with honest `live` / `mock` status badges | `/catalog` |
+
+### Seed data scale (measured)
+
+A deterministic `PortfolioSeeder` (fixed seed, reset-stable) generates a **6-month operational pattern**:
+
+| Goods | Orders | Donations | Point ledger | Subscriptions | Membership plans |
+|---|---|---|---|---|---|
+| 64 | 1,700 | 1,400 | 1,306 | 24 | 4 |
+
+- **Realistic distribution** — orders 70/15/10/5 (DONE/SHIPPING·READY/PAID/CANCEL·RETURN), Pareto goods
+  long-tail, some sold-out / low-stock items.
+- **Copyright-safe images** — Picsum `seed` URLs only (verified HTTP 200 host).
+- **Masked PII** — `faker(ko)` + masking (`Kim O-jun`, `010-****-1234`), zero real personal data.
+- **"Demo · test mode" badge** — no real payments or dispatch.
+
+### Verification status
+
+- ✅ Backend — compiles / boots / new endpoints return 200.
+- ✅ Frontend — build green.
+- ✅ Live UI smoke — 4 dashboard charts and real goods images render.
+
+> **Known polish** — a few today-KPI aggregates still read 0 (demo data distribution vs. reference-date alignment).
+
+---
+
 ## Tech stack
 
 **Backend** — Spring Boot 3.4 · Java 21 · MySQL 8 · Redis · JPA(Hibernate) + MyBatis · Spring Security +
@@ -150,8 +194,9 @@ everything down in one shot (cost safety).
 
 ```
 streamhub-admin/
-├── streamhub-api/        # Spring Boot (base/ · auth/ · v1/{admin,member,content,statistics,actionlog,post,pub})
-├── streamhub-web/        # Admin Next.js (src/app · src/apis/query[Orval] · src/components)
+├── streamhub-api/        # Spring Boot (base/ · auth/ · v1/{admin,member,content,statistics,actionlog,post,pub,goods,order,donation,dashboard})
+│                         #   portfolio expansion: v1/{goods,order,donation,dashboard} + member/Point* · base/config/PortfolioSeeder
+├── streamhub-web/        # Admin Next.js (src/app/(protected)/{admin-ops,goods,order,donation,subscription,subscription-plan,point,catalog,billing-calendar} · src/apis/query[Orval])
 ├── streamhub-user-web/   # User Next.js (src/app · src/components · src/lib[manual fetch+RQ])
 ├── deploy/               # Terraform IaC · deploy scripts · runbook
 ├── docker-compose.yml    # MySQL · Redis · MinIO · LocalStack
