@@ -8,6 +8,7 @@ import { X, CheckCircle2, CreditCard, ShieldAlert, Loader2, LogIn } from "lucide
 import clsx from "clsx";
 import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
+import { loadTossPayments } from "@/lib/toss";
 import {
   orderApi,
   orderKeys,
@@ -17,9 +18,10 @@ import {
 } from "@/lib/orders";
 
 /**
- * Payment methods shown in the checkout modal. Logos are rendered as styled text labels — no
- * external PG SDK is loaded. Selecting one sets `payProvider` on the real POST /pub/v1/orders
- * call: no money moves, but a genuine order row is created against the member's account.
+ * Payment methods shown in the checkout modal. TOSS is a REAL PG integration (Toss v2 sandbox):
+ * selecting it runs prepare → Toss payment window → /checkout/success → confirm, which calls the
+ * live Toss confirm API (test keys, no real charge). The other methods are mock one-shot orders
+ * (POST /pub/v1/orders) — a genuine order row is created, but no PG window opens and no money moves.
  */
 interface MethodMeta {
   id: PayProvider;
@@ -117,6 +119,43 @@ export function CheckoutModal({
       setAuthRequired(true);
       return;
     }
+
+    // TOSS = real PG: prepare an order, then hand off to the Toss window. On success the SDK
+    // redirects the page to /checkout/success, which confirms against the live Toss API.
+    if (method === "TOSS") {
+      setStage("processing");
+      try {
+        const prep = await orderApi.prepare({ albumId: item.albumId, provider: "TOSS" }, token);
+        const TossPayments = await loadTossPayments();
+        const tossPayments = TossPayments(prep.clientKey);
+        const payment = tossPayments.payment({ customerKey: prep.customerKey });
+        await payment.requestPayment({
+          method: "CARD",
+          amount: { currency: "KRW", value: prep.amount },
+          orderId: prep.orderNo,
+          orderName: prep.orderName,
+          successUrl: `${window.location.origin}/checkout/success`,
+          failUrl: `${window.location.origin}/checkout/fail`,
+          customerName: member?.name,
+        });
+        // requestPayment redirects on success; reaching here without redirect is unexpected.
+      } catch (err) {
+        setStage("select");
+        if (err instanceof ApiError && err.status === 401) {
+          setAuthRequired(true);
+          return;
+        }
+        // Toss throws on user-cancel/validation with a {code,message}-shaped error.
+        const message =
+          err && typeof err === "object" && "message" in err
+            ? String((err as { message: unknown }).message)
+            : "결제를 진행할 수 없습니다.";
+        setError(message);
+      }
+      return;
+    }
+
+    // Other methods = mock one-shot order (no PG window).
     setStage("processing");
     try {
       const result = await orderApi.create({ albumId: item.albumId, payProvider: method }, token);
@@ -133,6 +172,8 @@ export function CheckoutModal({
       setError(err instanceof Error ? err.message : "주문 생성에 실패했습니다.");
     }
   };
+
+  const isToss = method === "TOSS";
 
   return (
     <div
@@ -159,16 +200,20 @@ export function CheckoutModal({
           </button>
         </div>
 
-        {/* Test-mode banner (required) */}
+        {/* Test-mode banner (required) — copy adapts to the selected method's honesty level. */}
         <div className="border-b border-border bg-point/10 px-4 py-2.5">
           <div className="flex items-center gap-2">
             <ShieldAlert className="h-4 w-4 shrink-0 text-point" />
             <p className="text-[12px] font-semibold leading-tight text-point">
-              테스트 모드 · 실결제 아님 — 실제 PG 미연동
+              {isToss
+                ? "토스 테스트 결제 · 실제 PG 연동(샌드박스) — 실제 출금 없음"
+                : "목업 결제 · 실결제 아님 — PG 미연동(즉시 주문 생성)"}
             </p>
           </div>
           <p className="mt-1 pl-6 text-[11px] leading-tight text-point/80">
-            단, 데모 주문은 회원 계정에 실제로 생성됩니다(마이페이지 구매 내역에서 확인).
+            {isToss
+              ? "실제 토스 결제창이 열리고 토스 승인 API를 호출합니다. 테스트 키라 돈은 빠져나가지 않습니다."
+              : "데모 주문은 회원 계정에 실제로 생성됩니다(마이페이지 구매 내역에서 확인)."}
           </p>
         </div>
 
@@ -214,27 +259,40 @@ export function CheckoutModal({
                 </div>
               </div>
 
-              {/* Test card input */}
-              <div>
-                <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-inactive">
-                  <CreditCard className="h-3.5 w-3.5" />
-                  테스트 카드번호
-                </label>
-                <input
-                  inputMode="numeric"
-                  value={cardNo}
-                  onChange={(e) => setCardNo(formatCardNo(e.target.value))}
-                  placeholder={TEST_CARD}
-                  className="w-full rounded-xl border border-border bg-surface px-3.5 py-3 font-mono text-sm tracking-wider text-active outline-none transition placeholder:text-inactive focus:border-primary"
-                />
-                <button
-                  type="button"
-                  onClick={() => setCardNo(TEST_CARD)}
-                  className="mt-1.5 text-[11px] text-primary underline-offset-2 active:underline"
-                >
-                  테스트 카드번호 자동 입력 (4242…)
-                </button>
-              </div>
+              {/* Card input — only for mock methods. Toss collects card data in its own window. */}
+              {isToss ? (
+                <div className="rounded-card border border-primary/30 bg-primary/5 px-4 py-3">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                    <CreditCard className="h-3.5 w-3.5" />
+                    토스 결제창에서 카드 정보를 입력합니다
+                  </div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-inactive">
+                    “결제하기”를 누르면 토스 결제창이 열립니다. 테스트 환경이라 실제 카드로 결제해도
+                    출금되지 않습니다(토스 공식 정책 — 별도 테스트 카드번호 없음).
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <label className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-inactive">
+                    <CreditCard className="h-3.5 w-3.5" />
+                    테스트 카드번호
+                  </label>
+                  <input
+                    inputMode="numeric"
+                    value={cardNo}
+                    onChange={(e) => setCardNo(formatCardNo(e.target.value))}
+                    placeholder={TEST_CARD}
+                    className="w-full rounded-xl border border-border bg-surface px-3.5 py-3 font-mono text-sm tracking-wider text-active outline-none transition placeholder:text-inactive focus:border-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setCardNo(TEST_CARD)}
+                    className="mt-1.5 text-[11px] text-primary underline-offset-2 active:underline"
+                  >
+                    테스트 카드번호 자동 입력 (4242…)
+                  </button>
+                </div>
+              )}
 
               {error && (
                 <p className="rounded-lg border border-point/40 bg-point/10 px-3 py-2 text-[12px] font-medium text-point">
@@ -257,7 +315,7 @@ export function CheckoutModal({
               {stage === "processing" ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  주문 생성 중…
+                  {isToss ? "토스 결제창 여는 중…" : "주문 생성 중…"}
                 </>
               ) : member ? (
                 <>{formatKRW(total)} 결제하기</>

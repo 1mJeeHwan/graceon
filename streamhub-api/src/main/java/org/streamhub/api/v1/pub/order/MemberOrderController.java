@@ -19,6 +19,9 @@ import org.streamhub.api.base.response.ResultDTO;
 import org.streamhub.api.v1.pub.order.dto.MemberOrderCreateRequest;
 import org.streamhub.api.v1.pub.order.dto.MemberOrderListItem;
 import org.streamhub.api.v1.pub.order.dto.MemberOrderResult;
+import org.streamhub.api.v1.pub.order.dto.MemberPaymentConfirmRequest;
+import org.streamhub.api.v1.pub.order.dto.MemberPaymentPrepareRequest;
+import org.streamhub.api.v1.pub.order.dto.MemberPaymentPrepareResult;
 
 /**
  * Member-authenticated album purchase under the public ({@code /pub/**}, permitAll) namespace.
@@ -47,6 +50,24 @@ public class MemberOrderController {
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @Valid @RequestBody MemberOrderCreateRequest request) {
         return ResultDTO.ok(memberOrderService.purchase(resolveMemberId(authorization), request));
+    }
+
+    @Operation(summary = "결제 준비(실 PG)",
+            description = "결제창을 열기 전에 주문을 생성하고 결제창에 넘길 orderNo/금액/클라이언트키를 발급한다.")
+    @PostMapping("/prepare")
+    public ResultDTO<MemberPaymentPrepareResult> prepare(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @Valid @RequestBody MemberPaymentPrepareRequest request) {
+        return ResultDTO.ok(memberOrderService.prepare(resolveMemberId(authorization), request));
+    }
+
+    @Operation(summary = "결제 승인(실 PG)",
+            description = "결제창이 돌려준 paymentKey/orderId/amount로 실제 PG 승인을 호출하고 주문을 PAID로 전이한다.")
+    @PostMapping("/confirm")
+    public ResultDTO<MemberOrderResult> confirm(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @Valid @RequestBody MemberPaymentConfirmRequest request) {
+        return ResultDTO.ok(memberOrderService.confirm(resolveMemberId(authorization), request));
     }
 
     @Operation(summary = "구매내역", description = "로그인 회원의 주문 목록을 최신순으로 반환한다.")

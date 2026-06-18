@@ -28,8 +28,9 @@ member, content, post, statistics, **dashboard**, goods, order, subscription/don
 ### 관리자 사이트 — 15개 화면 라이브
 admin-ops(통합 운영 대시보드: KPI6+ApexCharts4+실시간피드+할일큐), dashboard(통계), catalog(기능 카탈로그), member(회원), content(콘텐츠 CRUD+업로드), goods(+add/[id], AG Grid 인라인+옵션/이미지), order(+[id], 상태머신 Stepper), **payment(결제내역: 결제/환불 영수증 조인 목록, 기간/수단/구분 필터, 주문딥링크)**, subscription(+[id]), subscription-plan, donation, point, billing-calendar, action-log. + 확장 5종(churches/albums/stores/worship/sms).
 
-### 어댑터 seam (실키 주입 지점, 현재 전부 목업/시드)
-PaymentProvider(toss/paypal/kakao/card) · SmsSender(aligo/solapi) · ChatProvider(llm) · MusicPreviewProvider(external) · GeocodeProvider(kakao) · PostcodeProvider · MapProvider(kakao). `.env` 플래그로 전환.
+### 어댑터 seam (실키 주입 지점)
+PaymentProvider(**toss=실 샌드박스 연동 완료**/paypal·kakao=스텁) · SmsSender(aligo/solapi) · ChatProvider(llm) · MusicPreviewProvider(external) · GeocodeProvider(kakao) · PostcodeProvider · MapProvider(kakao). `.env` 플래그로 전환.
+> **토스 실연동(2026-06-18):** 음반 결제의 토스 옵션은 **실제 Toss v2 결제창 + 실 confirm API** 호출(`api.tosspayments.com/v1/payments/confirm`). 기본키는 토스 공개 문서용 테스트키(`PAYMENT_TOSS_CLIENT_KEY`/`PAYMENT_TOSS_SECRET_KEY`로 override, 실 가맹점키 주입 시 코드변경 없이 라이브). 테스트키라 실제 출금 없음. 카카오/페이팔은 동일 패턴으로 후속 예정.
 
 ### 인프라/배포 자산
 - **무료 배포 패키지**: `docker-compose.deploy.yml`(전체 스택+Caddy 자동HTTPS) + `DEPLOY-FREE.md`($0 런북: Oracle Free VM+DuckDNS+Vercel) — **api 이미지 빌드 성공(IMG=0) 검증**
@@ -61,7 +62,7 @@ PaymentProvider(toss/paypal/kakao/card) · SmsSender(aligo/solapi) · ChatProvid
 ## 3. 부분 구현 기능 목록
 
 - **챗봇**: 프론트 위젯 동작하나 백엔드 `/v1/chat/**`가 비공개(인증) → user-web은 **목업 폴백**으로 동작. (공개화 1줄이면 실백엔드 사용 — 사용자 "제외2" 지시로 보류)
-- **결제**: 음반은 실주문 생성됨. 굿즈/구독 결제는 관리자 시드/플로우만(공개 구매는 음반만).
+- **결제**: 음반은 실주문 생성됨. **토스=실 PG 테스트 연동(prepare→토스 결제창→confirm, 실 confirm API 호출)**. 카카오/페이팔/카드 버튼은 목업 1단계 주문(즉시 PAID, 실 PG 미연동). 굿즈/구독 결제는 관리자 시드/플로우만(공개 구매는 음반만).
 - **장바구니**: "장바구니" 버튼은 데모(담김 표시만), 다중상품 카트→주문은 미구현(단건 즉시구매만).
 - **카탈로그**: 페이지·필터·배지 동작하나 카드 데이터가 확장 미반영(위 2 참조).
 - **이미지 업로드**: 백엔드 StorageService(MinIO) 동작, 관리자 content/goods 업로드 화면 있음. church/album 업로드 엔드포인트는 있으나 화면 없음.
@@ -167,6 +168,8 @@ PaymentProvider(toss/paypal/kakao/card) · SmsSender(aligo/solapi) · ChatProvid
 - [x] **[P0] 관리자 관리화면**: 교회·앨범·매장·예배신청·SMS **+ 결제내역** 전부 완료(사이드바 메뉴 포함).
 - [x] **[P1] 카탈로그 확장 반영**: 신규 도메인 카드 + live/mock 배지 + 결제내역 카드 live화.
 - [x] **[P1] 카탈로그 대표 스크린샷**: 7종 실캡처 + /catalog 31썸네일 로드 검증(broken 0).
+- [x] **실 PG 연동 — 토스**: prepare/confirm 2단계 + Toss v2 결제창 + 실 confirm API. 검증 완료(결제창 렌더·confirm 실 API 호출·금액위변조 차단).
+- [ ] **실 PG 연동 — 카카오페이 → 페이팔**(사용자 지정 순서): 동일 prepare/confirm 패턴. 카카오=ready/approve(tid+pg_token), 페이팔=create/capture(sandbox). 어댑터 스텁에 실 호출 채우기.
 - [ ] **[선택] AWS 라이브(C7)**: HLS 목업 권장(stream 도메인 + 관리자 송출 콘솔 + user-web hls.js 플레이어). 품질점수 무관, 포트폴리오 도메인 매트릭스 완성용.
 - [ ] **[P2] 챗봇 백엔드 공개화**: `/v1/chat/**` permitAll → user-web 실 룰베이스.
 - [ ] **[P2] 장바구니/다중구매·배송지 입력**(선택 고도화).

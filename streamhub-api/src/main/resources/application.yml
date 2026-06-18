@@ -60,13 +60,17 @@ app:
     geocode:
       provider: ${CHURCH_GEOCODE_PROVIDER:seed}
       kakao-rest-key: ${CHURCH_GEOCODE_KAKAO_REST_KEY:}
-  # Payment (C4) PG seam. mock = fake approve, no real charge; toss/paypal/kakao = real key
-  # injection points (@ConditionalOnProperty-gated). test-mode keeps every approval a demo no-op.
+  # Payment (C4) PG seam. mock = fake approve, no real charge. toss = REAL sandbox integration:
+  # the album checkout's Toss option calls the live Toss confirm API with the keys below. The
+  # defaults are Toss's public documentation test keys (test_ck_/test_sk_) — no real money moves;
+  # inject a real merchant key via PAYMENT_TOSS_* to go live with no code change. paypal/kakao
+  # remain @ConditionalOnProperty-gated stubs. test-mode only affects the mock approval memo.
   payment:
     provider: ${PAYMENT_PROVIDER:mock}
     test-mode: ${PAYMENT_TEST_MODE:true}
     toss:
-      secret-key: ${PAYMENT_TOSS_SECRET_KEY:}
+      client-key: ${PAYMENT_TOSS_CLIENT_KEY:test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq}
+      secret-key: ${PAYMENT_TOSS_SECRET_KEY:test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R}
     paypal:
       client-id: ${PAYMENT_PAYPAL_CLIENT_ID:}
       secret: ${PAYMENT_PAYPAL_SECRET:}

@@ -27,6 +27,31 @@ export interface OrderResult {
   paidAt: string | null;
 }
 
+/** Body of POST /pub/v1/orders/prepare (phase 1 of a real-PG purchase). */
+export interface PreparePaymentInput {
+  albumId: number;
+  provider: PayProvider;
+}
+
+/** Result of /prepare — everything the browser needs to open the PG payment window. */
+export interface PreparePaymentResult {
+  orderNo: string;
+  orderName: string;
+  amount: number;
+  provider: PayProvider;
+  /** PG client (publishable) key for the browser SDK. */
+  clientKey: string;
+  /** Member-scoped customer key for the window. */
+  customerKey: string;
+}
+
+/** Body of POST /pub/v1/orders/confirm — the values the PG window redirects back with. */
+export interface ConfirmPaymentInput {
+  orderNo: string;
+  paymentKey: string;
+  amount: number;
+}
+
 /** One row of GET /pub/v1/orders (my order history). */
 export interface OrderListItem {
   orderNo: string;
@@ -46,9 +71,15 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 export const orderApi = {
-  /** Create a real order for an album, authenticated with the member token. */
+  /** One-shot mock purchase: creates an order and approves it server-side (no PG window). */
   create: (input: CreateOrderInput, token: string) =>
     request<OrderResult>("/pub/v1/orders", { method: "POST", body: input, token }),
+  /** Real-PG phase 1: create the order and get the payment-window parameters (clientKey, amount…). */
+  prepare: (input: PreparePaymentInput, token: string) =>
+    request<PreparePaymentResult>("/pub/v1/orders/prepare", { method: "POST", body: input, token }),
+  /** Real-PG phase 2: confirm with the key the window redirected back with (calls the live PG). */
+  confirm: (input: ConfirmPaymentInput, token: string) =>
+    request<OrderResult>("/pub/v1/orders/confirm", { method: "POST", body: input, token }),
   /** List the signed-in member's orders, newest first. */
   list: (token: string) => request<OrderListItem[]>("/pub/v1/orders", { token }),
 };

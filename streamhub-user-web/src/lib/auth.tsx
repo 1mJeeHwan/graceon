@@ -66,3 +66,12 @@ export function useAuth(): AuthState {
   if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
   return ctx;
 }
+
+/**
+ * Reads the stored member token synchronously. Used by the PG redirect landing pages
+ * (/checkout/success|fail), which run before the AuthProvider has revalidated /me and so
+ * cannot rely on {@link useAuth}().token being populated yet.
+ */
+export function getStoredToken(): string | null {
+  return typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+}

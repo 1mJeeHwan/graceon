@@ -30,13 +30,24 @@ import org.streamhub.api.v1.payment.dto.PaymentResultDto;
 import org.streamhub.api.v1.pub.order.dto.MemberOrderCreateRequest;
 import org.streamhub.api.v1.pub.order.dto.MemberOrderListItem;
 import org.streamhub.api.v1.pub.order.dto.MemberOrderResult;
+import org.streamhub.api.v1.pub.order.dto.MemberPaymentConfirmRequest;
+import org.streamhub.api.v1.pub.order.dto.MemberPaymentPrepareRequest;
+import org.streamhub.api.v1.pub.order.dto.MemberPaymentPrepareResult;
 
 /**
  * Public (member-authenticated) album purchase. Creates a real {@code ORDERS} row + line item from
- * an on-sale album's bridge {@code GOODS_ITEM}, then drives it to {@code PAID} through the existing
- * mock {@link PaymentService} (request → approve) — reusing the order state machine for stock
- * deduction and the PAY receipt. No new state machine is introduced; the resulting order is visible
- * in the admin order list. All approvals are demo/test (실 PG 미연동).
+ * an on-sale album's bridge {@code GOODS_ITEM}, then drives it to {@code PAID} through
+ * {@link PaymentService} (request → approve) — reusing the order state machine for stock deduction
+ * and the PAY receipt. No new state machine is introduced; the resulting order is visible in the
+ * admin order list.
+ *
+ * <p>Two purchase paths share the same order-creation core:
+ * <ul>
+ *   <li>{@link #purchase} — one-shot mock: create + request + approve server-side (PAID immediately).</li>
+ *   <li>{@link #prepare} → browser PG window → {@link #confirm} — real PG (Toss): the transaction key
+ *       only exists after the user completes the window, so approval is a second client-driven call.</li>
+ * </ul>
+ * The mock path is a demo no-op; the Toss path calls the real Toss sandbox confirm API.
  */
 @Service
 public class MemberOrderService {
@@ -53,6 +64,7 @@ public class MemberOrderService {
     private final OrderItemRepository orderItemRepository;
     private final OrderReceiptRepository orderReceiptRepository;
     private final PaymentService paymentService;
+    private final String tossClientKey;
     private final SecureRandom random = new SecureRandom();
 
     public MemberOrderService(
@@ -62,7 +74,9 @@ public class MemberOrderService {
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
             OrderReceiptRepository orderReceiptRepository,
-            PaymentService paymentService) {
+            PaymentService paymentService,
+            @org.springframework.beans.factory.annotation.Value("${app.payment.toss.client-key:}")
+            String tossClientKey) {
         this.albumRepository = albumRepository;
         this.goodsItemRepository = goodsItemRepository;
         this.memberRepository = memberRepository;
@@ -70,6 +84,7 @@ public class MemberOrderService {
         this.orderItemRepository = orderItemRepository;
         this.orderReceiptRepository = orderReceiptRepository;
         this.paymentService = paymentService;
+        this.tossClientKey = tossClientKey;
     }
 
     /**
@@ -82,10 +97,73 @@ public class MemberOrderService {
      */
     @Transactional
     public MemberOrderResult purchase(Long memberId, MemberOrderCreateRequest request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ApiException(ResultCode.UNAUTHORIZED));
+        Member member = requireMember(memberId);
+        Order order = createAlbumOrder(member, request.albumId());
 
-        Album album = albumRepository.findById(request.albumId())
+        // One-shot path is the demo mock: it approves server-side with no payment window, so it can
+        // never carry a real PG transaction key. Force MOCK regardless of the requested method —
+        // real-PG purchases go through prepare → window → confirm instead.
+        approvePayment(order.getId(), "MOCK");
+
+        Order paid = orderRepository.findById(order.getId()).orElseThrow();
+        return new MemberOrderResult(
+                paid.getOrderNo(), paid.getStatus(), paid.getTotal(),
+                paidAt(order.getId()), true);
+    }
+
+    /**
+     * Phase 1 of a real-PG purchase: creates the order (PLACED) and marks payment {@code REQUESTED}
+     * via {@link PaymentService#request}, then returns everything the browser needs to open the PG
+     * payment window. No external PG call happens here — for Toss the window (and the later confirm)
+     * carry the real transaction. The {@code orderNo}/{@code amount} returned are authoritative.
+     */
+    @Transactional
+    public MemberPaymentPrepareResult prepare(Long memberId, MemberPaymentPrepareRequest request) {
+        Member member = requireMember(memberId);
+        String provider = resolveProvider(request.provider());
+        Order order = createAlbumOrder(member, request.albumId());
+
+        paymentService.request(new PayRequestCommand(order.getId(), provider));
+
+        String orderName = firstProductName(order.getId());
+        String customerKey = "member-" + member.getId();
+        return new MemberPaymentPrepareResult(
+                order.getOrderNo(), orderName, order.getTotal(), provider, tossClientKey, customerKey);
+    }
+
+    /**
+     * Phase 2 of a real-PG purchase: the payment window redirected back with its transaction key.
+     * Re-verifies the order belongs to the member and the reported amount matches the order total
+     * (tamper guard), then confirms via {@link PaymentService#approve} — which for Toss calls the
+     * real confirm API and, on success, drives the order {@code PLACED → PAID}.
+     *
+     * @throws ApiException {@code NOT_FOUND} if the order is missing, {@code UNAUTHORIZED} if it
+     *                      belongs to another member, {@code INVALID_PARAMETER} on amount mismatch
+     *                      or a PG decline (carrying the PG's message)
+     */
+    @Transactional
+    public MemberOrderResult confirm(Long memberId, MemberPaymentConfirmRequest request) {
+        requireMember(memberId);
+        Order order = orderRepository.findByOrderNo(request.orderNo())
+                .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
+        if (!order.getMemberId().equals(memberId)) {
+            throw new ApiException(ResultCode.UNAUTHORIZED);
+        }
+        if (!order.getTotal().equals(request.amount())) {
+            throw new ApiException(ResultCode.INVALID_PARAMETER, "결제 금액이 일치하지 않습니다");
+        }
+
+        paymentService.approve(new PayApproveCommand(order.getId(), request.paymentKey(), null));
+
+        Order paid = orderRepository.findById(order.getId()).orElseThrow();
+        return new MemberOrderResult(
+                paid.getOrderNo(), paid.getStatus(), paid.getTotal(),
+                paidAt(order.getId()), true);
+    }
+
+    /** Validates an on-sale album and creates the order + single line item (PLACED). */
+    private Order createAlbumOrder(Member member, Long albumId) {
+        Album album = albumRepository.findById(albumId)
                 .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
         if (album.getStatus() != AlbumStatus.ON_SALE) {
             throw new ApiException(ResultCode.NOT_FOUND);
@@ -93,7 +171,6 @@ public class MemberOrderService {
         if (album.getGoodsItemId() == null) {
             throw new ApiException(ResultCode.INVALID_PARAMETER, "구매할 수 없는 앨범입니다");
         }
-
         GoodsItem goods = goodsItemRepository.findById(album.getGoodsItemId())
                 .orElseThrow(() -> new ApiException(ResultCode.INVALID_PARAMETER, "구매할 수 없는 앨범입니다"));
         long price = goods.getPrice();
@@ -108,13 +185,12 @@ public class MemberOrderService {
                 .qty(1)
                 .lineTotal(price)
                 .build());
+        return order;
+    }
 
-        approvePayment(order.getId(), resolveProvider(request.payProvider()));
-
-        Order paid = orderRepository.findById(order.getId()).orElseThrow();
-        return new MemberOrderResult(
-                paid.getOrderNo(), paid.getStatus(), paid.getTotal(),
-                paidAt(order.getId()), true);
+    private Member requireMember(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new ApiException(ResultCode.UNAUTHORIZED));
     }
 
     /** A member's own purchase history, newest first. */

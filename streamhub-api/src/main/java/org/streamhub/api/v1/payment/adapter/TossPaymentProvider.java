@@ -1,20 +1,46 @@
 package org.streamhub.api.v1.payment.adapter;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.streamhub.api.base.exception.ApiException;
+import org.streamhub.api.base.response.ResultCode;
 
 /**
- * Toss Payments adapter — <b>실키 주입 지점(스텁)</b>. Registered only when
- * {@code app.payment.provider=toss}. The default demo deployment uses {@link MockPaymentProvider}.
+ * Toss Payments adapter (C4) — <b>real sandbox integration</b>. Unlike {@link MockPaymentProvider},
+ * {@link #approve} calls the live Toss confirm API
+ * ({@code POST https://api.tosspayments.com/v1/payments/confirm}) with HTTP Basic auth derived
+ * from the configured secret key. In the demo the secret key defaults to Toss's public
+ * documentation test key ({@code test_sk_...}), so no real money moves; a real merchant key
+ * injected via {@code PAYMENT_TOSS_SECRET_KEY} switches it to a live PG without code changes.
+ *
+ * <p>The Toss v2 payment window runs in the browser and is what actually authorises the card, so
+ * the server {@link #requestPayment} is a no-op: the real transaction id ({@code paymentKey}) is
+ * issued by the window and arrives here at the {@link #approve} step (as {@code txnId}). The amount
+ * confirmed is always the server-computed {@code order.total} carried on {@link PaymentRequest};
+ * Toss independently rejects any amount/orderId mismatch.
  */
 @Component
-@ConditionalOnProperty(name = "app.payment.provider", havingValue = "toss")
 public class TossPaymentProvider implements PaymentProvider {
 
-    /** ← 실 {@code test_ck_} 시크릿 키 주입점 (application-prod.yml / 환경변수). */
-    @Value("${app.payment.toss.secret-key:}")
-    private String secretKey;
+    private static final String CONFIRM_URL = "https://api.tosspayments.com/v1/payments/confirm";
+
+    private final String secretKey;
+    private final RestClient restClient;
+
+    public TossPaymentProvider(
+            @Value("${app.payment.toss.secret-key:}") String secretKey,
+            RestClient.Builder restClientBuilder) {
+        this.secretKey = secretKey;
+        this.restClient = restClientBuilder.build();
+    }
 
     @Override
     public String code() {
@@ -23,15 +49,54 @@ public class TossPaymentProvider implements PaymentProvider {
 
     @Override
     public PaymentResult requestPayment(PaymentRequest request) {
-        // TODO(실키): 위젯 SDK가 클라에서 결제창을 띄우므로 서버 requestPayment는 보통 no-op.
-        throw new UnsupportedOperationException("실 PG 미연동(데모) — app.payment.provider=mock 사용");
+        // v2 결제창이 클라이언트에서 결제를 개시하므로 서버 requestPayment는 no-op이다.
+        // 실제 거래키(paymentKey)는 결제창 완료 후 successUrl로 전달되어 approve 단계로 들어온다.
+        return PaymentResult.requested(code(), null);
     }
 
     @Override
     public PaymentResult approve(PaymentRequest request, String txnId, String maskedCard) {
-        // TODO(실키): RestClient POST https://api.tosspayments.com/v1/payments/confirm
-        //   Authorization: Basic base64(secretKey + ":") — 샌드박스 test_ck_ 키로 즉시 동작.
-        //   body: { paymentKey: txnId, orderId: request.orderNo(), amount: request.amount() }
-        throw new UnsupportedOperationException("실 PG 미연동(데모) — app.payment.provider=mock 사용");
+        if (secretKey == null || secretKey.isBlank()) {
+            throw new ApiException(ResultCode.INVALID_PARAMETER,
+                    "토스 시크릿 키 미설정 (PAYMENT_TOSS_SECRET_KEY)");
+        }
+        if (txnId == null || txnId.isBlank()) {
+            throw new ApiException(ResultCode.INVALID_PARAMETER, "paymentKey가 없습니다");
+        }
+
+        String basic = Base64.getEncoder()
+                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
+        Map<String, Object> body = Map.of(
+                "paymentKey", txnId,
+                "orderId", request.orderNo(),
+                "amount", request.amount());
+
+        // exchange() lets us read Toss's structured {code,message} error body instead of letting
+        // RestClient throw an opaque 4xx — so a declined/expired payment surfaces a real message.
+        ResponseEntity<JsonNode> response = restClient.post()
+                .uri(CONFIRM_URL)
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + basic)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .exchange((req, res) -> ResponseEntity
+                        .status(res.getStatusCode())
+                        .body(res.bodyTo(JsonNode.class)));
+
+        JsonNode node = response.getBody();
+        if (response.getStatusCode().is2xxSuccessful()) {
+            long approved = node != null && node.hasNonNull("totalAmount")
+                    ? node.get("totalAmount").asLong() : request.amount();
+            String method = node != null && node.hasNonNull("method")
+                    ? node.get("method").asText() : "";
+            String memo = ("토스 승인(테스트) " + method).trim();
+            return PaymentResult.approved(code(), txnId, approved, memo);
+        }
+
+        String tossCode = node != null && node.hasNonNull("code")
+                ? node.get("code").asText() : "TOSS_ERROR";
+        String tossMsg = node != null && node.hasNonNull("message")
+                ? node.get("message").asText() : "토스 결제 승인에 실패했습니다";
+        throw new ApiException(ResultCode.INVALID_PARAMETER,
+                "토스 결제 실패(" + tossCode + "): " + tossMsg);
     }
 }
