@@ -29,7 +29,7 @@ public class SweetTrackerDeliveryProvider implements DeliveryTrackingProvider {
     private final RestClient restClient;
 
     public SweetTrackerDeliveryProvider(
-            @Value("${app.delivery.sweettracker.api-key:eq04nwS5eQul42h6BZig3Q}") String apiKey,
+            @Value("${app.delivery.sweettracker.api-key:}") String apiKey,
             RestClient.Builder restClientBuilder) {
         this.apiKey = apiKey;
         this.restClient = restClientBuilder.build();
