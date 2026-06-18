@@ -6,6 +6,7 @@ import { TabBar } from "@/components/TabBar";
 import { MiniPreviewPlayer } from "@/components/preview/MiniPreviewPlayer";
 import { ChatbotWidget } from "@/components/ChatbotWidget";
 import { AnnouncementModal } from "@/components/AnnouncementModal";
+import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 
 export const metadata: Metadata = {
   title: "StreamHub — 함께 드리는 예배",
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               text={ANNOUNCEMENT.text}
               link={ANNOUNCEMENT.link || undefined}
             />
+            <AnalyticsTracker />
           </div>
         </Providers>
       </body>

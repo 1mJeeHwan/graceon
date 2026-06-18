@@ -9,6 +9,7 @@ statistics, asynchronous audit logging, and member login as working vertical sli
 with `docker-compose` and is **live on AWS (Terraform)**, auto-deployed via **GitHub Actions** on push to `main`.
 
 > **🔗 Live demo**
+> - Project roadmap (showcase) — https://streamhub-user.vercel.app/roadmap
 > - User site — https://streamhub-user.vercel.app
 > - Admin console — https://streamhub-admin.vercel.app
 > - API (Swagger) — https://dpdtwguq8ke3x.cloudfront.net/swagger-ui/index.html

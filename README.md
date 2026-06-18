@@ -8,6 +8,7 @@
 로컬은 `docker-compose`, 배포는 **AWS(Terraform)에 실제 가동 중**이며 `main` 푸시 시 **GitHub Actions로 자동 배포**됩니다.
 
 > **🔗 라이브 데모**
+> - 프로젝트 로드맵(쇼케이스) — https://streamhub-user.vercel.app/roadmap
 > - 사용자 사이트 — https://streamhub-user.vercel.app
 > - 관리자 콘솔 — https://streamhub-admin.vercel.app
 > - API(Swagger) — https://dpdtwguq8ke3x.cloudfront.net/swagger-ui/index.html

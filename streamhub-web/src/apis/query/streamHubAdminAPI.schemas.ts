@@ -2491,6 +2491,27 @@ export interface MemberPaymentConfirmRequest {
   amount: number;
 }
 
+export interface EventIngestRequest {
+  type?: string;
+  contentType?: string;
+  targetId?: number;
+  title?: string;
+  path?: string;
+  sessionId?: string;
+  memberId?: number;
+  deviceType?: string;
+  referrer?: string;
+  dwellMs?: number;
+}
+
+export type ResultDTOVoidResultObject = { [key: string]: unknown };
+
+export interface ResultDTOVoid {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ResultDTOVoidResultObject;
+}
+
 export interface MemberLoginRequest {
   email: string;
   password: string;
@@ -2531,14 +2552,6 @@ export interface TokenResponse {
   accessToken?: string;
   refreshToken?: string;
   accessTokenExpiresIn?: number;
-}
-
-export type ResultDTOVoidResultObject = { [key: string]: unknown };
-
-export interface ResultDTOVoid {
-  resultCode?: string;
-  resultMessage?: string;
-  resultObject?: ResultDTOVoidResultObject;
 }
 
 export interface LoginRequest {
@@ -3043,6 +3056,78 @@ export interface ResultDTOListChatMessageRow {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: ChatMessageRow[];
+}
+
+export interface ResultDTOListTimeseriesPointDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: TimeseriesPointDto[];
+}
+
+export interface TimeseriesPointDto {
+  date?: string;
+  events?: number;
+  sessions?: number;
+}
+
+export interface AnalyticsOverviewDto {
+  totalEvents?: number;
+  totalSessions?: number;
+  uniqueVisitors?: number;
+  pageViews?: number;
+  contentViews?: number;
+  avgDwellMs?: number;
+}
+
+export interface ResultDTOAnalyticsOverviewDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: AnalyticsOverviewDto;
+}
+
+export type ContentStatDtoContentType =
+  (typeof ContentStatDtoContentType)[keyof typeof ContentStatDtoContentType];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ContentStatDtoContentType = {
+  VIDEO: "VIDEO",
+  ALBUM: "ALBUM",
+  POST: "POST",
+  PAGE: "PAGE",
+} as const;
+
+export interface ContentStatDto {
+  contentType?: ContentStatDtoContentType;
+  targetId?: number;
+  title?: string;
+  views?: number;
+  avgDwellMs?: number;
+  lastViewedAt?: string;
+}
+
+export interface ResultDTOListContentStatDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ContentStatDto[];
+}
+
+export type AnalyticsBreakdownDtoByDevice = { [key: string]: number };
+
+export interface AnalyticsBreakdownDto {
+  byDevice?: AnalyticsBreakdownDtoByDevice;
+  topReferrers?: CountItemDto[];
+  topPaths?: CountItemDto[];
+}
+
+export interface CountItemDto {
+  label?: string;
+  count?: number;
+}
+
+export interface ResultDTOAnalyticsBreakdownDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: AnalyticsBreakdownDto;
 }
 
 export interface MeResponse {
