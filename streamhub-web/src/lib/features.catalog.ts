@@ -105,8 +105,10 @@ const PLACEHOLDER_THUMB = "/catalog/placeholder.png";
 /**
  * Full catalog. `live` cards are backed by a real route + API in this repo
  * (dashboard / member / content / action-log / churches / albums / store /
- * worship / sms / payment); `mock`/`wip` cards are designed/seeded but not yet
- * navigable, so the 열기 button is disabled and viewers never hit a broken link.
+ * worship / sms / payment / order / goods / point / donation / subscription /
+ * subscription-plan / billing-calendar); `mock`/`wip` cards are designed/seeded
+ * but not yet navigable, so the 열기 button is disabled and viewers never hit a
+ * broken link.
  */
 export const FEATURES: FeatureCard[] = [
   // ---- live (4) — verified routes in this repo ----
@@ -250,10 +252,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "support",
     title: "정기후원·구독 현황",
     summary: "빌링키·회차·상태를 추적하는 정기결제 현황",
-    status: "mock",
+    status: "live",
     href: "/subscription",
     gnuboard: "정기결제 §6.4 paylist.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/subscription/page.tsx",
+    thumb: "/catalog/subscription.png",
     highlights: ["빌링키(마스킹)", "회차 추적", "ACTIVE⇄PAUSED 상태머신"],
   },
   {
@@ -261,10 +264,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "support",
     title: "멤버십 플랜 관리",
     summary: "등급별 혜택과 가격 정책을 정의",
-    status: "wip",
-    href: "/subscription/plans",
+    status: "live",
+    href: "/subscription-plan",
     gnuboard: "정기결제 §6.3 itemlist.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/subscription-plan/page.tsx",
+    thumb: "/catalog/subscription-plan.png",
     highlights: ["등급별 혜택 JSON", "가격 정책"],
   },
   {
@@ -272,10 +276,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "support",
     title: "정기결제 일정",
     summary: "CRON 청구 시뮬레이션과 캘린더 뷰",
-    status: "mock",
-    href: "/subscription/calendar",
+    status: "live",
+    href: "/billing-calendar",
     gnuboard: "정기결제 §6.5 calendar.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/billing-calendar/page.tsx",
+    thumb: "/catalog/billing-calendar.png",
     highlights: ["CRON 청구 시뮬", "캘린더 UI", "공휴일 이동"],
   },
   {
@@ -283,10 +288,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "support",
     title: "후원 내역",
     summary: "단건·정기 후원과 캠페인 연동, 영수증 발행",
-    status: "mock",
+    status: "live",
     href: "/donation",
     gnuboard: "영카트 §4.2 / §5.1",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/donation/page.tsx",
+    thumb: "/catalog/donation.png",
     highlights: ["단건/정기 분리", "캠페인 연동", "영수증"],
   },
 
@@ -296,10 +302,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "shop",
     title: "주문 관리",
     summary: "주문 상태머신과 합계 재계산을 갖춘 주문 목록",
-    status: "mock",
+    status: "live",
     href: "/order",
     gnuboard: "영카트 §4.2 orderlist.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/order/page.tsx",
+    thumb: "/catalog/order.png",
     highlights: ["주문 상태머신(PLACED→DONE)", "합계 재계산", "AG Grid"],
   },
   {
@@ -307,10 +314,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "shop",
     title: "굿즈 관리",
     summary: "옵션·이미지·인라인 일괄수정이 가능한 상품 관리",
-    status: "mock",
+    status: "live",
     href: "/goods",
     gnuboard: "영카트 §4.5 itemlist.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/goods/page.tsx",
+    thumb: "/catalog/goods.png",
     highlights: ["인라인 일괄수정", "옵션/이미지", "파레토 분포"],
   },
   {
@@ -375,10 +383,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "member",
     title: "포인트(은혜) 원장",
     summary: "증감 원장과 누적 동기화·만료 배치",
-    status: "mock",
+    status: "live",
     href: "/point",
     gnuboard: "§2.5 point_list.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/point/page.tsx",
+    thumb: "/catalog/point.png",
     highlights: ["증감 원장", "누적 동기화 트랜잭션", "만료 배치"],
   },
   {
