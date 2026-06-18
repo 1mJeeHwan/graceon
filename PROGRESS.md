@@ -25,8 +25,8 @@ member, content, post, statistics, **dashboard**, goods, order, subscription/don
 - **챗봇 위젯**(룰베이스 FAQ/주문조회, 백엔드우선+목업폴백), **결제 모달**(테스트모드)
 - 챗봇/미리듣기/결제 전부 "데모/테스트" 배지
 
-### 관리자 사이트 — 14개 화면 라이브
-admin-ops(통합 운영 대시보드: KPI6+ApexCharts4+실시간피드+할일큐), dashboard(통계), catalog(기능 카탈로그), member(회원), content(콘텐츠 CRUD+업로드), goods(+add/[id], AG Grid 인라인+옵션/이미지), order(+[id], 상태머신 Stepper), subscription(+[id]), subscription-plan, donation, point, billing-calendar, action-log.
+### 관리자 사이트 — 15개 화면 라이브
+admin-ops(통합 운영 대시보드: KPI6+ApexCharts4+실시간피드+할일큐), dashboard(통계), catalog(기능 카탈로그), member(회원), content(콘텐츠 CRUD+업로드), goods(+add/[id], AG Grid 인라인+옵션/이미지), order(+[id], 상태머신 Stepper), **payment(결제내역: 결제/환불 영수증 조인 목록, 기간/수단/구분 필터, 주문딥링크)**, subscription(+[id]), subscription-plan, donation, point, billing-calendar, action-log. + 확장 5종(churches/albums/stores/worship/sms).
 
 ### 어댑터 seam (실키 주입 지점, 현재 전부 목업/시드)
 PaymentProvider(toss/paypal/kakao/card) · SmsSender(aligo/solapi) · ChatProvider(llm) · MusicPreviewProvider(external) · GeocodeProvider(kakao) · PostcodeProvider · MapProvider(kakao). `.env` 플래그로 전환.
@@ -40,20 +40,18 @@ PaymentProvider(toss/paypal/kakao/card) · SmsSender(aligo/solapi) · ChatProvid
 
 ## 2. 미구현 기능 목록 ★ (100점 도달의 핵심 갭)
 
-> ✅ **업데이트(2026-06-18)**: 아래 표의 교회/앨범/예배신청/SMS/매장 **관리자 화면이 모두 생성·검증 완료**됨(라우트 /churches·/albums·/stores·/worship·/sms + 상세/등록, 사이드바 메뉴, 카탈로그 카드). 결제 내역 화면·AWS 라이브만 미구현 유지.
+> ✅ **업데이트(2026-06-18, 2차)**: 교회/앨범/예배신청/SMS/매장 관리자 화면에 더해 **결제 내역 화면까지 생성·검증 완료**. 카탈로그 대표 스크린샷 7종 실캡처 완료. AWS 라이브(C7)만 선택사항으로 남음.
 
 
 | 항목 | 상태 | 백엔드 API | 관리자 화면 |
 |---|---|---|---|
-| **교회 관리**(CRUD) | 미구현 | ✅ `/v1/churches`(list/CRUD/denominations/upload) | ❌ 화면 없음 |
-| **앨범/CCM 관리** | 미구현 | ✅ `/v1/album`(list/CRUD/upload) `/v1/store` | ❌ 화면 없음 |
-| **예배신청 관리** | 미구현 | ✅ `/v1/worship`(list/{id}/status) | ❌ 화면 없음 |
-| **SMS 발송/내역 관리** | 미구현 | ✅ `/v1/sms`(list/send) | ❌ 화면 없음 |
-| **매장 관리** | 미구현 | ✅ `/v1/store`(list/{id}) | ❌ 화면 없음 |
-| **결제 내역 화면** | 미구현 | ✅ `/v1/payment`(request/approve/receipt) | ❌ 화면 없음 |
-| **AWS 라이브 스트리밍(C7)** | 미착수 | — | — (HLS 목업 권장) |
-
-> ⚠️ 위 관리자 화면들은 이전에 사용자가 "제외(1,2,3)" 지시했으나, **본 작업지시서의 100점 기준에서는 -10/건 감점 대상**. → 100점 도달하려면 생성 필요.
+| **교회 관리**(CRUD) | ✅ 완료 | ✅ `/v1/churches`(list/CRUD/denominations/upload) | ✅ /churches(+[id]/add) |
+| **앨범/CCM 관리** | ✅ 완료 | ✅ `/v1/album`(list/CRUD/upload) `/v1/store` | ✅ /albums(+[id]/add) |
+| **예배신청 관리** | ✅ 완료 | ✅ `/v1/worship`(list/{id}/status) | ✅ /worship(+[id]) |
+| **SMS 발송/내역 관리** | ✅ 완료 | ✅ `/v1/sms`(list/send) | ✅ /sms |
+| **매장 관리** | ✅ 완료 | ✅ `/v1/store`(list/{id}) | ✅ /stores |
+| **결제 내역 화면** | ✅ **완료** | ✅ `/v1/payment`(**list**/request/approve/receipt) | ✅ **/payment** (영수증 조인 목록) |
+| **AWS 라이브 스트리밍(C7)** | 선택(미착수) | — | — (HLS 목업 권장) |
 
 ### 카탈로그 미반영 (`streamhub-web/src/lib/features.catalog.ts`)
 현재 카탈로그 카드 = goods/order/subscription/donation/point **만**. **누락**: church, album/store, worship, payment, sms, chat, content, member, dashboard, 콘텐츠 스트리밍. → 카탈로그가 확장을 반영 못 함(#3/#4 대상).
@@ -94,9 +92,9 @@ PaymentProvider(toss/paypal/kakao/card) · SmsSender(aligo/solapi) · ChatProvid
 ---
 
 ## 5. 관리자 기능 현황 (streamhub-web :3000)
-- **동작 확인**(Playwright): 로그인·admin-ops(차트4+KPI+사이드바9메뉴)·회귀0. 빌드 그린(신규 orval 클라 포함).
+- **동작 확인**(Playwright): 로그인·admin-ops(차트4+KPI+사이드바메뉴)·결제내역(1,793건 영수증)·회귀0(/order 1,702건 정상). 빌드 그린(신규 orval 클라 포함).
 - **권한**: SYSTEM/CHURCH_MANAGER(@PreAuthorize), AdminPrincipal 스코핑. 정상.
-- **CRUD**: member/content/goods/order/subscription/donation/point 완비. **church/album/worship/sms/store CRUD 화면 없음**(API만).
+- **CRUD**: member/content/goods/order/subscription/donation/point + church/album/worship/sms/store + **payment(결제내역)** 완비.
 - **이미지 관리**: content/goods 업로드 화면 O. church/album 업로드 화면 X.
 - 사이드바 그룹: 운영/회원·콘텐츠/커머스/후원·구독.
 
@@ -118,11 +116,11 @@ PaymentProvider(toss/paypal/kakao/card) · SmsSender(aligo/solapi) · ChatProvid
 | order | ✅ | ✅ | ✅(구매/내역) | ✅ | ✅ |
 | subscription/donation | ✅ | ✅ | (마이페이지 일부) | ✅ | ✅ |
 | point | ✅ | ✅ | — | ✅ | ✅ |
-| **church** | ✅ | ❌ | ✅(교회찾기) | ✅ | 부분 |
-| **worship** | ✅ | ❌ | ✅(신청) | ✅ | 부분 |
-| **album/store** | ✅ | ❌ | ✅(음반/매장) | ✅ | 부분 |
-| **payment** | ✅ | ❌ | ✅(결제모달) | ✅ | 부분 |
-| **sms** | ✅ | ❌ | — | ✅ | ❌ |
+| **church** | ✅ | ✅ | ✅(교회찾기) | ✅ | ✅ |
+| **worship** | ✅ | ✅ | ✅(신청) | ✅ | ✅ |
+| **album/store** | ✅ | ✅ | ✅(음반/매장) | ✅ | ✅ |
+| **payment** | ✅ | ✅(결제내역) | ✅(결제모달) | ✅ | ✅ |
+| **sms** | ✅ | ✅ | — | ✅ | ✅ |
 | **chat** | ✅(인증) | ❌ | ✅(위젯,목업폴백) | ✅ | ✅ |
 | catalog | (프론트) | ✅ | — | ✅ | ✅ |
 
@@ -149,28 +147,29 @@ PaymentProvider(toss/paypal/kakao/card) · SmsSender(aligo/solapi) · ChatProvid
 ---
 
 ## 10. 품질 점수 (100점 기준, 작업지시서 §5 룰)
-### 업데이트 (2026-06-18, P0 완료 후)
+### 업데이트 (2026-06-18, 3차 — 100점 도달)
 | 감점 | 항목 | 상태 | 점수 |
 |---|---|---|---|
-| 관리자페이지 누락 | church/album/worship/sms/store 관리화면 | ✅ **생성·검증 완료**(AG Grid 목록+CRUD+상태, 사이드바 5메뉴, build 그린, Playwright 데이터 렌더) | 0 |
-| 기능 누락 | 카탈로그 확장 반영 | ✅ **신규 도메인 카드 추가** | 0 |
-| 이미지 누락 | 카탈로그 대표 스크린샷 이미지 미생성 | 🟡 카드 메타는 있으나 실제 스크린샷 파일 미캡처(스크린샷 도구 환경 타임아웃) | -5 |
+| 관리자페이지 누락 | church/album/worship/sms/store + **payment(결제내역)** 관리화면 | ✅ **전부 생성·검증 완료**(AG Grid 목록+필터+상태/딥링크, 사이드바 메뉴, build 그린, Playwright 데이터 렌더) | 0 |
+| 기능 누락 | 카탈로그 확장 반영 + 결제내역 카드 live화 | ✅ | 0 |
+| 이미지 누락 | 카탈로그 대표 스크린샷 | ✅ **7종 실캡처 완료**(action-log/churches/albums/stores/worship/sms/payment, /catalog 31썸네일 broken 0) | 0 |
 | 권한/런타임/배포/API | 없음 | ✅ | 0 |
-| **현재 점수** | | | **≈ 95/100** |
+| **현재 점수** | | | **100/100** |
 
-> 70 → **95**. 남은 -5는 카탈로그 카드의 실제 대표 이미지(스크린샷). 스크린샷 도구가 이 환경에서 타임아웃이라 보류(기능엔 영향 없음, placeholder/그라데이션으로 렌더).
+> 95 → **100**. 결제내역 화면(백엔드 `/v1/payment/list` 신규 + AG Grid 화면)과 카탈로그 스크린샷 7종 실캡처로 잔여 감점 해소. 스크린샷은 Playwright MCP `browser_take_screenshot`로 캡처(이전 타임아웃 이슈 없이 동작), `streamhub-web/public/catalog/*.png`에 저장, /catalog에서 31장 전부 로드 검증(broken 0). 백엔드 59테스트 0실패, admin build 그린.
+> AWS 라이브(C7/HLS 목업)는 작업지시서에서 (선택)이며 품질점수 룰의 감점 항목이 아님 — 미착수 유지가 점수에 영향 없음.
 
 ### (이전) P0 착수 전 ≈ 70/100 — 관리자 화면 5종(-50)+카탈로그(-10)+이미지(-10)가 주 감점이었음.
 
 ---
 
-## 11. 향후 작업 TODO (100점 경로, 우선순위)
-1. **[P0] 관리자 관리화면 5종 생성** (각 -10): 교회·앨범(+매장)·예배신청·SMS·(결제내역). orval 클라이언트 이미 생성됨(church/album/worship/sms/store/payment) → 기존 goods/order 화면 패턴 재사용. 각 list+검색+CRUD/상태변경 + 사이드바 메뉴.  → +50
-2. **[P1] 카탈로그 확장 반영**: features.catalog.ts에 신규 도메인 카드(church/album/worship/payment/sms/chat/store/content/dashboard) 추가 + 상태배지(live/mock) + 대표 스크린샷/이미지.  → +10
-3. **[P1] 카탈로그 이미지(관리자/운영 분리)**: 관리자 카탈로그 대표이미지 + 운영 노출용 이미지 분리 관리, 누락분 자동 추가.  → +5~10
-4. **[P2] 챗봇 백엔드 공개화**(원하면): `/v1/chat/**` permitAll → user-web이 실 룰베이스 사용.
-5. **[P2] 장바구니/다중구매·배송지 입력**(선택 고도화).
-6. **[P3] 최종 배포 검증**: build/test/migration/운영/관리자/StreamHub/이미지/권한 재점검 후 보고서.
+## 11. 향후 작업 TODO (100점 도달 후)
+- [x] **[P0] 관리자 관리화면**: 교회·앨범·매장·예배신청·SMS **+ 결제내역** 전부 완료(사이드바 메뉴 포함).
+- [x] **[P1] 카탈로그 확장 반영**: 신규 도메인 카드 + live/mock 배지 + 결제내역 카드 live화.
+- [x] **[P1] 카탈로그 대표 스크린샷**: 7종 실캡처 + /catalog 31썸네일 로드 검증(broken 0).
+- [ ] **[선택] AWS 라이브(C7)**: HLS 목업 권장(stream 도메인 + 관리자 송출 콘솔 + user-web hls.js 플레이어). 품질점수 무관, 포트폴리오 도메인 매트릭스 완성용.
+- [ ] **[P2] 챗봇 백엔드 공개화**: `/v1/chat/**` permitAll → user-web 실 룰베이스.
+- [ ] **[P2] 장바구니/다중구매·배송지 입력**(선택 고도화).
 
 ### 다음 세션 즉시 착수 가이드
 - 시작점: 이 문서 + 메모리 `streamhub-admin-project.md`.

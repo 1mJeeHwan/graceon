@@ -103,9 +103,10 @@ export const STATUS_META: Record<FeatureStatus, StatusMeta> = {
 const PLACEHOLDER_THUMB = "/catalog/placeholder.png";
 
 /**
- * Full catalog. Only the four routes that genuinely exist in this codebase
- * (dashboard / member / content / action-log) are `live`; everything else is
- * `mock`/`wip` so viewers never hit a broken deep link.
+ * Full catalog. `live` cards are backed by a real route + API in this repo
+ * (dashboard / member / content / action-log / churches / albums / store /
+ * worship / sms / payment); `mock`/`wip` cards are designed/seeded but not yet
+ * navigable, so the 열기 button is disabled and viewers never hit a broken link.
  */
 export const FEATURES: FeatureCard[] = [
   // ---- live (4) — verified routes in this repo ----
@@ -154,7 +155,7 @@ export const FEATURES: FeatureCard[] = [
     href: "/action-log",
     gnuboard: "§2.3 visit_list.php",
     repoPath: "streamhub-web/src/app/(protected)/action-log/page.tsx",
-    thumb: PLACEHOLDER_THUMB,
+    thumb: "/catalog/action-log.png",
     highlights: ["SQS 비동기 적재", "액션 색상 배지", "SYSTEM 전용"],
   },
 
@@ -168,7 +169,7 @@ export const FEATURES: FeatureCard[] = [
     href: "/churches",
     gnuboard: "(PalmPlus 고유)",
     repoPath: "streamhub-web/src/app/(protected)/churches/page.tsx",
-    thumb: PLACEHOLDER_THUMB,
+    thumb: "/catalog/churches.png",
     highlights: ["교단/지역 검색", "위경도 좌표", "예배시간 다건", "썸네일 업로드"],
   },
   {
@@ -180,7 +181,7 @@ export const FEATURES: FeatureCard[] = [
     href: "/albums",
     gnuboard: "(PalmPlus 고유)",
     repoPath: "streamhub-web/src/app/(protected)/albums/page.tsx",
-    thumb: PLACEHOLDER_THUMB,
+    thumb: "/catalog/albums.png",
     highlights: ["장르 분류", "트랙 다건(미리듣기)", "굿즈 연동", "커버 업로드"],
   },
   {
@@ -192,7 +193,7 @@ export const FEATURES: FeatureCard[] = [
     href: "/stores",
     gnuboard: "(PalmPlus 고유)",
     repoPath: "streamhub-web/src/app/(protected)/stores/page.tsx",
-    thumb: PLACEHOLDER_THUMB,
+    thumb: "/catalog/stores.png",
     highlights: ["매장 위치", "운영시간", "단순 CRUD"],
   },
   {
@@ -204,7 +205,7 @@ export const FEATURES: FeatureCard[] = [
     href: "/worship",
     gnuboard: "(PalmPlus 고유)",
     repoPath: "streamhub-web/src/app/(protected)/worship/page.tsx",
-    thumb: PLACEHOLDER_THUMB,
+    thumb: "/catalog/worship.png",
     highlights: ["접수 상태머신", "부서/세례 구분", "동반가족", "기간 검색"],
   },
   {
@@ -216,19 +217,20 @@ export const FEATURES: FeatureCard[] = [
     href: "/sms",
     gnuboard: "SMS §7.x history_list.php",
     repoPath: "streamhub-web/src/app/(protected)/sms/page.tsx",
-    thumb: PLACEHOLDER_THUMB,
+    thumb: "/catalog/sms.png",
     highlights: ["SMS/LMS 자동 분기", "발송 큐", "성공/실패 이력", "테스트 모드"],
   },
   {
     id: "payment-seam",
-    domain: "support",
-    title: "결제 연동 (seam)",
-    summary: "결제 요청·승인 2단계 시뮬레이션 연동부",
-    status: "wip",
+    domain: "shop",
+    title: "결제 내역 관리",
+    summary: "결제·환불 영수증을 주문·회원과 조인해 조회하는 결제 원장",
+    status: "live",
     href: "/payment",
-    gnuboard: "정기결제 §6.x",
-    thumb: PLACEHOLDER_THUMB,
-    highlights: ["요청→승인 2단계", "PG 어댑터 seam", "멱등키"],
+    gnuboard: "영카트 §6.x paylist.php",
+    repoPath: "streamhub-web/src/app/(protected)/payment/page.tsx",
+    thumb: "/catalog/payment.png",
+    highlights: ["결제/환불 구분", "PG·거래번호", "기간/수단 필터", "요청→승인 seam"],
   },
   {
     id: "chat-bot",

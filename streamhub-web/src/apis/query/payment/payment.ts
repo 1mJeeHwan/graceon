@@ -24,8 +24,10 @@ import type {
 import type {
   PayApproveCommand,
   PayRequestCommand,
+  PaymentSearchRequest,
   ResultDTOPaymentReceiptDto,
   ResultDTOPaymentResultDto,
+  ResultDTOResInfinityListPaymentListItem,
 } from "../streamHubAdminAPI.schemas";
 
 import { customInstance } from "../../custom-instance";
@@ -110,6 +112,89 @@ export const usePaymentRequestCreate = <TError = unknown, TContext = unknown>(
   TContext
 > => {
   const mutationOptions = getPaymentRequestCreateMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+/**
+ * 결제/환불 영수증(ORDER_RECEIPT)을 주문·회원과 조인해 검색/기간 필터 + 페이지네이션으로 반환한다.
+ * @summary 결제 내역 목록
+ */
+export const paymentList = (
+  paymentSearchRequest: PaymentSearchRequest,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOResInfinityListPaymentListItem>({
+    url: `/v1/payment/list`,
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    data: paymentSearchRequest,
+    signal,
+  });
+};
+
+export const getPaymentListMutationOptions = <
+  TError = unknown,
+  TContext = unknown
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof paymentList>>,
+    TError,
+    { data: PaymentSearchRequest },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof paymentList>>,
+  TError,
+  { data: PaymentSearchRequest },
+  TContext
+> => {
+  const mutationKey = ["paymentList"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof paymentList>>,
+    { data: PaymentSearchRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return paymentList(data);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PaymentListMutationResult = NonNullable<
+  Awaited<ReturnType<typeof paymentList>>
+>;
+export type PaymentListMutationBody = PaymentSearchRequest;
+export type PaymentListMutationError = unknown;
+
+/**
+ * @summary 결제 내역 목록
+ */
+export const usePaymentList = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof paymentList>>,
+      TError,
+      { data: PaymentSearchRequest },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof paymentList>>,
+  TError,
+  { data: PaymentSearchRequest },
+  TContext
+> => {
+  const mutationOptions = getPaymentListMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };

@@ -44,11 +44,13 @@ class PaymentServiceTest {
     private ActionLogPublisher actionLogPublisher;
     @Mock
     private PaymentProvider paymentProvider;
+    @Mock
+    private org.streamhub.api.v1.payment.mapper.PaymentMapper paymentMapper;
 
     private PaymentService paymentService() {
         return new PaymentService(
                 orderRepository, orderReceiptRepository, orderService,
-                providerRouter, actionLogPublisher, true);
+                providerRouter, actionLogPublisher, paymentMapper, true);
     }
 
     private Order requestedOrder(String txnId) {
@@ -75,5 +77,25 @@ class PaymentServiceTest {
         // The mismatch short-circuits before resolving/charging any provider.
         verify(providerRouter, never()).resolve(any());
         verify(paymentProvider, never()).approve(any(), any(), any());
+    }
+
+    @Test
+    void list_mapsRowsAndTotalIntoPage() {
+        org.streamhub.api.v1.payment.dto.PaymentListItem row =
+                new org.streamhub.api.v1.payment.dto.PaymentListItem();
+        row.setId(1L);
+        row.setKind(org.streamhub.api.v1.order.entity.ReceiptKind.PAY);
+        when(paymentMapper.selectList(any(), any(), any(), any(), any(), any(), any(),
+                org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt()))
+                .thenReturn(java.util.List.of(row));
+        when(paymentMapper.countList(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(1L);
+
+        var page = paymentService().list(new org.streamhub.api.v1.payment.dto.PaymentSearchRequest(
+                0, 10, null, null, null, null, null, null, null));
+
+        org.assertj.core.api.Assertions.assertThat(page.getContents()).hasSize(1);
+        org.assertj.core.api.Assertions.assertThat(page.getTotalCount()).isEqualTo(1L);
+        org.assertj.core.api.Assertions.assertThat(page.getTotalPage()).isEqualTo(1);
     }
 }

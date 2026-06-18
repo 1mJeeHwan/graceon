@@ -945,6 +945,77 @@ export interface ResultDTOPaymentResultDto {
   resultObject?: PaymentResultDto;
 }
 
+export type PaymentSearchRequestKind =
+  (typeof PaymentSearchRequestKind)[keyof typeof PaymentSearchRequestKind];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PaymentSearchRequestKind = {
+  PAY: "PAY",
+  REFUND: "REFUND",
+} as const;
+
+export interface PaymentSearchRequest {
+  pageNumber?: number;
+  pageSize?: number;
+  searchField?: string;
+  keyword?: string;
+  kind?: PaymentSearchRequestKind;
+  method?: string;
+  provider?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
+export type PaymentListItemKind =
+  (typeof PaymentListItemKind)[keyof typeof PaymentListItemKind];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PaymentListItemKind = {
+  PAY: "PAY",
+  REFUND: "REFUND",
+} as const;
+
+export type PaymentListItemPayStatus =
+  (typeof PaymentListItemPayStatus)[keyof typeof PaymentListItemPayStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PaymentListItemPayStatus = {
+  NONE: "NONE",
+  REQUESTED: "REQUESTED",
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  FAILED: "FAILED",
+  CANCELED: "CANCELED",
+} as const;
+
+export interface PaymentListItem {
+  id?: number;
+  orderId?: number;
+  orderNo?: string;
+  memberId?: number;
+  memberName?: string;
+  kind?: PaymentListItemKind;
+  amount?: number;
+  method?: string;
+  provider?: string;
+  txnId?: string;
+  memo?: string;
+  payStatus?: PaymentListItemPayStatus;
+  createdAt?: string;
+}
+
+export interface ResInfinityListPaymentListItem {
+  contents?: PaymentListItem[];
+  totalCount?: number;
+  totalPage?: number;
+}
+
+export interface ResultDTOResInfinityListPaymentListItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ResInfinityListPaymentListItem;
+}
+
 export interface PayApproveCommand {
   orderId: number;
   txnId: string;
@@ -1674,6 +1745,39 @@ export interface WorshipRegisterResponse {
   regNo?: string;
 }
 
+export interface MemberOrderCreateRequest {
+  albumId: number;
+  payProvider?: string;
+}
+
+export type MemberOrderResultStatus =
+  (typeof MemberOrderResultStatus)[keyof typeof MemberOrderResultStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const MemberOrderResultStatus = {
+  PLACED: "PLACED",
+  PAID: "PAID",
+  READY: "READY",
+  SHIPPING: "SHIPPING",
+  DONE: "DONE",
+  CANCEL: "CANCEL",
+  RETURN: "RETURN",
+} as const;
+
+export interface MemberOrderResult {
+  orderNo?: string;
+  status?: MemberOrderResultStatus;
+  total?: number;
+  paidAt?: string;
+  testMode?: boolean;
+}
+
+export interface ResultDTOMemberOrderResult {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: MemberOrderResult;
+}
+
 export interface MemberLoginRequest {
   email: string;
   password: string;
@@ -2198,6 +2302,34 @@ export interface ResultDTOPostDetail {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: PostDetail;
+}
+
+export type MemberOrderListItemStatus =
+  (typeof MemberOrderListItemStatus)[keyof typeof MemberOrderListItemStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const MemberOrderListItemStatus = {
+  PLACED: "PLACED",
+  PAID: "PAID",
+  READY: "READY",
+  SHIPPING: "SHIPPING",
+  DONE: "DONE",
+  CANCEL: "CANCEL",
+  RETURN: "RETURN",
+} as const;
+
+export interface MemberOrderListItem {
+  orderNo?: string;
+  productName?: string;
+  total?: number;
+  status?: MemberOrderListItemStatus;
+  orderedAt?: string;
+}
+
+export interface ResultDTOListMemberOrderListItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: MemberOrderListItem[];
 }
 
 export interface PublicHomeResponse {

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.streamhub.api.v1.payment.mapper.PaymentMapper">
+
+    <!-- Shared filter block: searchField+keyword, kind, method, provider, created_at range. -->
+    <sql id="searchWhere">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="searchField == 'orderNo'">
+                        AND o.order_no LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchField == 'memberName'">
+                        AND m.name LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <when test="searchField == 'txnId'">
+                        AND r.txn_id LIKE CONCAT('%', #{keyword}, '%')
+                    </when>
+                    <otherwise>
+                        AND o.order_no LIKE CONCAT('%', #{keyword}, '%')
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="kind != null and kind != ''">
+                AND r.kind = #{kind}
+            </if>
+            <if test="method != null and method != ''">
+                AND r.method = #{method}
+            </if>
+            <if test="provider != null and provider != ''">
+                AND r.provider = #{provider}
+            </if>
+            <if test="fromDate != null">
+                AND r.created_at &gt;= #{fromDate}
+            </if>
+            <if test="toDate != null">
+                AND r.created_at &lt; DATE_ADD(#{toDate}, INTERVAL 1 DAY)
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectList" resultType="org.streamhub.api.v1.payment.dto.PaymentListItem">
+        SELECT
+            r.id          AS id,
+            r.order_id    AS order_id,
+            o.order_no    AS order_no,
+            o.member_id   AS member_id,
+            m.name        AS member_name,
+            r.kind        AS kind,
+            r.amount      AS amount,
+            r.method      AS method,
+            r.provider    AS provider,
+            r.txn_id      AS txn_id,
+            r.memo        AS memo,
+            o.pay_status  AS pay_status,
+            r.created_at  AS created_at
+        FROM ORDER_RECEIPT r
+            JOIN ORDERS o ON r.order_id = o.id
+            JOIN MEMBER m ON o.member_id = m.id
+        <include refid="searchWhere"/>
+        ORDER BY r.created_at DESC, r.id DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countList" resultType="long">
+        SELECT COUNT(*)
+        FROM ORDER_RECEIPT r
+            JOIN ORDERS o ON r.order_id = o.id
+            JOIN MEMBER m ON o.member_id = m.id
+        <include refid="searchWhere"/>
+    </select>
+
+</mapper>

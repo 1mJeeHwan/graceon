@@ -70,6 +70,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "주문관리", href: "/order", icon: ClipboardList },
       { label: "앨범관리", href: "/albums", icon: Disc3 },
       { label: "매장관리", href: "/stores", icon: Store },
+      { label: "결제내역", href: "/payment", icon: CreditCard },
     ],
   },
   {

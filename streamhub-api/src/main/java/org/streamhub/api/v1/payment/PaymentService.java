@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.streamhub.api.base.exception.ApiException;
+import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.v1.actionlog.ActionLogPublisher;
 import org.streamhub.api.v1.order.OrderService;
@@ -22,8 +23,11 @@ import org.streamhub.api.v1.payment.adapter.PaymentRequest;
 import org.streamhub.api.v1.payment.adapter.PaymentResult;
 import org.streamhub.api.v1.payment.dto.PayApproveCommand;
 import org.streamhub.api.v1.payment.dto.PayRequestCommand;
+import org.streamhub.api.v1.payment.dto.PaymentListItem;
 import org.streamhub.api.v1.payment.dto.PaymentReceiptDto;
 import org.streamhub.api.v1.payment.dto.PaymentResultDto;
+import org.streamhub.api.v1.payment.dto.PaymentSearchRequest;
+import org.streamhub.api.v1.payment.mapper.PaymentMapper;
 
 /**
  * Payment orchestration (C4): request → (mock) approve → order state transition + PG receipt
@@ -39,6 +43,7 @@ public class PaymentService {
     private final OrderService orderService;
     private final PaymentProviderRouter providerRouter;
     private final ActionLogPublisher actionLogPublisher;
+    private final PaymentMapper paymentMapper;
     private final boolean testMode;
 
     public PaymentService(
@@ -47,13 +52,41 @@ public class PaymentService {
             OrderService orderService,
             PaymentProviderRouter providerRouter,
             ActionLogPublisher actionLogPublisher,
+            PaymentMapper paymentMapper,
             @Value("${app.payment.test-mode:true}") boolean testMode) {
         this.orderRepository = orderRepository;
         this.orderReceiptRepository = orderReceiptRepository;
         this.orderService = orderService;
         this.providerRouter = providerRouter;
         this.actionLogPublisher = actionLogPublisher;
+        this.paymentMapper = paymentMapper;
         this.testMode = testMode;
+    }
+
+    /**
+     * Paginated payment-history search (MyBatis): payment/refund receipts joined with their order
+     * and the paying member. All filters optional; ordered newest-first.
+     */
+    @Transactional(readOnly = true)
+    public ResInfinityList<PaymentListItem> list(PaymentSearchRequest request) {
+        String searchField = blankToNull(request.searchField());
+        String keyword = blankToNull(request.keyword());
+        String kind = request.kind() == null ? null : request.kind().name();
+        String method = blankToNull(request.method());
+        String provider = blankToNull(request.provider());
+        int size = request.pageSizeOrDefault();
+
+        List<PaymentListItem> rows = paymentMapper.selectList(
+                searchField, keyword, kind, method, provider,
+                request.fromDate(), request.toDate(), request.offset(), size);
+        long total = paymentMapper.countList(
+                searchField, keyword, kind, method, provider,
+                request.fromDate(), request.toDate());
+        return ResInfinityList.of(rows, total, size);
+    }
+
+    private String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     /**

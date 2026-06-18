@@ -10,11 +10,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.response.ResultDTO;
 import org.streamhub.api.v1.payment.dto.PayApproveCommand;
 import org.streamhub.api.v1.payment.dto.PayRequestCommand;
+import org.streamhub.api.v1.payment.dto.PaymentListItem;
 import org.streamhub.api.v1.payment.dto.PaymentReceiptDto;
 import org.streamhub.api.v1.payment.dto.PaymentResultDto;
+import org.streamhub.api.v1.payment.dto.PaymentSearchRequest;
 
 /**
  * Payment endpoints (SYSTEM or CHURCH_MANAGER). All approvals are demo/test mode — no real PG
@@ -31,6 +34,14 @@ public class PaymentController {
 
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
+    }
+
+    @Operation(summary = "결제 내역 목록",
+            description = "결제/환불 영수증(ORDER_RECEIPT)을 주문·회원과 조인해 검색/기간 필터 + 페이지네이션으로 반환한다.")
+    @PostMapping("/list")
+    public ResultDTO<ResInfinityList<PaymentListItem>> list(
+            @RequestBody PaymentSearchRequest request) {
+        return ResultDTO.ok(paymentService.list(request));
     }
 
     @Operation(summary = "결제 요청", description = "주문에 대해 (가짜) 결제를 요청하고 거래번호를 발급한다.")
