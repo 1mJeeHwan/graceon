@@ -88,7 +88,7 @@ A mobile-first public media site in the tone of a real production user app.
 
 ## Portfolio admin expansion (Goods · Orders · Membership · Dashboard)
 
-Reinterprets the **operational breadth of the gnuboard5 / youngcart5 admin** into the PalmPlus
+Reinterprets the **operational breadth of the gnuboard5 / youngcart5 admin** into a production service's
 (church/streaming) domain — going beyond simple CRUD to working **order state machines, recurring
 billing, a point ledger, and a unified operations dashboard**. See
 [`docs/portfolio-admin-design.md`](docs/portfolio-admin-design.md) for the design intent, domain

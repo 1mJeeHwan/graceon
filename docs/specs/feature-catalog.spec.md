@@ -89,7 +89,7 @@ export interface DomainMeta {
 |---|---|---|---|---|---|---|---|
 | 1 | `dashboard` | support | 통합 운영 대시보드 | **live** | `/dashboard` | 영카트 §5.1 sale1.php | KPI 카드, ApexCharts, Redis 캐시 집계 |
 | 2 | `members` | member | 회원 관리 | **live** | `/member` | §2.1 member_list.php | 동적 검색, JPA+MyBatis 하이브리드, 일괄 승인/거부 |
-| 3 | `contents` | content | 설교/음원 관리 | **live** | `/content` | (PalmPlus 고유) | MinIO 업로드(S3 SDK), 해시태그 다대다, 복합 조인 |
+| 3 | `contents` | content | 설교/음원 관리 | **live** | `/content` | (레퍼런스 서비스 고유) | MinIO 업로드(S3 SDK), 해시태그 다대다, 복합 조인 |
 | 4 | `action-log` | settings | 감사 로그 | **live** | `/action-log` | §2.3 visit_list.php | SQS 비동기 적재, 액션 색상 배지, SYSTEM 전용 |
 | 5 | `orders` | shop | 주문 관리 | mock | `/orders` | 영카트 §4.2 orderlist.php | 주문 상태머신(PLACED→DONE), 합계 재계산, AG Grid |
 | 6 | `goods` | shop | 굿즈 관리 | mock | `/goods` | 영카트 §4.5 itemlist.php | 인라인 일괄수정, 옵션/이미지, 파레토 분포 |

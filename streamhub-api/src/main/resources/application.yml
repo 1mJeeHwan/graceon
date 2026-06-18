@@ -65,8 +65,9 @@ app:
       kakao-rest-key: ${CHURCH_GEOCODE_KAKAO_REST_KEY:}
   # Payment (C4) PG seam. mock = fake approve, no real charge. toss = REAL sandbox integration:
   # the album checkout's Toss option calls the live Toss confirm API with the keys below. The
-  # defaults are Toss's public documentation test keys (test_ck_/test_sk_) — no real money moves;
-  # inject a real merchant key via PAYMENT_TOSS_* to go live with no code change. paypal/kakao
+  # Keys are NOT committed (public repo). Toss publishes public test keys (test_ck_/test_sk_) in its
+  # official sample repo (github.com/tosspayments/tosspayments-sample) — set them on PAYMENT_TOSS_*
+  # to run the Toss sandbox demo; a real merchant key goes live with no code change. paypal/kakao
   # remain @ConditionalOnProperty-gated stubs. test-mode only affects the mock approval memo.
   payment:
     provider: ${PAYMENT_PROVIDER:mock}
@@ -74,8 +75,8 @@ app:
     # Browser origin redirect PGs (kakao/paypal) send the user back to (/checkout/success|fail).
     return-base-url: ${PAYMENT_RETURN_BASE_URL:http://localhost:3001}
     toss:
-      client-key: ${PAYMENT_TOSS_CLIENT_KEY:test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq}
-      secret-key: ${PAYMENT_TOSS_SECRET_KEY:test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R}
+      client-key: ${PAYMENT_TOSS_CLIENT_KEY:}
+      secret-key: ${PAYMENT_TOSS_SECRET_KEY:}
     # kakao/paypal: real adapter code, but @ConditionalOnProperty-gated on the key below — empty by
     # default so the bean is absent and the router falls back to mock. Inject your own sandbox key
     # to activate (no public test key exists for these, unlike Toss).
@@ -86,15 +87,15 @@ app:
     kakao:
       secret-key: ${PAYMENT_KAKAO_SECRET_KEY:}
       cid: ${PAYMENT_KAKAO_CID:TC0ONETIME}
-  # Delivery tracking (C8) seam. sweettracker = REAL aggregator API (스마트택배); the api-key
-  # defaults to SweetTracker's public documentation demo key so carrier list + live tracking work
-  # out of the box (override via DELIVERY_SWEETTRACKER_API_KEY). mock = offline fake timeline.
+  # Delivery tracking (C8) seam. sweettracker = REAL aggregator API (스마트택배). The api-key is NOT
+  # committed (public repo) — get a free key (or the public docs demo key) from SweetTracker
+  # (info.sweettracker.co.kr/apidoc) and set DELIVERY_SWEETTRACKER_API_KEY. mock = offline timeline.
   delivery:
     provider: ${DELIVERY_PROVIDER:sweettracker}
     # Scheduler that polls SHIPPING orders and auto-advances 배달완료 → DONE (default every 30m).
     sync-cron: ${DELIVERY_SYNC_CRON:0 */30 * * * *}
     sweettracker:
-      api-key: ${DELIVERY_SWEETTRACKER_API_KEY:eq04nwS5eQul42h6BZig3Q}
+      api-key: ${DELIVERY_SWEETTRACKER_API_KEY:}
   # SMS/LMS (C6) sender seam. mock = log-only, no external send; aligo/solapi = real key
   # injection points (@ConditionalOnProperty-gated). Seeded messages are all testMode=Y.
   sms:

@@ -14,10 +14,10 @@ import org.streamhub.api.base.response.ResultCode;
 
 /**
  * SweetTracker (스마트택배) delivery-tracking adapter (C8) — <b>real aggregator integration</b>
- * ({@code info.sweettracker.co.kr}). Default provider; the {@code t_key} defaults to SweetTracker's
- * public documentation demo key, so carrier list + live tracking work out of the box (override via
- * {@code DELIVERY_SWEETTRACKER_API_KEY} with your own key). One aggregator covers every Korean
- * courier, so no per-carrier code is needed.
+ * ({@code info.sweettracker.co.kr}). Default provider. The {@code t_key} is injected via
+ * {@code DELIVERY_SWEETTRACKER_API_KEY} (not committed — public repo); get a free key or the public
+ * docs demo key from SweetTracker. One aggregator covers every Korean courier, so no per-carrier
+ * code is needed.
  */
 @Component
 @ConditionalOnProperty(name = "app.delivery.provider", havingValue = "sweettracker", matchIfMissing = true)

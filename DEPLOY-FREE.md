@@ -47,6 +47,10 @@ free tier, a spare box, etc.).
    export JWT_SECRET="$(openssl rand -base64 48)"
    # (fill these in after Part 2 with the real Vercel URLs; localhost is fine for the first boot)
    export APP_CORS_ALLOWED_ORIGINS=https://your-admin.vercel.app,https://your-userweb.vercel.app
+   # (선택) 실 연동 키 — 비우면 mock/seed로 동작. 키는 저장소에 없으니 여기서 주입한다:
+   #   export PAYMENT_TOSS_CLIENT_KEY=...   PAYMENT_TOSS_SECRET_KEY=...   # 토스 공개 테스트키
+   #   export PAYMENT_RETURN_BASE_URL=https://your-userweb.vercel.app     # PG 결제창 복귀 URL
+   #   export DELIVERY_SWEETTRACKER_API_KEY=...                            # 스마트택배(배송조회)
    docker compose -f docker-compose.yml -f docker-compose.deploy.yml up -d --build
    ```
    Caddy obtains a Let's Encrypt certificate automatically on first request.

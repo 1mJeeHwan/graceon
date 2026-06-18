@@ -2,7 +2,7 @@
 
 ## 1. 목적/범위
 
-PalmPlus 굿즈샵(상품·카테고리·옵션·재고·이미지)과 주문(주문·주문상품·입금/환불) 도메인을 영카트5 `itemform`/`orderlist`/`orderform`를 교회 굿즈로 재해석하여 **DB 연동 실동작**으로 구현한다. 포트폴리오의 핵심 어필은 **주문 상태머신**(`PLACED → PAID → READY → SHIPPING → DONE`, 분기 `CANCEL`/`RETURN`)과 상태전이 시 **재고 차감/복원·합계 재계산·입금/환불 영수증 기록**을 한 트랜잭션으로 묶는 점이다. 기존 `streamhub-api`(Spring Boot 3.4.1 / Java 21, JPA+MyBatis 혼용) · `streamhub-web`(Next.js 14, AG Grid, React Query, RHF+Zod) 컨벤션을 100% 그대로 따른다. 굿즈 이미지 업로드는 기존 `StorageService`를 재사용한다.
+레퍼런스 서비스 굿즈샵(상품·카테고리·옵션·재고·이미지)과 주문(주문·주문상품·입금/환불) 도메인을 영카트5 `itemform`/`orderlist`/`orderform`를 교회 굿즈로 재해석하여 **DB 연동 실동작**으로 구현한다. 포트폴리오의 핵심 어필은 **주문 상태머신**(`PLACED → PAID → READY → SHIPPING → DONE`, 분기 `CANCEL`/`RETURN`)과 상태전이 시 **재고 차감/복원·합계 재계산·입금/환불 영수증 기록**을 한 트랜잭션으로 묶는 점이다. 기존 `streamhub-api`(Spring Boot 3.4.1 / Java 21, JPA+MyBatis 혼용) · `streamhub-web`(Next.js 14, AG Grid, React Query, RHF+Zod) 컨벤션을 100% 그대로 따른다. 굿즈 이미지 업로드는 기존 `StorageService`를 재사용한다.
 
 ---
 

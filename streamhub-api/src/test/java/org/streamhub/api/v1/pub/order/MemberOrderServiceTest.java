@@ -49,13 +49,13 @@ class MemberOrderServiceTest {
         return new MemberOrderService(
                 albumRepository, goodsItemRepository, memberRepository, orderRepository,
                 orderItemRepository, orderReceiptRepository, paymentService, deliveryService,
-                "test_ck_demo");
+                "demo-client-key");
     }
 
     private Order order(long memberId, long total) {
         Order order = Order.builder()
                 .orderNo("20260618-000001").memberId(memberId).status(OrderStatus.PLACED)
-                .orderedName("임지환").receiverName("임지환").goodsTotal(total).total(total)
+                .orderedName("홍길동").receiverName("홍길동").goodsTotal(total).total(total)
                 .payMethod("CARD").build();
         ReflectionTestUtils.setField(order, "id", 7L);
         return order;

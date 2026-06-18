@@ -86,7 +86,7 @@
 
 ## 포트폴리오 어드민 확장 (Goods · Orders · Membership · Dashboard)
 
-그누보드5/영카트5 관리자의 **운영 기능 폭**을 PalmPlus(교회·스트리밍) 도메인으로 재해석해,
+그누보드5/영카트5 관리자의 **운영 기능 폭**을 레퍼런스 서비스(교회·스트리밍) 도메인으로 재해석해,
 단순 CRUD를 넘어 **주문 상태머신 · 정기빌링 · 포인트 원장 · 통합 운영 대시보드**까지 동작하는 신규 어드민 도메인을 추가했습니다.
 설계 의도·도메인 매핑·시드 전략은 [`docs/portfolio-admin-design.md`](docs/portfolio-admin-design.md) 참고.
 

@@ -10,8 +10,9 @@
  * <ul>
  *   <li><b>결제 (C4)</b> — {@code app.payment.provider}(기본 mock).
  *       <ul>
- *         <li>toss = <b>실 샌드박스 연동 완료</b>. 기본값이 토스 공개 문서용 테스트키이므로 즉시 동작.
- *             override: {@code PAYMENT_TOSS_CLIENT_KEY} / {@code PAYMENT_TOSS_SECRET_KEY}.</li>
+ *         <li>toss = <b>실 샌드박스 연동 완료</b>. 키는 저장소에 포함하지 않음(공개 레포) — 토스 공개
+ *             문서용 테스트키(공식 샘플 {@code github.com/tosspayments/tosspayments-sample})를
+ *             {@code PAYMENT_TOSS_CLIENT_KEY} / {@code PAYMENT_TOSS_SECRET_KEY}에 주입하면 동작.</li>
  *         <li>kakao = 실 호출 코드(ready/approve). 활성화: {@code PAYMENT_KAKAO_SECRET_KEY}
  *             (+ {@code PAYMENT_KAKAO_CID}, 기본 TC0ONETIME). 공개 테스트키 없음 → 본인 키 필요.</li>
  *         <li>paypal = 실 호출 코드(OAuth→create/capture). 활성화: {@code PAYMENT_PAYPAL_CLIENT_ID}
@@ -19,8 +20,8 @@
  *         <li>{@code PAYMENT_TEST_MODE}(기본 true)는 mock 승인 메모 표기에만 영향.</li>
  *       </ul></li>
  *   <li><b>배송조회 (C8)</b> — {@code app.delivery.provider}(기본 sweettracker, <b>실연동</b>).
- *       기본값이 스마트택배 공개 데모키라 택배사 목록/배송조회 즉시 동작. override:
- *       {@code DELIVERY_SWEETTRACKER_API_KEY}. mock = 오프라인 가짜 타임라인.</li>
+ *       키는 저장소 미포함 — 무료/공개 데모키를 {@code DELIVERY_SWEETTRACKER_API_KEY}에 주입하면
+ *       택배사 목록/배송조회 동작. mock = 오프라인 가짜 타임라인.</li>
  *   <li><b>SMS/LMS (C6)</b> — {@code app.sms.sender}(기본 mock=로그만). 활성화: aligo
  *       ({@code SMS_ALIGO_API_KEY}/{@code SMS_ALIGO_USER_ID}) 또는 solapi
  *       ({@code SMS_SOLAPI_API_KEY}/{@code SMS_SOLAPI_API_SECRET}).</li>

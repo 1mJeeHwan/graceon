@@ -62,7 +62,7 @@ class WorshipServiceTest {
 
     private WorshipRegisterRequest request() {
         return new WorshipRegisterRequest(
-                1L, "임지환", Gender.MALE, LocalDate.of(1990, 1, 1), "010-1234-5678",
+                1L, "홍길동", Gender.MALE, LocalDate.of(1990, 1, 1), "010-1234-5678",
                 null, "06000", "서울특별시 강남구", "101호", RegisterDept.YOUTH,
                 "N", null, null, null, null, "Y", List.of());
     }
@@ -76,7 +76,7 @@ class WorshipServiceTest {
 
     private WorshipRegistration saved(String regNo) {
         WorshipRegistration reg = WorshipRegistration.builder()
-                .churchId(1L).regNo(regNo).name("임지환").phone("010-1234-5678").privacyAgreed("Y").build();
+                .churchId(1L).regNo(regNo).name("홍길동").phone("010-1234-5678").privacyAgreed("Y").build();
         ReflectionTestUtils.setField(reg, "id", 42L);
         return reg;
     }

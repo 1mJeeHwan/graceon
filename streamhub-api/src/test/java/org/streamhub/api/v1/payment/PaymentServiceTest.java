@@ -56,7 +56,7 @@ class PaymentServiceTest {
     private Order order() {
         Order order = Order.builder()
                 .orderNo("20260618-000001").memberId(1L).status(OrderStatus.PLACED)
-                .orderedName("임지환").receiverName("임지환").goodsTotal(10_000L).total(10_000L)
+                .orderedName("홍길동").receiverName("홍길동").goodsTotal(10_000L).total(10_000L)
                 .payMethod("CARD").build();
         ReflectionTestUtils.setField(order, "id", 7L);
         return order;

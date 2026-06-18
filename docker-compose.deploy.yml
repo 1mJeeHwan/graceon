@@ -31,6 +31,14 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET (e.g. openssl rand -base64 48)}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      # External-integration seams (optional). Empty = mock/seed defaults, so the demo boots with no
+      # keys. Set these to activate real integrations (see the org.streamhub.api package-info):
+      #   Toss 결제 = 토스 공개 테스트키(공식 샘플 저장소); 복귀 URL = 배포된 user-web 주소.
+      PAYMENT_TOSS_CLIENT_KEY: ${PAYMENT_TOSS_CLIENT_KEY:-}
+      PAYMENT_TOSS_SECRET_KEY: ${PAYMENT_TOSS_SECRET_KEY:-}
+      PAYMENT_RETURN_BASE_URL: ${PAYMENT_RETURN_BASE_URL:-http://localhost:3001}
+      #   배송조회 = 스마트택배 키(무료/공개 데모키).
+      DELIVERY_SWEETTRACKER_API_KEY: ${DELIVERY_SWEETTRACKER_API_KEY:-}
       TZ: Asia/Seoul
     depends_on:
       mysql:
