@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Disc3, MapPin, Search } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 /** Top app bar: logo left, search right. Sticky within the phone frame. */
 export function AppBar() {
@@ -27,6 +28,7 @@ export function AppBar() {
         <Link href="/search" aria-label="검색" className="text-active transition-colors hover:text-primary">
           <Search className="h-5 w-5" />
         </Link>
+        <ThemeToggle />
       </nav>
     </header>
   );

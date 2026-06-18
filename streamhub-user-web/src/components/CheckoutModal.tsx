@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -92,6 +93,12 @@ export function CheckoutModal({
   const [order, setOrder] = useState<OrderResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [authRequired, setAuthRequired] = useState(false);
+  // Portal target. The modal is rendered into <body> (below) so its `position: fixed`
+  // is anchored to the viewport — not to a transformed ancestor (e.g. a page wrapper
+  // with `animate-fade-up`, whose lingering transform would otherwise make the bottom
+  // sheet pin to the page's hidden bottom instead of the screen).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Reset transient state whenever the modal is (re)opened.
   useEffect(() => {
@@ -115,7 +122,7 @@ export function CheckoutModal({
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const total = item.price;
   const loginHref = `/login?from=${encodeURIComponent(pathname)}`;
@@ -191,7 +198,7 @@ export function CheckoutModal({
 
   const isToss = method === "TOSS";
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60"
       role="dialog"
@@ -356,7 +363,8 @@ export function CheckoutModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

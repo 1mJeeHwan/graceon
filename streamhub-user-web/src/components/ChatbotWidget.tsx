@@ -14,6 +14,9 @@ import { usePreviewPlayer } from "./preview/PreviewPlayerProvider";
 /** localStorage key for the front-generated chat session id (UUID). */
 const SESSION_STORAGE_KEY = "streamhub.chat.sessionKey";
 
+/** localStorage key for the user-dragged launcher position ({side, bottom}). */
+const POS_STORAGE_KEY = "streamhub.chat.launcherPos";
+
 /** Reads (or lazily creates) the per-browser session key kept in localStorage. */
 function getSessionKey(): string {
   if (typeof window === "undefined") return "";
@@ -80,23 +83,125 @@ export function ChatbotWidget() {
     [sending],
   );
 
+  // --- Draggable launcher -------------------------------------------------
+  // Long-press (or drag past a small threshold) to pick the launcher up, then move it
+  // up/down freely; on release it snaps to the nearer side (left/right) and the chosen
+  // {side, bottom} is persisted to localStorage. A plain tap still opens the chat.
+  const columnRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ side: "left" | "right"; bottom: number }>({
+    side: "right",
+    bottom: 100,
+  });
+  const [dragging, setDragging] = useState(false);
+  const gesture = useRef<{
+    startX: number;
+    startY: number;
+    dragging: boolean;
+    timer: ReturnType<typeof setTimeout> | null;
+  } | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(POS_STORAGE_KEY);
+      if (raw) {
+        const p = JSON.parse(raw) as { side?: string; bottom?: number };
+        if ((p.side === "left" || p.side === "right") && typeof p.bottom === "number") {
+          setPos({ side: p.side, bottom: p.bottom });
+        }
+      }
+    } catch {
+      /* ignore malformed/blocked storage */
+    }
+  }, []);
+
+  // Keep the launcher clear of the mini player (when a track is loaded) and the tab bar.
+  const minBottom = previewTrack ? 168 : 84;
+  const clampBottom = useCallback(
+    (b: number) => {
+      const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+      return Math.min(Math.max(b, minBottom), vh - 120);
+    },
+    [minBottom],
+  );
+
+  const beginDrag = useCallback(() => {
+    if (gesture.current) gesture.current.dragging = true;
+    setDragging(true);
+  }, []);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    const timer = setTimeout(beginDrag, 220);
+    gesture.current = { startX: e.clientX, startY: e.clientY, dragging: false, timer };
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    const g = gesture.current;
+    if (!g) return;
+    if (!g.dragging && Math.hypot(e.clientX - g.startX, e.clientY - g.startY) > 8) {
+      if (g.timer) clearTimeout(g.timer);
+      beginDrag();
+    }
+    if (!g.dragging) return;
+    const rect = columnRef.current?.getBoundingClientRect();
+    const centerX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    setPos({
+      side: e.clientX < centerX ? "left" : "right",
+      bottom: clampBottom(window.innerHeight - e.clientY - 28),
+    });
+  };
+
+  const endGesture = () => {
+    const g = gesture.current;
+    gesture.current = null;
+    if (!g) return;
+    if (g.timer) clearTimeout(g.timer);
+    if (g.dragging) {
+      setDragging(false);
+      setPos((p) => {
+        const next = { side: p.side, bottom: clampBottom(p.bottom) };
+        try {
+          window.localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(next));
+        } catch {
+          /* ignore blocked storage */
+        }
+        return next;
+      });
+    } else {
+      setOpen(true); // plain tap → open chat
+    }
+  };
+
   return (
     <>
-      {/* Launcher — anchored to the phone frame (480px column), not the viewport edge. */}
+      {/* Launcher — anchored to the phone frame (480px column), not the viewport edge.
+          Draggable: long-press / drag to move vertically, snaps to either side. */}
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40">
-        <div className="relative mx-auto h-0 w-full max-w-[480px]">
+        <div ref={columnRef} className="relative mx-auto h-0 w-full max-w-[480px]">
           {!open && (
             <button
               type="button"
-              aria-label="챗봇 열기"
-              onClick={() => setOpen(true)}
+              aria-label="챗봇 열기 (길게 눌러 위치 이동)"
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={endGesture}
+              onPointerCancel={endGesture}
+              style={
+                {
+                  [pos.side]: 16,
+                  bottom: clampBottom(pos.bottom),
+                  touchAction: "none",
+                } as React.CSSProperties
+              }
               className={clsx(
-                "pointer-events-auto absolute right-4 grid h-14 w-14 place-items-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 transition-all active:scale-95",
-                previewTrack ? "bottom-[164px]" : "bottom-[100px]",
+                "pointer-events-auto absolute grid h-14 w-14 place-items-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 select-none",
+                dragging
+                  ? "scale-110 cursor-grabbing ring-4 ring-primary/30"
+                  : "transition-all active:scale-95",
               )}
             >
-              <MessageCircle className="h-6 w-6" />
-              <span className="absolute -right-1 -top-1 flex h-5 items-center rounded-full bg-point px-1.5 text-[9px] font-bold text-white">
+              <MessageCircle className="pointer-events-none h-6 w-6" />
+              <span className="pointer-events-none absolute -right-1 -top-1 flex h-5 items-center rounded-full bg-point px-1.5 text-[9px] font-bold text-white">
                 AI
               </span>
             </button>

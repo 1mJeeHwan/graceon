@@ -17,6 +17,27 @@
 
   /* Outside the phone frame (desktop letterboxing). */
   --frame-out: 11 12 16;
+
+  color-scheme: dark;
+}
+
+/* Light theme — opt-in via [data-theme="light"] on <html> (ThemeToggle + no-flash
+   script). Every component uses the semantic tokens / Tailwind colors below, so
+   overriding the channels here re-themes the whole app with no per-component edits. */
+:root[data-theme="light"] {
+  --bg: 247 248 250; /* page background */
+  --surface: 255 255 255; /* cards / sections */
+  --card: 238 241 245; /* elevated / select */
+  --border: 222 226 232;
+  --active: 23 26 33; /* primary text (near-black) */
+  --inactive: 100 107 122; /* secondary text */
+  --noimg: 150 158 170;
+  --primary: 8 145 178; /* deeper cyan for contrast on white */
+  --secondary: 91 48 255;
+  --point: 224 18 70;
+  --frame-out: 226 230 236;
+
+  color-scheme: light;
 }
 
 * {
