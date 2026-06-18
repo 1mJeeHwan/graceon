@@ -17,6 +17,11 @@ import {
   HeartHandshake,
   CalendarClock,
   ScrollText,
+  Church,
+  HandHeart,
+  Disc3,
+  Store,
+  MessageSquare,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -52,10 +57,19 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: "교회·예배",
+    items: [
+      { label: "교회관리", href: "/churches", icon: Church },
+      { label: "예배신청", href: "/worship", icon: HandHeart },
+    ],
+  },
+  {
     title: "커머스",
     items: [
       { label: "굿즈관리", href: "/goods", icon: ShoppingBag },
       { label: "주문관리", href: "/order", icon: ClipboardList },
+      { label: "앨범관리", href: "/albums", icon: Disc3 },
+      { label: "매장관리", href: "/stores", icon: Store },
     ],
   },
   {
@@ -66,6 +80,10 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "후원 내역", href: "/donation", icon: HeartHandshake },
       { label: "결제일정", href: "/billing-calendar", icon: CalendarClock },
     ],
+  },
+  {
+    title: "소통",
+    items: [{ label: "SMS", href: "/sms", icon: MessageSquare }],
   },
   {
     title: "시스템",
