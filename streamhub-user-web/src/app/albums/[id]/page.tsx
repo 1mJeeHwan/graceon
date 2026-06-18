@@ -70,9 +70,6 @@ export default function AlbumDetailPage({ params }: { params: { id: string } }) 
                 {data.releaseDate && <span>{formatDate(data.releaseDate)} 발매 · </span>}
                 <span>{data.trackCount}곡</span>
               </p>
-              {data.price != null && (
-                <p className="mt-3 text-lg font-bold text-primary">{data.price.toLocaleString()}원</p>
-              )}
             </div>
 
             {data.description && (
@@ -81,31 +78,44 @@ export default function AlbumDetailPage({ params }: { params: { id: string } }) 
               </p>
             )}
 
-            {/* Purchase (demo) */}
-            <div className="mt-5 flex gap-2">
-              <button
-                onClick={() => setAdded(true)}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border py-3 text-sm font-bold text-active active:bg-card"
-              >
-                <ShoppingCart className="h-4 w-4" />
-                {added ? "담김 (데모)" : "장바구니"}
-              </button>
-              <button
-                onClick={() => setCheckoutOpen(true)}
-                className="btn-primary flex-1 py-3 text-sm"
-              >
-                구매하기
-              </button>
+            {/* Purchase — price emphasized, cart + buy. The buy CTA is also pinned bottom (sticky). */}
+            <div className="mt-5 rounded-card border border-primary/30 bg-primary/5 px-4 py-4">
+              <div className="flex items-end justify-between">
+                <span className="text-xs font-semibold text-inactive">판매가</span>
+                {data.price != null ? (
+                  <span className="text-2xl font-extrabold tracking-tight text-primary">
+                    {data.price.toLocaleString()}
+                    <span className="ml-0.5 text-base font-bold">원</span>
+                  </span>
+                ) : (
+                  <span className="text-sm font-medium text-inactive">가격 미정</span>
+                )}
+              </div>
+              <div className="mt-3.5 flex gap-2">
+                <button
+                  onClick={() => setAdded(true)}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-bg py-3 text-sm font-bold text-active active:bg-card"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  {added ? "담김 (데모)" : "장바구니"}
+                </button>
+                <button
+                  onClick={() => setCheckoutOpen(true)}
+                  className="btn-primary flex-[1.4] py-3 text-sm font-bold"
+                >
+                  구매하기
+                </button>
+              </div>
+              <p className="mt-2.5 flex items-center gap-1.5 text-[11px] leading-tight text-inactive">
+                <Info className="h-3.5 w-3.5 shrink-0" />
+                실결제는 없지만 주문은 실제로 생성됩니다(로그인 필요).
+              </p>
             </div>
             <CheckoutModal
               open={checkoutOpen}
               onClose={() => setCheckoutOpen(false)}
-              item={{ name: data.title, price: data.price ?? 0 }}
+              item={{ albumId: data.id, name: data.title, price: data.price ?? 0 }}
             />
-            <p className="mt-2 flex items-center gap-1.5 text-[11px] text-inactive">
-              <Info className="h-3.5 w-3.5 shrink-0" />
-              구매·결제는 데모 플로우입니다(실 결제 미연동).
-            </p>
           </div>
 
           {/* Track list */}
@@ -140,6 +150,17 @@ export default function AlbumDetailPage({ params }: { params: { id: string } }) 
             >
               <MapPin className="h-4 w-4 text-primary" />이 음반 판매 매장 보기
             </Link>
+          </div>
+
+          {/* Sticky purchase bar — keeps the buy CTA reachable while scrolling tracks. */}
+          <div className="sticky bottom-0 z-40 mt-7 border-t border-border bg-bg/95 px-5 py-3 backdrop-blur">
+            <button
+              onClick={() => setCheckoutOpen(true)}
+              className="btn-primary w-full py-3.5 text-[15px] font-bold"
+            >
+              <ShoppingCart className="h-4.5 w-4.5" />
+              {data.price != null ? `${data.price.toLocaleString()}원 구매하기` : "구매하기"}
+            </button>
           </div>
         </article>
       ) : null}

@@ -1,18 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, CheckCircle2, CreditCard, ShieldAlert, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { X, CheckCircle2, CreditCard, ShieldAlert, Loader2, LogIn } from "lucide-react";
 import clsx from "clsx";
+import { useAuth } from "@/lib/auth";
+import { ApiError } from "@/lib/api";
+import {
+  orderApi,
+  orderKeys,
+  ORDER_STATUS_LABELS,
+  type OrderResult,
+  type PayProvider,
+} from "@/lib/orders";
 
 /**
  * Payment methods shown in the checkout modal. Logos are rendered as styled text labels — no
- * external PG SDK is loaded (this is a client-only demo). Backend seam: a real flow would POST
- * /v1/payment/request then /v1/payment/approve (see payment spec §3.2); here approval is faked.
+ * external PG SDK is loaded. Selecting one sets `payProvider` on the real POST /pub/v1/orders
+ * call: no money moves, but a genuine order row is created against the member's account.
  */
-type PayMethod = "KAKAO" | "TOSS" | "PAYPAL" | "CARD";
-
 interface MethodMeta {
-  id: PayMethod;
+  id: PayProvider;
   label: string;
   /** Tailwind text color class for the logo-style label. */
   className: string;
@@ -29,12 +39,12 @@ const METHODS: MethodMeta[] = [
 const TEST_CARD = "4242 4242 4242 4242";
 
 export interface CheckoutItem {
+  /** Album id — the order is created for this album. */
+  albumId: number;
   /** Display name, e.g. "찬양 1집 앨범". */
   name: string;
-  /** Price in KRW. */
+  /** Price in KRW (display only — the server computes the authoritative total). */
   price: number;
-  /** Optional quantity (defaults to 1). */
-  quantity?: number;
 }
 
 type Stage = "select" | "processing" | "done";
@@ -50,9 +60,10 @@ function formatCardNo(value: string): string {
 }
 
 /**
- * Mock checkout modal for album/goods purchases (C4). Lets the user pick a method, enter a test
- * card number, and "pay" — producing a fake approval receipt. Always shows a "테스트 모드 · 실결제
- * 아님" badge. Export it and open from any buy button via the `open`/`onClose` props.
+ * Checkout modal for album purchases (C4). Lets the user pick a method and "pay" — which makes a
+ * real POST /pub/v1/orders call with the member token, creating an actual order (no money moves).
+ * The receipt shows the real orderNo/status/total returned by the server. A logged-out user is
+ * routed to login (with a return path). Always shows a "테스트 모드 · 실결제 아님" badge.
  */
 export function CheckoutModal({
   open,
@@ -63,9 +74,15 @@ export function CheckoutModal({
   onClose: () => void;
   item: CheckoutItem;
 }) {
-  const [method, setMethod] = useState<PayMethod>("KAKAO");
+  const { member, token } = useAuth();
+  const pathname = usePathname();
+  const queryClient = useQueryClient();
+  const [method, setMethod] = useState<PayProvider>("KAKAO");
   const [cardNo, setCardNo] = useState("");
   const [stage, setStage] = useState<Stage>("select");
+  const [order, setOrder] = useState<OrderResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [authRequired, setAuthRequired] = useState(false);
 
   // Reset transient state whenever the modal is (re)opened.
   useEffect(() => {
@@ -73,6 +90,9 @@ export function CheckoutModal({
       setStage("select");
       setMethod("KAKAO");
       setCardNo("");
+      setOrder(null);
+      setError(null);
+      setAuthRequired(false);
     }
   }, [open]);
 
@@ -88,14 +108,30 @@ export function CheckoutModal({
 
   if (!open) return null;
 
-  const quantity = item.quantity ?? 1;
-  const total = item.price * quantity;
-  const txnId = `MOCK-${Date.now().toString().slice(-8)}`;
+  const total = item.price;
+  const loginHref = `/login?from=${encodeURIComponent(pathname)}`;
 
-  const pay = () => {
-    // Backend seam: replace with paymentRequest()/paymentApprove() mutations once wired.
+  const pay = async () => {
+    setError(null);
+    if (!token) {
+      setAuthRequired(true);
+      return;
+    }
     setStage("processing");
-    window.setTimeout(() => setStage("done"), 1100);
+    try {
+      const result = await orderApi.create({ albumId: item.albumId, payProvider: method }, token);
+      setOrder(result);
+      setStage("done");
+      // Refresh the My-page order history so the new order shows up immediately.
+      queryClient.invalidateQueries({ queryKey: orderKeys.list });
+    } catch (err) {
+      setStage("select");
+      if (err instanceof ApiError && err.status === 401) {
+        setAuthRequired(true);
+        return;
+      }
+      setError(err instanceof Error ? err.message : "주문 생성에 실패했습니다.");
+    }
   };
 
   return (
@@ -124,23 +160,30 @@ export function CheckoutModal({
         </div>
 
         {/* Test-mode banner (required) */}
-        <div className="flex items-center gap-2 border-b border-border bg-point/10 px-4 py-2.5">
-          <ShieldAlert className="h-4 w-4 shrink-0 text-point" />
-          <p className="text-[12px] font-semibold leading-tight text-point">
-            테스트 모드 · 실결제 아님 — 실제 PG 미연동(가짜 승인)
+        <div className="border-b border-border bg-point/10 px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4 shrink-0 text-point" />
+            <p className="text-[12px] font-semibold leading-tight text-point">
+              테스트 모드 · 실결제 아님 — 실제 PG 미연동
+            </p>
+          </div>
+          <p className="mt-1 pl-6 text-[11px] leading-tight text-point/80">
+            단, 데모 주문은 회원 계정에 실제로 생성됩니다(마이페이지 구매 내역에서 확인).
           </p>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {stage === "done" ? (
-            <Receipt item={item} total={total} method={method} txnId={txnId} />
+          {stage === "done" && order ? (
+            <Receipt item={item} order={order} method={method} />
+          ) : authRequired ? (
+            <AuthPrompt loginHref={loginHref} />
           ) : (
             <div className="space-y-5 px-4 py-4">
               {/* Order summary */}
               <div className="rounded-card border border-border bg-surface px-4 py-3.5">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-active">{item.name}</span>
-                  <span className="text-sm text-inactive">x{quantity}</span>
+                  <span className="text-sm text-inactive">x1</span>
                 </div>
                 <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2.5">
                   <span className="text-sm font-medium text-inactive">결제 금액</span>
@@ -192,12 +235,18 @@ export function CheckoutModal({
                   테스트 카드번호 자동 입력 (4242…)
                 </button>
               </div>
+
+              {error && (
+                <p className="rounded-lg border border-point/40 bg-point/10 px-3 py-2 text-[12px] font-medium text-point">
+                  {error}
+                </p>
+              )}
             </div>
           )}
         </div>
 
         {/* Footer action */}
-        {stage !== "done" && (
+        {stage !== "done" && !authRequired && (
           <div className="border-t border-border bg-surface px-4 py-3">
             <button
               type="button"
@@ -208,19 +257,28 @@ export function CheckoutModal({
               {stage === "processing" ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  승인 중…
+                  주문 생성 중…
                 </>
-              ) : (
+              ) : member ? (
                 <>{formatKRW(total)} 결제하기</>
+              ) : (
+                <>로그인하고 구매하기</>
               )}
             </button>
           </div>
         )}
-        {stage === "done" && (
+        {(stage === "done" || authRequired) && (
           <div className="border-t border-border bg-surface px-4 py-3">
-            <button type="button" onClick={onClose} className="btn-primary w-full">
-              확인
-            </button>
+            {authRequired ? (
+              <Link href={loginHref} className="btn-primary w-full">
+                <LogIn className="h-4 w-4" />
+                로그인하러 가기
+              </Link>
+            ) : (
+              <button type="button" onClick={onClose} className="btn-primary w-full">
+                확인
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -228,36 +286,63 @@ export function CheckoutModal({
   );
 }
 
+/** Logged-out gate: explains login is required and links to /login with a return path. */
+function AuthPrompt({ loginHref }: { loginHref: string }) {
+  return (
+    <div className="px-4 py-8">
+      <div className="flex flex-col items-center text-center">
+        <div className="grid h-14 w-14 place-items-center rounded-full bg-primary/15">
+          <LogIn className="h-7 w-7 text-primary" />
+        </div>
+        <h3 className="mt-3 text-lg font-bold text-active">로그인 후 구매 가능</h3>
+        <p className="mt-1.5 text-sm leading-relaxed text-inactive">
+          음반 구매는 회원 전용입니다.
+          <br />
+          로그인하면 바로 이 화면으로 돌아옵니다.
+        </p>
+      </div>
+      <Link
+        href={loginHref}
+        className="mt-5 flex w-full items-center justify-center text-[12px] font-medium text-primary underline-offset-2 active:underline"
+      >
+        체험 계정으로 로그인하기
+      </Link>
+    </div>
+  );
+}
+
 function Receipt({
   item,
-  total,
+  order,
   method,
-  txnId,
 }: {
   item: CheckoutItem;
-  total: number;
-  method: PayMethod;
-  txnId: string;
+  order: OrderResult;
+  method: PayProvider;
 }) {
   const methodLabel = METHODS.find((m) => m.id === method)?.label ?? method;
+  const statusLabel = ORDER_STATUS_LABELS[order.status] ?? order.status;
   return (
     <div className="px-4 py-6">
       <div className="flex flex-col items-center text-center">
         <CheckCircle2 className="h-14 w-14 text-primary" />
-        <h3 className="mt-3 text-lg font-bold text-active">결제가 완료되었어요</h3>
-        <p className="mt-1 text-xs text-inactive">MOCK 승인(실거래 아님)</p>
+        <h3 className="mt-3 text-lg font-bold text-active">주문이 생성되었어요</h3>
+        <p className="mt-1 font-mono text-sm font-bold text-primary">
+          {order.orderNo} · {statusLabel}
+        </p>
       </div>
 
       <dl className="mt-6 space-y-2.5 rounded-card border border-border bg-surface px-4 py-4 text-sm">
         <Row label="상품" value={item.name} />
+        <Row label="주문번호" value={order.orderNo} mono />
         <Row label="결제 수단" value={methodLabel} />
-        <Row label="거래번호" value={txnId} mono />
+        <Row label="상태" value={statusLabel} />
         <div className="my-1 border-t border-border" />
-        <Row label="결제 금액" value={formatKRW(total)} strong />
+        <Row label="결제 금액" value={formatKRW(order.total)} strong />
       </dl>
 
       <p className="mt-4 text-center text-[11px] text-inactive">
-        본 영수증은 데모용이며 실제 결제가 이뤄지지 않았습니다.
+        실제 결제는 이뤄지지 않았지만, 이 주문은 마이페이지 구매 내역에 기록됩니다.
       </p>
     </div>
   );

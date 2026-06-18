@@ -1,22 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LogIn } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
-export default function LoginPage() {
+/** Returns a safe in-app return path from `?from=`, defaulting to /mypage. */
+function useReturnPath(): string {
+  const params = useSearchParams();
+  const from = params.get("from");
+  // Only allow same-origin relative paths to avoid open-redirects.
+  return from && from.startsWith("/") && !from.startsWith("//") ? from : "/mypage";
+}
+
+function LoginForm() {
   const { member, loading, login } = useAuth();
   const router = useRouter();
+  const returnPath = useReturnPath();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Already logged in → go to my page.
+  // Already logged in → go back where the user came from (or my page).
   useEffect(() => {
-    if (!loading && member) router.replace("/mypage");
-  }, [loading, member, router]);
+    if (!loading && member) router.replace(returnPath);
+  }, [loading, member, router, returnPath]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,7 +34,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email.trim(), password);
-      router.replace("/mypage");
+      router.replace(returnPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : "로그인에 실패했습니다.");
       setSubmitting(false);
@@ -84,5 +93,14 @@ export default function LoginPage() {
         비밀번호 <span className="text-primary">member1234</span>
       </div>
     </section>
+  );
+}
+
+export default function LoginPage() {
+  // useSearchParams (in LoginForm) requires a Suspense boundary under the App Router.
+  return (
+    <Suspense fallback={<div className="px-5 pt-10" aria-busy="true" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

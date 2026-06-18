@@ -1,10 +1,12 @@
 "use client";
 
 import { useHome } from "@/lib/queries";
+import { useAlbums } from "@/lib/albums";
 import { Hero } from "@/components/Hero";
 import { ContentContainer } from "@/components/ContentContainer";
 import { HRow, HItem } from "@/components/HRow";
 import { ContentCard } from "@/components/ContentCard";
+import { AlbumCard } from "@/components/AlbumCard";
 import { PostCard } from "@/components/PostCard";
 import { NearbyChurchesSection } from "@/components/NearbyChurchesSection";
 import { EmptyState, ErrorState } from "@/components/States";
@@ -25,6 +27,42 @@ function HomeSkeleton() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** "CCM 음반" carousel on the home screen — gives album purchases equal billing with video/music. */
+function CcmAlbumSection() {
+  const { data, isLoading } = useAlbums({ page: 0, size: 10 });
+  const albums = data?.contents ?? [];
+
+  if (isLoading) {
+    return (
+      <ContentContainer title="CCM 음반" moreHref="/albums">
+        <HRow>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <HItem key={i} width={150}>
+              <div className="skeleton aspect-square rounded-card" />
+              <div className="skeleton mt-2.5 h-4 w-4/5 rounded" />
+            </HItem>
+          ))}
+        </HRow>
+      </ContentContainer>
+    );
+  }
+
+  // Nothing to show → drop the section entirely (keeps the home screen clean).
+  if (albums.length === 0) return null;
+
+  return (
+    <ContentContainer title="CCM 음반" moreHref="/albums">
+      <HRow>
+        {albums.map((album) => (
+          <HItem key={album.id} width={150}>
+            <AlbumCard item={album} />
+          </HItem>
+        ))}
+      </HRow>
+    </ContentContainer>
   );
 }
 
@@ -66,6 +104,8 @@ export default function HomePage() {
           <EmptyState message="등록된 음악이 없습니다." />
         )}
       </ContentContainer>
+
+      <CcmAlbumSection />
 
       <NearbyChurchesSection />
 
