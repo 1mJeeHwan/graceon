@@ -5,8 +5,13 @@
 교회/스트리밍 플랫폼을 **실제 운영 서비스의 프로덕션 스택 그대로** 재현한 풀스택 포트폴리오 프로젝트입니다.
 하나의 백엔드(Spring Boot) 위에 **운영자용 관리자 콘솔**과 **공개 사용자 미디어 사이트** 두 개의 프론트엔드가 올라가며,
 인증·RBAC·파일 업로드·통계 캐싱·비동기 감사로그·회원 로그인까지 **동작하는 수직 슬라이스**로 구성됩니다.
-로컬은 `docker-compose`, 배포는 AWS(Terraform)로 바로 띄울 수 있습니다.
+로컬은 `docker-compose`, 배포는 **AWS(Terraform)에 실제 가동 중**이며 `main` 푸시 시 **GitHub Actions로 자동 배포**됩니다.
 
+> **🔗 라이브 데모**
+> - 사용자 사이트 — https://streamhub-user.vercel.app
+> - 관리자 콘솔 — https://streamhub-admin.vercel.app
+> - API(Swagger) — https://dpdtwguq8ke3x.cloudfront.net/swagger-ui/index.html
+>
 > **데모 계정**
 > - 관리자 콘솔 — `admin` / `admin1234` (시스템), `manager` / `manager1234` (교회 관리자)
 > - 사용자 사이트 — `member01@streamhub.test` / `member1234`
@@ -220,10 +225,15 @@ JUnit 5 + Mockito 단위 테스트 — JWT 발급/검증/회전 + **관리자↔
 
 ---
 
-## 배포 (AWS)
+## 배포 (실제 가동 중)
 
-`deploy/README.md` 참고 — Terraform으로 EC2/RDS/S3/SQS/ECR를 만들고, `deploy/scripts/deploy-api.sh`로
-이미지를 ECR에 푸시 후 SSM으로 무중단 배포, 프론트는 Vercel. `terraform destroy`로 한 번에 정리(비용 안전).
+- **백엔드** — Terraform으로 AWS에 프로비저닝(EC2 + RDS MySQL + S3 + SQS + ECR + SSM). API는 EC2 컨테이너로
+  띄우고 **CloudFront(HTTPS)** 뒤에 둔다. `main`에 `streamhub-api/**` 변경이 푸시되면 **GitHub Actions**가
+  이미지를 빌드→ECR 푸시→SSM으로 무중단 롤. 수동 재배포는 `gh workflow run deploy.yml`.
+- **프론트** — Vercel(관리자 `streamhub-web` · 사용자 `streamhub-user-web`)에 GitHub 연동, `main` 푸시 시 자동 재배포.
+- **비용 안전** — `terraform destroy`로 인프라 일괄 정리. 무료/저비용 단일 VM 대안은 `DEPLOY-FREE.md` 참고.
+
+상세 절차는 `deploy/README.md`.
 
 ---
 
@@ -237,5 +247,5 @@ streamhub-admin/
 ├── streamhub-user-web/   # 사용자 Next.js (src/app · src/components · src/lib[수동 fetch+RQ])
 ├── deploy/               # Terraform IaC · 배포 스크립트 · 런북
 ├── docker-compose.yml    # MySQL · Redis · MinIO · LocalStack
-└── PLAN.md / USER-SITE-PLAN.md  # 설계문서 + 구현 로드맵
+└── docs/                 # 도메인 설계 스펙(specs/) · 설계문서 · 스크린샷
 ```

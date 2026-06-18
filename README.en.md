@@ -6,8 +6,13 @@ A full-stack portfolio project that reproduces a church/streaming platform **usi
 stack as the real service**. A single Spring Boot backend powers two frontends — an **operator admin
 console** and a **public user media site** — covering authentication, RBAC, file upload, cached
 statistics, asynchronous audit logging, and member login as working vertical slices. It runs locally
-with `docker-compose` and deploys to AWS via Terraform.
+with `docker-compose` and is **live on AWS (Terraform)**, auto-deployed via **GitHub Actions** on push to `main`.
 
+> **🔗 Live demo**
+> - User site — https://streamhub-user.vercel.app
+> - Admin console — https://streamhub-admin.vercel.app
+> - API (Swagger) — https://dpdtwguq8ke3x.cloudfront.net/swagger-ui/index.html
+>
 > **Demo accounts**
 > - Admin console — `admin` / `admin1234` (system), `manager` / `manager1234` (church manager)
 > - User site — `member01@streamhub.test` / `member1234`
@@ -234,11 +239,17 @@ wrapper (success unwrap, `ApiError` status mapping, bearer header).
 
 ---
 
-## Deploy (AWS)
+## Deploy (live)
 
-See `deploy/README.md` — Terraform provisions EC2/RDS/S3/SQS/ECR, `deploy/scripts/deploy-api.sh`
-pushes the image to ECR and rolls it out via SSM, frontend goes to Vercel. `terraform destroy` tears
-everything down in one shot (cost safety).
+- **Backend** — Provisioned on AWS with Terraform (EC2 + RDS MySQL + S3 + SQS + ECR + SSM). The API runs
+  as an EC2 container behind **CloudFront (HTTPS)**. On push to `main` touching `streamhub-api/**`,
+  **GitHub Actions** builds the image → pushes to ECR → rolls it via SSM (zero-downtime). Manual redeploy:
+  `gh workflow run deploy.yml`.
+- **Frontends** — Vercel (admin `streamhub-web` · user `streamhub-user-web`), Git-connected, auto-deploy on push to `main`.
+- **Cost safety** — `terraform destroy` tears everything down in one shot. A free/low-cost single-VM
+  alternative is documented in `DEPLOY-FREE.md`.
+
+Full runbook in `deploy/README.md`.
 
 ---
 
@@ -252,5 +263,5 @@ streamhub-admin/
 ├── streamhub-user-web/   # User Next.js (src/app · src/components · src/lib[manual fetch+RQ])
 ├── deploy/               # Terraform IaC · deploy scripts · runbook
 ├── docker-compose.yml    # MySQL · Redis · MinIO · LocalStack
-└── PLAN.md / USER-SITE-PLAN.md  # design docs + roadmap
+└── docs/                 # domain design specs (specs/) · design docs · screenshots
 ```
