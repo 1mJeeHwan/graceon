@@ -123,12 +123,14 @@ public class MemberOrderService {
         String provider = resolveProvider(request.provider());
         Order order = createAlbumOrder(member, request.albumId());
 
-        paymentService.request(new PayRequestCommand(order.getId(), provider));
+        PaymentResultDto requested = paymentService.request(new PayRequestCommand(order.getId(), provider));
 
         String orderName = firstProductName(order.getId());
         String customerKey = "member-" + member.getId();
+        // Toss → clientKey for the browser SDK; Kakao/PayPal → redirectUrl from the PG ready/create.
         return new MemberPaymentPrepareResult(
-                order.getOrderNo(), orderName, order.getTotal(), provider, tossClientKey, customerKey);
+                order.getOrderNo(), orderName, order.getTotal(), provider,
+                tossClientKey, customerKey, requested.redirectUrl());
     }
 
     /**

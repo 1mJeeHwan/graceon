@@ -22,6 +22,7 @@ public record PaymentResultDto(
         String txnId,
         Long amount,
         String memo,
+        String redirectUrl,
         boolean testMode) {
 
     /** Maps an adapter {@link PaymentResult} to the API DTO. */
@@ -33,6 +34,7 @@ public record PaymentResultDto(
                 result.txnId(),
                 result.amount(),
                 result.memo(),
+                result.redirectUrl(),
                 testMode);
     }
 }

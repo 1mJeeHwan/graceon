@@ -37,6 +37,13 @@ const METHODS: MethodMeta[] = [
   { id: "CARD", label: "신용·체크카드", className: "text-active" },
 ];
 
+/**
+ * Providers routed through the real PG flow (prepare → window/redirect → confirm). Only Toss has a
+ * public sandbox key, so it's the only real one in the demo; KAKAO/PAYPAL adapters exist on the
+ * backend and join here once their sandbox keys are configured. Everything else is mock one-shot.
+ */
+const REAL_PG_PROVIDERS = new Set<PayProvider>(["TOSS"]);
+
 /** Official Toss test card number — placeholder only, never sent anywhere. */
 const TEST_CARD = "4242 4242 4242 4242";
 
@@ -120,12 +127,21 @@ export function CheckoutModal({
       return;
     }
 
-    // TOSS = real PG: prepare an order, then hand off to the Toss window. On success the SDK
-    // redirects the page to /checkout/success, which confirms against the live Toss API.
-    if (method === "TOSS") {
+    // Real-PG flow: prepare an order, then hand off to the PG. Toss uses its client SDK window;
+    // redirect PGs (Kakao/PayPal) return a redirectUrl we navigate to. Both come back to
+    // /checkout/success, which confirms against the live PG API. KAKAO/PAYPAL are mock by default
+    // (no public sandbox key) and only become real PG here once their keys are configured — add
+    // them to REAL_PG_PROVIDERS at that point.
+    if (REAL_PG_PROVIDERS.has(method)) {
       setStage("processing");
       try {
-        const prep = await orderApi.prepare({ albumId: item.albumId, provider: "TOSS" }, token);
+        const prep = await orderApi.prepare({ albumId: item.albumId, provider: method }, token);
+        if (prep.redirectUrl) {
+          // Server-initiated redirect PG (Kakao/PayPal).
+          window.location.href = prep.redirectUrl;
+          return;
+        }
+        // Client-SDK PG (Toss): open the payment window.
         const TossPayments = await loadTossPayments();
         const tossPayments = TossPayments(prep.clientKey);
         const payment = tossPayments.payment({ customerKey: prep.customerKey });
@@ -145,7 +161,7 @@ export function CheckoutModal({
           setAuthRequired(true);
           return;
         }
-        // Toss throws on user-cancel/validation with a {code,message}-shaped error.
+        // PG SDK throws on user-cancel/validation with a {code,message}-shaped error.
         const message =
           err && typeof err === "object" && "message" in err
             ? String((err as { message: unknown }).message)

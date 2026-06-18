@@ -9,8 +9,10 @@ package org.streamhub.api.v1.pub.order.dto;
  * @param orderName   human-readable order name shown in the window
  * @param amount      server-computed total (KRW)
  * @param provider    PG code that will handle the payment
- * @param clientKey   PG client (publishable) key for the browser SDK
+ * @param clientKey   PG client (publishable) key for the browser SDK (Toss); null for redirect PGs
  * @param customerKey member-scoped customer key for the window
+ * @param redirectUrl for server-initiated redirect PGs (Kakao/PayPal), the URL to navigate to;
+ *                    null for client-SDK PGs (Toss)
  */
 public record MemberPaymentPrepareResult(
         String orderNo,
@@ -18,5 +20,6 @@ public record MemberPaymentPrepareResult(
         Long amount,
         String provider,
         String clientKey,
-        String customerKey) {
+        String customerKey,
+        String redirectUrl) {
 }

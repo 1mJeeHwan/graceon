@@ -53,30 +53,30 @@ class PaymentServiceTest {
                 providerRouter, actionLogPublisher, paymentMapper, true);
     }
 
-    private Order requestedOrder(String txnId) {
+    private Order order() {
         Order order = Order.builder()
                 .orderNo("20260618-000001").memberId(1L).status(OrderStatus.PLACED)
                 .orderedName("임지환").receiverName("임지환").goodsTotal(10_000L).total(10_000L)
                 .payMethod("CARD").build();
         ReflectionTestUtils.setField(order, "id", 7L);
-        order.applyPayRequest("MOCK", txnId); // moves to REQUESTED and stores the issued txnId
         return order;
     }
 
     @Test
-    void approve_txnIdMismatch_isRejectedBeforeProviderCall() {
-        Order order = requestedOrder("MOCK-20260618-000001-1");
+    void approve_onNonRequestedOrder_isRejectedBeforeProviderCall() {
+        // payStatus defaults to NONE (no prior request) — approving it must be refused, and the
+        // PG provider must never be resolved/charged. This guard also blocks double-approve.
+        Order order = order();
         when(orderRepository.findById(7L)).thenReturn(Optional.of(order));
 
         assertThatThrownBy(() -> paymentService().approve(
-                new PayApproveCommand(7L, "FORGED-TXN-9999", "4242424242424242")))
+                new PayApproveCommand(7L, "pg_token_real", "4242424242424242")))
                 .isInstanceOf(ApiException.class)
                 .extracting("resultCode")
                 .isEqualTo(ResultCode.INVALID_PARAMETER);
 
-        // The mismatch short-circuits before resolving/charging any provider.
         verify(providerRouter, never()).resolve(any());
-        verify(paymentProvider, never()).approve(any(), any(), any());
+        verify(paymentProvider, never()).approve(any(), any(), any(), any());
     }
 
     @Test

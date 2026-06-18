@@ -169,7 +169,7 @@ PaymentProvider(**toss=실 샌드박스 연동 완료**/paypal·kakao=스텁) ·
 - [x] **[P1] 카탈로그 확장 반영**: 신규 도메인 카드 + live/mock 배지 + 결제내역 카드 live화.
 - [x] **[P1] 카탈로그 대표 스크린샷**: 7종 실캡처 + /catalog 31썸네일 로드 검증(broken 0).
 - [x] **실 PG 연동 — 토스**: prepare/confirm 2단계 + Toss v2 결제창 + 실 confirm API. 검증 완료(결제창 렌더·confirm 실 API 호출·금액위변조 차단).
-- [ ] **실 PG 연동 — 카카오페이 → 페이팔**(사용자 지정 순서): 동일 prepare/confirm 패턴. 카카오=ready/approve(tid+pg_token), 페이팔=create/capture(sandbox). 어댑터 스텁에 실 호출 채우기.
+- [x] **실 PG 연동 — 카카오페이·페이팔 어댑터 코드**: 실 호출 코드 구현 완료(카카오 ready/approve `open-api.kakaopay.com`, 페이팔 OAuth+create/capture `api-m.sandbox.paypal.com`). `@ConditionalOnProperty`로 키 있을 때만 등록(없으면 mock 폴백, 데모 무영향). seam을 2토큰 approve(requestTxnId=tid/orderId + clientToken=pg_token/token)+redirectUrl로 확장. **공개 테스트키 없어 실 API 호출은 미검증**(키 주입 시 동작). 프론트는 redirectUrl 처리 추가, REAL_PG_PROVIDERS에 추가하면 활성화.
 - [ ] **[선택] AWS 라이브(C7)**: HLS 목업 권장(stream 도메인 + 관리자 송출 콘솔 + user-web hls.js 플레이어). 품질점수 무관, 포트폴리오 도메인 매트릭스 완성용.
 - [ ] **[P2] 챗봇 백엔드 공개화**: `/v1/chat/**` permitAll → user-web 실 룰베이스.
 - [ ] **[P2] 장바구니/다중구매·배송지 입력**(선택 고도화).

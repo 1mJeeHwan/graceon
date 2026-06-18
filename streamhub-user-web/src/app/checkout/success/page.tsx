@@ -31,8 +31,11 @@ function CheckoutSuccessInner() {
     if (confirmed.current) return;
     confirmed.current = true;
 
-    const orderNo = params.get("orderId");
-    const paymentKey = params.get("paymentKey");
+    // Param names differ per PG: Toss → orderId/paymentKey; Kakao → orderNo/pg_token;
+    // PayPal → orderNo/token. Read whichever is present.
+    const orderNo = params.get("orderId") ?? params.get("orderNo");
+    const paymentKey =
+      params.get("paymentKey") ?? params.get("pg_token") ?? params.get("token");
     const amountRaw = params.get("amount");
     const amount = amountRaw ? Number(amountRaw) : NaN;
     const token = getStoredToken();

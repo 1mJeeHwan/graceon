@@ -39,10 +39,12 @@ export interface PreparePaymentResult {
   orderName: string;
   amount: number;
   provider: PayProvider;
-  /** PG client (publishable) key for the browser SDK. */
+  /** PG client (publishable) key for the browser SDK (Toss); empty for redirect PGs. */
   clientKey: string;
   /** Member-scoped customer key for the window. */
   customerKey: string;
+  /** Redirect URL for server-initiated PGs (Kakao/PayPal); absent for client-SDK PGs (Toss). */
+  redirectUrl?: string;
 }
 
 /** Body of POST /pub/v1/orders/confirm — the values the PG window redirects back with. */

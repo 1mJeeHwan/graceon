@@ -68,14 +68,21 @@ app:
   payment:
     provider: ${PAYMENT_PROVIDER:mock}
     test-mode: ${PAYMENT_TEST_MODE:true}
+    # Browser origin redirect PGs (kakao/paypal) send the user back to (/checkout/success|fail).
+    return-base-url: ${PAYMENT_RETURN_BASE_URL:http://localhost:3001}
     toss:
       client-key: ${PAYMENT_TOSS_CLIENT_KEY:test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq}
       secret-key: ${PAYMENT_TOSS_SECRET_KEY:test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R}
+    # kakao/paypal: real adapter code, but @ConditionalOnProperty-gated on the key below — empty by
+    # default so the bean is absent and the router falls back to mock. Inject your own sandbox key
+    # to activate (no public test key exists for these, unlike Toss).
     paypal:
       client-id: ${PAYMENT_PAYPAL_CLIENT_ID:}
       secret: ${PAYMENT_PAYPAL_SECRET:}
+      currency: ${PAYMENT_PAYPAL_CURRENCY:USD}
     kakao:
       secret-key: ${PAYMENT_KAKAO_SECRET_KEY:}
+      cid: ${PAYMENT_KAKAO_CID:TC0ONETIME}
   # SMS/LMS (C6) sender seam. mock = log-only, no external send; aligo/solapi = real key
   # injection points (@ConditionalOnProperty-gated). Seeded messages are all testMode=Y.
   sms:

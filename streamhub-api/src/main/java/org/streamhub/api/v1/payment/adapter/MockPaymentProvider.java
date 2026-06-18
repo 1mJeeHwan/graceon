@@ -27,7 +27,10 @@ public class MockPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public PaymentResult approve(PaymentRequest request, String txnId, String maskedCard) {
+    public PaymentResult approve(
+            PaymentRequest request, String requestTxnId, String clientToken, String maskedCard) {
+        // Mock echoes the request-stage txnId; clientToken equals it in the mock flow.
+        String txnId = clientToken != null ? clientToken : requestTxnId;
         String memo = maskedCard == null || maskedCard.isBlank()
                 ? "MOCK 승인(실거래 아님)"
                 : "MOCK 승인(실거래 아님) " + maskedCard;

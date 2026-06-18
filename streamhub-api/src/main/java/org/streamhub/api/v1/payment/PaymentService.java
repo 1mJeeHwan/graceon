@@ -138,15 +138,16 @@ public class PaymentService {
         if (order.getPayStatus() != PayStatus.REQUESTED) {
             throw new ApiException(ResultCode.INVALID_PARAMETER, "결제요청 상태가 아닙니다");
         }
-        if (order.getPayTxnId() != null && !order.getPayTxnId().equals(command.txnId())) {
-            throw new ApiException(ResultCode.INVALID_PARAMETER, "결제요청 거래번호가 일치하지 않습니다");
-        }
 
         PaymentProvider adapter = providerRouter.resolve(order.getPayProvider());
         String maskedCard = maskCard(command.cardNo());
+        // Pass both the server-stored request-stage id (order.payTxnId — Kakao tid / PayPal order
+        // id, null for Toss) and the client-supplied completion token (command.txnId — Toss
+        // paymentKey / Kakao pg_token / PayPal token). Each adapter uses what its PG needs and
+        // validates server-side; the amount/orderId are always the server values on this request.
         PaymentResult result = adapter.approve(
                 new PaymentRequest(order.getOrderNo(), order.getTotal(), adapter.code()),
-                command.txnId(), maskedCard);
+                order.getPayTxnId(), command.txnId(), maskedCard);
 
         order.applyPayApprove();
         orderRepository.saveAndFlush(order);

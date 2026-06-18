@@ -55,19 +55,23 @@ public class TossPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public PaymentResult approve(PaymentRequest request, String txnId, String maskedCard) {
+    public PaymentResult approve(
+            PaymentRequest request, String requestTxnId, String clientToken, String maskedCard) {
+        // Toss issues nothing at request time (requestTxnId is null); the real paymentKey is the
+        // client token the window redirected back with.
+        String paymentKey = clientToken;
         if (secretKey == null || secretKey.isBlank()) {
             throw new ApiException(ResultCode.INVALID_PARAMETER,
                     "토스 시크릿 키 미설정 (PAYMENT_TOSS_SECRET_KEY)");
         }
-        if (txnId == null || txnId.isBlank()) {
+        if (paymentKey == null || paymentKey.isBlank()) {
             throw new ApiException(ResultCode.INVALID_PARAMETER, "paymentKey가 없습니다");
         }
 
         String basic = Base64.getEncoder()
                 .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
         Map<String, Object> body = Map.of(
-                "paymentKey", txnId,
+                "paymentKey", paymentKey,
                 "orderId", request.orderNo(),
                 "amount", request.amount());
 
@@ -89,7 +93,7 @@ public class TossPaymentProvider implements PaymentProvider {
             String method = node != null && node.hasNonNull("method")
                     ? node.get("method").asText() : "";
             String memo = ("토스 승인(테스트) " + method).trim();
-            return PaymentResult.approved(code(), txnId, approved, memo);
+            return PaymentResult.approved(code(), paymentKey, approved, memo);
         }
 
         String tossCode = node != null && node.hasNonNull("code")
