@@ -23,7 +23,7 @@ export function AlbumListView() {
     setPage(0);
   }, [debounced, genre]);
 
-  const params = { genre, keyword: debounced || undefined, page, size: PAGE_SIZE };
+  const params = { genre, keyword: debounced || undefined, pageNumber: page, pageSize: PAGE_SIZE };
   const { data, isLoading, isError, error, isPlaceholderData, refetch } = useAlbums(params);
 
   return (

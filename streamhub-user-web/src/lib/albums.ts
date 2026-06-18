@@ -115,8 +115,10 @@ export interface StoreDto {
 export interface AlbumListParams {
   genre?: AlbumGenre;
   keyword?: string;
-  page?: number;
-  size?: number;
+  // Must match the backend AlbumSearchRequest fields (pageNumber/pageSize). Sending
+  // page/size silently fell back to page 0 on the server — the broken-pagination bug.
+  pageNumber?: number;
+  pageSize?: number;
 }
 
 export interface StoreListParams {
