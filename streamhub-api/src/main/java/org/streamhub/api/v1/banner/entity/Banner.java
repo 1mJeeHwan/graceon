@@ -1,0 +1,103 @@
+package org.streamhub.api.v1.banner.entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+/**
+ * A promotional banner shown on the front (main slots, side rail, popup). Display is gated by
+ * {@code useYn} and the {@code startAt}/{@code endAt} window. All values are demo/fictional
+ * (image URLs are placeholders — no real assets).
+ */
+@Entity
+@Table(name = "BANNER", indexes = {
+        @Index(name = "idx_banner_position", columnList = "position"),
+        @Index(name = "idx_banner_use", columnList = "use_yn")
+})
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Banner {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "title", nullable = false, length = 200)
+    private String title;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "position", nullable = false, length = 20)
+    private BannerPosition position;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "device", nullable = false, length = 10)
+    private BannerDevice device;
+
+    @Column(name = "image_url", nullable = false, length = 500)
+    private String imageUrl;
+
+    @Column(name = "link_url", length = 500)
+    private String linkUrl;
+
+    @Column(name = "start_at")
+    private LocalDateTime startAt;
+
+    @Column(name = "end_at")
+    private LocalDateTime endAt;
+
+    @Column(name = "sort_order", nullable = false)
+    private int sortOrder;
+
+    @Column(name = "use_yn", nullable = false, length = 1)
+    private String useYn;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Builder
+    private Banner(String title, BannerPosition position, BannerDevice device, String imageUrl,
+                   String linkUrl, LocalDateTime startAt, LocalDateTime endAt, int sortOrder,
+                   String useYn, LocalDateTime createdAt) {
+        this.title = title;
+        this.position = position;
+        this.device = device;
+        this.imageUrl = imageUrl;
+        this.linkUrl = linkUrl;
+        this.startAt = startAt;
+        this.endAt = endAt;
+        this.sortOrder = sortOrder;
+        this.useYn = useYn != null ? useYn : "Y";
+        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
+    }
+
+    /** Updates editable fields. */
+    public void update(String title, BannerPosition position, BannerDevice device, String imageUrl,
+                       String linkUrl, LocalDateTime startAt, LocalDateTime endAt, int sortOrder,
+                       String useYn) {
+        this.title = title;
+        this.position = position;
+        this.device = device;
+        this.imageUrl = imageUrl;
+        this.linkUrl = linkUrl;
+        this.startAt = startAt;
+        this.endAt = endAt;
+        this.sortOrder = sortOrder;
+        this.useYn = useYn;
+    }
+
+    /** Updates only the display order (drag-to-reorder). */
+    public void updateSortOrder(int sortOrder) {
+        this.sortOrder = sortOrder;
+    }
+}
