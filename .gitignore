@@ -31,3 +31,6 @@ next-env.d.ts
 *.tfstate
 *.tfstate.*
 *.tfvars
+
+# Disposable resume note (next-session continuity; delete on resume)
+RESUME.md
