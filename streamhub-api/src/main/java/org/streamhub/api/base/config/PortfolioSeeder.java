@@ -706,10 +706,15 @@ public class PortfolioSeeder implements CommandLineRunner {
             String payMethod = (i % 4 == 0) ? "BANK" : "CARD";
             OrderStatus status = resolveStatus(now, orderedAt, rnd);
 
+            // Demo invoice (numeric). These are not real shipments, so the courier API will report
+            // "invalid invoice" (carriers validate a checksum) — the UI surfaces that gracefully.
+            // Point a demo order at a real format-valid invoice to see the live 200 response shape.
             String trackingNo = (status == OrderStatus.SHIPPING || status == OrderStatus.DONE)
-                    ? String.format("CJ%010d", 1_000_000L + i)
+                    ? String.format("6%011d", 50_000_000_000L + i)
                     : null;
-            String shipCompany = trackingNo != null ? "CJ대한통운" : null;
+            // Store the carrier CODE (04 = CJ대한통운) so the admin carrier dropdown and the
+            // delivery-tracking API can use it directly (C8). Display name resolved from the list.
+            String shipCompany = trackingNo != null ? "04" : null;
 
             String orderNo = buildOrderNo(orderedAt, daySeq);
 

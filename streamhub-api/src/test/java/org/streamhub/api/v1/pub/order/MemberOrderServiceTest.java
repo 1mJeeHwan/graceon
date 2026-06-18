@@ -43,11 +43,13 @@ class MemberOrderServiceTest {
     @Mock private OrderItemRepository orderItemRepository;
     @Mock private OrderReceiptRepository orderReceiptRepository;
     @Mock private PaymentService paymentService;
+    @Mock private org.streamhub.api.v1.delivery.DeliveryService deliveryService;
 
     private MemberOrderService service() {
         return new MemberOrderService(
                 albumRepository, goodsItemRepository, memberRepository, orderRepository,
-                orderItemRepository, orderReceiptRepository, paymentService, "test_ck_demo");
+                orderItemRepository, orderReceiptRepository, paymentService, deliveryService,
+                "test_ck_demo");
     }
 
     private Order order(long memberId, long total) {

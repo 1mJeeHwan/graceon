@@ -7,11 +7,13 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.streamhub.api.v1.delivery.adapter.Tracking;
 import org.streamhub.api.base.exception.ApiException;
 import org.streamhub.api.base.jwt.JwtTokenProvider;
 import org.streamhub.api.base.response.ResultCode;
@@ -75,6 +77,14 @@ public class MemberOrderController {
     public ResultDTO<List<MemberOrderListItem>> myOrders(
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         return ResultDTO.ok(memberOrderService.myOrders(resolveMemberId(authorization)));
+    }
+
+    @Operation(summary = "배송 조회", description = "회원 본인 주문의 운송장으로 실시간 배송 진행상황을 조회한다.")
+    @GetMapping("/{orderNo}/tracking")
+    public ResultDTO<Tracking> tracking(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @PathVariable String orderNo) {
+        return ResultDTO.ok(memberOrderService.trackMyOrder(resolveMemberId(authorization), orderNo));
     }
 
     private Long resolveMemberId(String authorization) {

@@ -3,18 +3,21 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Truck, PackageCheck } from "lucide-react";
 
 import {
   useOrderStatus,
   useOrderTracking,
   useOrderDetail,
+  useOrderCarriers,
+  orderTrackingInfo,
 } from "@/apis/query/order/order";
 import {
   OrderReceiptDtoKind,
   type OrderDetail,
   type OrderItemDto,
   type OrderReceiptDto,
+  type Tracking,
 } from "@/apis/query/streamHubAdminAPI.schemas";
 import { formatDateTime } from "@/lib/format";
 import OrderStatusBadge from "@/components/order/OrderStatusBadge";
@@ -70,9 +73,16 @@ export default function OrderDetailPage() {
   const [trackingNo, setTrackingNo] = useState("");
   const [shipCompany, setShipCompany] = useState("");
 
+  // Live delivery tracking (C8) — courier list for the dropdown + on-demand shipment lookup.
+  const [tracking, setTracking] = useState<Tracking | null>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingError, setTrackingError] = useState<string | null>(null);
+
   const detailQuery = useOrderDetail(orderId, {
     query: { enabled: Number.isFinite(orderId) },
   });
+  const carriersQuery = useOrderCarriers();
+  const carriers = carriersQuery.data?.resultObject ?? [];
   const changeStatusMutation = useOrderStatus();
   const changeTrackingMutation = useOrderTracking();
 
@@ -148,6 +158,24 @@ export default function OrderDetailPage() {
         onError: () => setError("운송장 저장 중 오류가 발생했습니다."),
       },
     );
+  };
+
+  const loadTracking = async () => {
+    setTracking(null);
+    setTrackingError(null);
+    setTrackingLoading(true);
+    try {
+      const response = await orderTrackingInfo(orderId);
+      if (response.resultCode === SUCCESS_CODE && response.resultObject) {
+        setTracking(response.resultObject);
+      } else {
+        setTrackingError(response.resultMessage ?? "배송 조회에 실패했습니다.");
+      }
+    } catch {
+      setTrackingError("배송 조회 중 오류가 발생했습니다.");
+    } finally {
+      setTrackingLoading(false);
+    }
   };
 
   return (
@@ -432,16 +460,22 @@ export default function OrderDetailPage() {
                   htmlFor="shipCompany"
                   className="mb-1 block text-xs font-medium text-slate-500"
                 >
-                  배송회사
+                  택배사
                 </label>
-                <input
+                <select
                   id="shipCompany"
-                  type="text"
                   value={shipCompany}
-                  disabled={!isTrackingEnabled(status)}
+                  disabled={!isTrackingEnabled(status) || carriersQuery.isLoading}
                   onChange={(event) => setShipCompany(event.target.value)}
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-                />
+                >
+                  <option value="">택배사 선택</option>
+                  {carriers.map((carrier) => (
+                    <option key={carrier.code} value={carrier.code ?? ""}>
+                      {carrier.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="mt-4 flex justify-end">
@@ -458,6 +492,81 @@ export default function OrderDetailPage() {
                 )}
                 운송장 저장
               </button>
+            </div>
+
+            {/* Live delivery tracking (C8) — calls the courier API for the saved invoice. */}
+            <div className="mt-6 border-t border-slate-200 pt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Truck className="h-4 w-4 text-slate-400" />
+                  <h3 className="text-sm font-semibold text-slate-900">배송 조회</h3>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500">
+                    스마트택배 연동
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadTracking}
+                  disabled={!detail?.trackingNo || trackingLoading}
+                  className="flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {trackingLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  배송 조회
+                </button>
+              </div>
+
+              {!detail?.trackingNo && (
+                <p className="mt-3 text-xs text-slate-400">
+                  운송장을 저장하면 택배사 API로 실시간 배송상황을 조회할 수 있습니다.
+                </p>
+              )}
+
+              {trackingError && (
+                <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  {trackingError}
+                </p>
+              )}
+
+              {tracking && (
+                <div className="mt-3">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+                    <span>
+                      택배사 <strong className="text-slate-900">{tracking.carrierName ?? "-"}</strong>
+                    </span>
+                    <span>
+                      송장 <strong className="font-mono text-slate-900">{tracking.invoiceNo ?? "-"}</strong>
+                    </span>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${
+                        tracking.completed
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}
+                    >
+                      {tracking.completed && <PackageCheck className="h-3 w-3" />}
+                      {tracking.completed ? "배달완료" : "배송중"}
+                    </span>
+                  </div>
+
+                  {tracking.events && tracking.events.length > 0 ? (
+                    <ol className="mt-3 space-y-3 border-l border-slate-200 pl-4">
+                      {tracking.events.map((event, index) => (
+                        <li key={index} className="relative">
+                          <span className="absolute -left-[21px] top-1 h-2 w-2 rounded-full bg-brand" />
+                          <p className="text-sm text-slate-900">{event.description ?? "-"}</p>
+                          <p className="text-xs text-slate-500">
+                            {event.location ?? ""} · {event.time ?? ""}
+                          </p>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="mt-3 text-xs text-slate-400">
+                      아직 등록된 배송 이벤트가 없습니다(택배사 조회 결과 없음).
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </section>
         </div>

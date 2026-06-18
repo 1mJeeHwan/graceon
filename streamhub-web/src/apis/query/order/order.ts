@@ -25,8 +25,10 @@ import type {
   OrderSearchRequest,
   OrderStatusChangeRequest,
   OrderTrackingRequest,
+  ResultDTOListCarrier,
   ResultDTOOrderDetail,
   ResultDTOResInfinityListOrderListItem,
+  ResultDTOTracking,
 } from "../streamHubAdminAPI.schemas";
 
 import { customInstance } from "../../custom-instance";
@@ -407,6 +409,294 @@ export function useOrderDetail<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getOrderDetailQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * 주문의 택배사+운송장번호로 택배사 API를 호출해 실시간 배송 진행상황을 반환한다.
+ * @summary 배송 조회
+ */
+export const orderTrackingInfo = (id: number, signal?: AbortSignal) => {
+  return customInstance<ResultDTOTracking>({
+    url: `/v1/order/${id}/tracking-info`,
+    method: "GET",
+    signal,
+  });
+};
+
+export const getOrderTrackingInfoQueryKey = (id?: number) => {
+  return [`/v1/order/${id}/tracking-info`] as const;
+};
+
+export const getOrderTrackingInfoQueryOptions = <
+  TData = Awaited<ReturnType<typeof orderTrackingInfo>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof orderTrackingInfo>>,
+        TError,
+        TData
+      >
+    >;
+  }
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getOrderTrackingInfoQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof orderTrackingInfo>>
+  > = ({ signal }) => orderTrackingInfo(id, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof orderTrackingInfo>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type OrderTrackingInfoQueryResult = NonNullable<
+  Awaited<ReturnType<typeof orderTrackingInfo>>
+>;
+export type OrderTrackingInfoQueryError = unknown;
+
+export function useOrderTrackingInfo<
+  TData = Awaited<ReturnType<typeof orderTrackingInfo>>,
+  TError = unknown
+>(
+  id: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof orderTrackingInfo>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof orderTrackingInfo>>,
+          TError,
+          Awaited<ReturnType<typeof orderTrackingInfo>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useOrderTrackingInfo<
+  TData = Awaited<ReturnType<typeof orderTrackingInfo>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof orderTrackingInfo>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof orderTrackingInfo>>,
+          TError,
+          Awaited<ReturnType<typeof orderTrackingInfo>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useOrderTrackingInfo<
+  TData = Awaited<ReturnType<typeof orderTrackingInfo>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof orderTrackingInfo>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 배송 조회
+ */
+
+export function useOrderTrackingInfo<
+  TData = Awaited<ReturnType<typeof orderTrackingInfo>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof orderTrackingInfo>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getOrderTrackingInfoQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * 운송장 등록 드롭다운용 택배사 목록(스마트택배 연동).
+ * @summary 택배사 목록
+ */
+export const orderCarriers = (signal?: AbortSignal) => {
+  return customInstance<ResultDTOListCarrier>({
+    url: `/v1/order/carriers`,
+    method: "GET",
+    signal,
+  });
+};
+
+export const getOrderCarriersQueryKey = () => {
+  return [`/v1/order/carriers`] as const;
+};
+
+export const getOrderCarriersQueryOptions = <
+  TData = Awaited<ReturnType<typeof orderCarriers>>,
+  TError = unknown
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof orderCarriers>>, TError, TData>
+  >;
+}) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getOrderCarriersQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof orderCarriers>>> = ({
+    signal,
+  }) => orderCarriers(signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof orderCarriers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type OrderCarriersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof orderCarriers>>
+>;
+export type OrderCarriersQueryError = unknown;
+
+export function useOrderCarriers<
+  TData = Awaited<ReturnType<typeof orderCarriers>>,
+  TError = unknown
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof orderCarriers>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof orderCarriers>>,
+          TError,
+          Awaited<ReturnType<typeof orderCarriers>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useOrderCarriers<
+  TData = Awaited<ReturnType<typeof orderCarriers>>,
+  TError = unknown
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof orderCarriers>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof orderCarriers>>,
+          TError,
+          Awaited<ReturnType<typeof orderCarriers>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useOrderCarriers<
+  TData = Awaited<ReturnType<typeof orderCarriers>>,
+  TError = unknown
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof orderCarriers>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 택배사 목록
+ */
+
+export function useOrderCarriers<
+  TData = Awaited<ReturnType<typeof orderCarriers>>,
+  TError = unknown
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof orderCarriers>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getOrderCarriersQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

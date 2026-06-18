@@ -9,10 +9,14 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import java.util.List;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.response.ResultDTO;
+import org.streamhub.api.v1.delivery.DeliveryService;
+import org.streamhub.api.v1.delivery.adapter.Carrier;
+import org.streamhub.api.v1.delivery.adapter.Tracking;
 import org.streamhub.api.v1.order.dto.OrderDetail;
 import org.streamhub.api.v1.order.dto.OrderListItem;
 import org.streamhub.api.v1.order.dto.OrderSearchRequest;
@@ -30,9 +34,11 @@ import org.streamhub.api.v1.order.dto.OrderTrackingRequest;
 public class OrderController {
 
     private final OrderService orderService;
+    private final DeliveryService deliveryService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, DeliveryService deliveryService) {
         this.orderService = orderService;
+        this.deliveryService = deliveryService;
     }
 
     @Operation(summary = "주문 목록", description = "검색/상태/기간 필터 + 페이지네이션된 주문 목록.")
@@ -60,5 +66,18 @@ public class OrderController {
     public ResultDTO<OrderDetail> changeTracking(
             @PathVariable Long id, @Valid @RequestBody OrderTrackingRequest request) {
         return ResultDTO.ok(orderService.changeTracking(id, request));
+    }
+
+    @Operation(summary = "택배사 목록", description = "운송장 등록 드롭다운용 택배사 목록(스마트택배 연동).")
+    @GetMapping("/carriers")
+    public ResultDTO<List<Carrier>> carriers() {
+        return ResultDTO.ok(deliveryService.carriers());
+    }
+
+    @Operation(summary = "배송 조회",
+            description = "주문의 택배사+운송장번호로 택배사 API를 호출해 실시간 배송 진행상황을 반환한다.")
+    @GetMapping("/{id}/tracking-info")
+    public ResultDTO<Tracking> trackingInfo(@PathVariable Long id) {
+        return ResultDTO.ok(deliveryService.trackOrder(id));
     }
 }

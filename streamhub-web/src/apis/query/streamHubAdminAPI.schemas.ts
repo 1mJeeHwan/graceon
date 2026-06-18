@@ -936,6 +936,7 @@ export interface PaymentResultDto {
   txnId?: string;
   amount?: number;
   memo?: string;
+  redirectUrl?: string;
   testMode?: boolean;
 }
 
@@ -1778,6 +1779,33 @@ export interface ResultDTOMemberOrderResult {
   resultObject?: MemberOrderResult;
 }
 
+export interface MemberPaymentPrepareRequest {
+  albumId: number;
+  provider?: string;
+}
+
+export interface MemberPaymentPrepareResult {
+  orderNo?: string;
+  orderName?: string;
+  amount?: number;
+  provider?: string;
+  clientKey?: string;
+  customerKey?: string;
+  redirectUrl?: string;
+}
+
+export interface ResultDTOMemberPaymentPrepareResult {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: MemberPaymentPrepareResult;
+}
+
+export interface MemberPaymentConfirmRequest {
+  orderNo: string;
+  paymentKey: string;
+  amount: number;
+}
+
 export interface MemberLoginRequest {
   email: string;
   password: string;
@@ -2119,6 +2147,41 @@ export interface ResultDTOPaymentReceiptDto {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: PaymentReceiptDto;
+}
+
+export interface ResultDTOTracking {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: Tracking;
+}
+
+export interface Tracking {
+  carrierCode?: string;
+  carrierName?: string;
+  invoiceNo?: string;
+  level?: number;
+  completed?: boolean;
+  senderName?: string;
+  receiverName?: string;
+  events?: TrackingEvent[];
+}
+
+export interface TrackingEvent {
+  time?: string;
+  location?: string;
+  description?: string;
+}
+
+export interface Carrier {
+  code?: string;
+  name?: string;
+  international?: boolean;
+}
+
+export interface ResultDTOListCarrier {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: Carrier[];
 }
 
 export interface GoodsCategoryDto {

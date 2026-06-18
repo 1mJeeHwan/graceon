@@ -29,7 +29,8 @@ member, content, post, statistics, **dashboard**, goods, order, subscription/don
 admin-ops(통합 운영 대시보드: KPI6+ApexCharts4+실시간피드+할일큐), dashboard(통계), catalog(기능 카탈로그), member(회원), content(콘텐츠 CRUD+업로드), goods(+add/[id], AG Grid 인라인+옵션/이미지), order(+[id], 상태머신 Stepper), **payment(결제내역: 결제/환불 영수증 조인 목록, 기간/수단/구분 필터, 주문딥링크)**, subscription(+[id]), subscription-plan, donation, point, billing-calendar, action-log. + 확장 5종(churches/albums/stores/worship/sms).
 
 ### 어댑터 seam (실키 주입 지점)
-PaymentProvider(**toss=실 샌드박스 연동 완료**/paypal·kakao=스텁) · SmsSender(aligo/solapi) · ChatProvider(llm) · MusicPreviewProvider(external) · GeocodeProvider(kakao) · PostcodeProvider · MapProvider(kakao). `.env` 플래그로 전환.
+PaymentProvider(**toss=실 샌드박스 연동 완료**/kakao·paypal=실 호출 코드, 키 주입형) · **DeliveryTrackingProvider(sweettracker=실 연동 완료/mock)** · SmsSender(aligo/solapi) · ChatProvider(llm) · MusicPreviewProvider(external) · GeocodeProvider(kakao) · PostcodeProvider · MapProvider(kakao). `.env` 플래그로 전환.
+> **배송조회 실연동(2026-06-18, C8):** 운송장 수동입력만 있던 것을 **스마트택배(SweetTracker) 집계 API** 연동으로 확장. `GET /v1/order/carriers`(택배사 132종)·`GET /v1/order/{id}/tracking-info`(관리자)·`GET /pub/v1/orders/{orderNo}/tracking`(회원). 주문의 택배사코드+송장번호로 실 배송조회. 관리자 주문상세=택배사 드롭다운+배송 타임라인, user-web 마이페이지=주문별 배송조회. **공개 데모키로 실 API 검증 완료**(carriers 132, tracking-info 실호출+카탈로그 resolve+상태/타임라인). 가짜 송장은 택배사 checksum 검증으로 거부됨(정직). `DELIVERY_SWEETTRACKER_API_KEY`로 override.
 > **토스 실연동(2026-06-18):** 음반 결제의 토스 옵션은 **실제 Toss v2 결제창 + 실 confirm API** 호출(`api.tosspayments.com/v1/payments/confirm`). 기본키는 토스 공개 문서용 테스트키(`PAYMENT_TOSS_CLIENT_KEY`/`PAYMENT_TOSS_SECRET_KEY`로 override, 실 가맹점키 주입 시 코드변경 없이 라이브). 테스트키라 실제 출금 없음. 카카오/페이팔은 동일 패턴으로 후속 예정.
 
 ### 인프라/배포 자산

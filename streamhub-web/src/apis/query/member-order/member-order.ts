@@ -23,8 +23,12 @@ import type {
 
 import type {
   MemberOrderCreateRequest,
+  MemberPaymentConfirmRequest,
+  MemberPaymentPrepareRequest,
   ResultDTOListMemberOrderListItem,
   ResultDTOMemberOrderResult,
+  ResultDTOMemberPaymentPrepareResult,
+  ResultDTOTracking,
 } from "../streamHubAdminAPI.schemas";
 
 import { customInstance } from "../../custom-instance";
@@ -263,3 +267,345 @@ export const useMemberOrderOrdersCreate = <
 
   return useMutation(mutationOptions, queryClient);
 };
+/**
+ * 결제창을 열기 전에 주문을 생성하고 결제창에 넘길 orderNo/금액/클라이언트키를 발급한다.
+ * @summary 결제 준비(실 PG)
+ */
+export const memberOrderOrdersPrepareCreate = (
+  memberPaymentPrepareRequest: MemberPaymentPrepareRequest,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOMemberPaymentPrepareResult>({
+    url: `/pub/v1/orders/prepare`,
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    data: memberPaymentPrepareRequest,
+    signal,
+  });
+};
+
+export const getMemberOrderOrdersPrepareCreateMutationOptions = <
+  TError = unknown,
+  TContext = unknown
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof memberOrderOrdersPrepareCreate>>,
+    TError,
+    { data: MemberPaymentPrepareRequest },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof memberOrderOrdersPrepareCreate>>,
+  TError,
+  { data: MemberPaymentPrepareRequest },
+  TContext
+> => {
+  const mutationKey = ["memberOrderOrdersPrepareCreate"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof memberOrderOrdersPrepareCreate>>,
+    { data: MemberPaymentPrepareRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return memberOrderOrdersPrepareCreate(data);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MemberOrderOrdersPrepareCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof memberOrderOrdersPrepareCreate>>
+>;
+export type MemberOrderOrdersPrepareCreateMutationBody =
+  MemberPaymentPrepareRequest;
+export type MemberOrderOrdersPrepareCreateMutationError = unknown;
+
+/**
+ * @summary 결제 준비(실 PG)
+ */
+export const useMemberOrderOrdersPrepareCreate = <
+  TError = unknown,
+  TContext = unknown
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof memberOrderOrdersPrepareCreate>>,
+      TError,
+      { data: MemberPaymentPrepareRequest },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof memberOrderOrdersPrepareCreate>>,
+  TError,
+  { data: MemberPaymentPrepareRequest },
+  TContext
+> => {
+  const mutationOptions =
+    getMemberOrderOrdersPrepareCreateMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+/**
+ * 결제창이 돌려준 paymentKey/orderId/amount로 실제 PG 승인을 호출하고 주문을 PAID로 전이한다.
+ * @summary 결제 승인(실 PG)
+ */
+export const memberOrderOrdersConfirmCreate = (
+  memberPaymentConfirmRequest: MemberPaymentConfirmRequest,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOMemberOrderResult>({
+    url: `/pub/v1/orders/confirm`,
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    data: memberPaymentConfirmRequest,
+    signal,
+  });
+};
+
+export const getMemberOrderOrdersConfirmCreateMutationOptions = <
+  TError = unknown,
+  TContext = unknown
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof memberOrderOrdersConfirmCreate>>,
+    TError,
+    { data: MemberPaymentConfirmRequest },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof memberOrderOrdersConfirmCreate>>,
+  TError,
+  { data: MemberPaymentConfirmRequest },
+  TContext
+> => {
+  const mutationKey = ["memberOrderOrdersConfirmCreate"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof memberOrderOrdersConfirmCreate>>,
+    { data: MemberPaymentConfirmRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return memberOrderOrdersConfirmCreate(data);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MemberOrderOrdersConfirmCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof memberOrderOrdersConfirmCreate>>
+>;
+export type MemberOrderOrdersConfirmCreateMutationBody =
+  MemberPaymentConfirmRequest;
+export type MemberOrderOrdersConfirmCreateMutationError = unknown;
+
+/**
+ * @summary 결제 승인(실 PG)
+ */
+export const useMemberOrderOrdersConfirmCreate = <
+  TError = unknown,
+  TContext = unknown
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof memberOrderOrdersConfirmCreate>>,
+      TError,
+      { data: MemberPaymentConfirmRequest },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof memberOrderOrdersConfirmCreate>>,
+  TError,
+  { data: MemberPaymentConfirmRequest },
+  TContext
+> => {
+  const mutationOptions =
+    getMemberOrderOrdersConfirmCreateMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+/**
+ * 회원 본인 주문의 운송장으로 실시간 배송 진행상황을 조회한다.
+ * @summary 배송 조회
+ */
+export const memberOrderOrdersTracking = (
+  orderNo: string,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOTracking>({
+    url: `/pub/v1/orders/${orderNo}/tracking`,
+    method: "GET",
+    signal,
+  });
+};
+
+export const getMemberOrderOrdersTrackingQueryKey = (orderNo?: string) => {
+  return [`/pub/v1/orders/${orderNo}/tracking`] as const;
+};
+
+export const getMemberOrderOrdersTrackingQueryOptions = <
+  TData = Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+  TError = unknown
+>(
+  orderNo: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+        TError,
+        TData
+      >
+    >;
+  }
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getMemberOrderOrdersTrackingQueryKey(orderNo);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof memberOrderOrdersTracking>>
+  > = ({ signal }) => memberOrderOrdersTracking(orderNo, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!orderNo,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type MemberOrderOrdersTrackingQueryResult = NonNullable<
+  Awaited<ReturnType<typeof memberOrderOrdersTracking>>
+>;
+export type MemberOrderOrdersTrackingQueryError = unknown;
+
+export function useMemberOrderOrdersTracking<
+  TData = Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+  TError = unknown
+>(
+  orderNo: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+          TError,
+          Awaited<ReturnType<typeof memberOrderOrdersTracking>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useMemberOrderOrdersTracking<
+  TData = Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+  TError = unknown
+>(
+  orderNo: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+          TError,
+          Awaited<ReturnType<typeof memberOrderOrdersTracking>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useMemberOrderOrdersTracking<
+  TData = Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+  TError = unknown
+>(
+  orderNo: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 배송 조회
+ */
+
+export function useMemberOrderOrdersTracking<
+  TData = Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+  TError = unknown
+>(
+  orderNo: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberOrderOrdersTracking>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getMemberOrderOrdersTrackingQueryOptions(
+    orderNo,
+    options
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}

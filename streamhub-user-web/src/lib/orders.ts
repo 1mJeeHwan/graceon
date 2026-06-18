@@ -54,6 +54,25 @@ export interface ConfirmPaymentInput {
   amount: number;
 }
 
+/** One scan event in a shipment's progress (GET /pub/v1/orders/{orderNo}/tracking). */
+export interface TrackingEvent {
+  time: string | null;
+  location: string | null;
+  description: string | null;
+}
+
+/** Live shipment status for an order, from the courier API via the backend delivery seam. */
+export interface Tracking {
+  carrierCode: string | null;
+  carrierName: string | null;
+  invoiceNo: string | null;
+  level: number;
+  completed: boolean;
+  senderName: string | null;
+  receiverName: string | null;
+  events: TrackingEvent[];
+}
+
 /** One row of GET /pub/v1/orders (my order history). */
 export interface OrderListItem {
   orderNo: string;
@@ -84,6 +103,9 @@ export const orderApi = {
     request<OrderResult>("/pub/v1/orders/confirm", { method: "POST", body: input, token }),
   /** List the signed-in member's orders, newest first. */
   list: (token: string) => request<OrderListItem[]>("/pub/v1/orders", { token }),
+  /** Live delivery tracking for one of the member's orders (calls the courier API). */
+  tracking: (orderNo: string, token: string) =>
+    request<Tracking>(`/pub/v1/orders/${orderNo}/tracking`, { token }),
 };
 
 export const orderKeys = {

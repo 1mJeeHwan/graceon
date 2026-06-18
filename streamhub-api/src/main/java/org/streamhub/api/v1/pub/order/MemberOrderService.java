@@ -64,6 +64,7 @@ public class MemberOrderService {
     private final OrderItemRepository orderItemRepository;
     private final OrderReceiptRepository orderReceiptRepository;
     private final PaymentService paymentService;
+    private final org.streamhub.api.v1.delivery.DeliveryService deliveryService;
     private final String tossClientKey;
     private final SecureRandom random = new SecureRandom();
 
@@ -75,6 +76,7 @@ public class MemberOrderService {
             OrderItemRepository orderItemRepository,
             OrderReceiptRepository orderReceiptRepository,
             PaymentService paymentService,
+            org.streamhub.api.v1.delivery.DeliveryService deliveryService,
             @org.springframework.beans.factory.annotation.Value("${app.payment.toss.client-key:}")
             String tossClientKey) {
         this.albumRepository = albumRepository;
@@ -84,7 +86,25 @@ public class MemberOrderService {
         this.orderItemRepository = orderItemRepository;
         this.orderReceiptRepository = orderReceiptRepository;
         this.paymentService = paymentService;
+        this.deliveryService = deliveryService;
         this.tossClientKey = tossClientKey;
+    }
+
+    /**
+     * Live shipment tracking for the member's own order (verifies ownership, then delegates to the
+     * delivery seam which calls the courier API).
+     *
+     * @throws ApiException {@code NOT_FOUND} if missing, {@code UNAUTHORIZED} if it is not the
+     *                      member's order
+     */
+    @Transactional(readOnly = true)
+    public org.streamhub.api.v1.delivery.adapter.Tracking trackMyOrder(Long memberId, String orderNo) {
+        Order order = orderRepository.findByOrderNo(orderNo)
+                .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
+        if (!order.getMemberId().equals(memberId)) {
+            throw new ApiException(ResultCode.UNAUTHORIZED);
+        }
+        return deliveryService.trackOrder(order);
     }
 
     /**

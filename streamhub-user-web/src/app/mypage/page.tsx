@@ -2,10 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Church, LogOut, Mail, Phone, Receipt, ShoppingBag, User } from "lucide-react";
+import {
+  CalendarDays,
+  Church,
+  Loader2,
+  LogOut,
+  Mail,
+  PackageCheck,
+  Phone,
+  Receipt,
+  ShoppingBag,
+  Truck,
+  User,
+} from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/lib/auth";
-import { useMyOrders, ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/orders";
+import {
+  orderApi,
+  useMyOrders,
+  ORDER_STATUS_LABELS,
+  type OrderListItem,
+  type OrderStatus,
+  type Tracking,
+} from "@/lib/orders";
 import { formatDate } from "@/lib/format";
 import { NearbyChurchesSection } from "@/components/NearbyChurchesSection";
 
@@ -56,30 +75,108 @@ function OrderHistorySection({ token }: { token: string }) {
       ) : (
         <ul className="divide-y divide-border/60 overflow-hidden rounded-card border border-border/70 bg-surface">
           {orders.map((order) => (
-            <li key={order.orderNo} className="px-4 py-3.5">
-              <div className="flex items-center justify-between gap-3">
-                <p className="ellipsis-1 text-sm font-bold text-active">{order.firstItemName}</p>
-                <span
-                  className={clsx(
-                    "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold",
-                    statusClass(order.status),
-                  )}
-                >
-                  {ORDER_STATUS_LABELS[order.status] ?? order.status}
-                </span>
-              </div>
-              <div className="mt-1 flex items-center justify-between gap-3">
-                <span className="font-mono text-[11px] text-inactive">{order.orderNo}</span>
-                <span className="text-sm font-bold text-primary">
-                  {order.total.toLocaleString()}원
-                </span>
-              </div>
-              <p className="mt-0.5 text-[11px] text-inactive">{formatDate(order.orderedAt)}</p>
-            </li>
+            <OrderRow key={order.orderNo} order={order} token={token} />
           ))}
         </ul>
       )}
     </section>
+  );
+}
+
+/** One order row with an on-demand "배송조회" expander backed by the courier API. */
+function OrderRow({ order, token }: { order: OrderListItem; token: string }) {
+  const [tracking, setTracking] = useState<Tracking | null>(null);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadTracking = async () => {
+    setOpen(true);
+    if (tracking || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      setTracking(await orderApi.tracking(order.orderNo, token));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "배송 조회에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <li className="px-4 py-3.5">
+      <div className="flex items-center justify-between gap-3">
+        <p className="ellipsis-1 text-sm font-bold text-active">{order.firstItemName}</p>
+        <span
+          className={clsx(
+            "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold",
+            statusClass(order.status),
+          )}
+        >
+          {ORDER_STATUS_LABELS[order.status] ?? order.status}
+        </span>
+      </div>
+      <div className="mt-1 flex items-center justify-between gap-3">
+        <span className="font-mono text-[11px] text-inactive">{order.orderNo}</span>
+        <span className="text-sm font-bold text-primary">{order.total.toLocaleString()}원</span>
+      </div>
+      <div className="mt-1 flex items-center justify-between gap-3">
+        <p className="text-[11px] text-inactive">{formatDate(order.orderedAt)}</p>
+        <button
+          type="button"
+          onClick={open ? () => setOpen(false) : loadTracking}
+          className="flex items-center gap-1 text-[11px] font-semibold text-primary active:underline"
+        >
+          <Truck className="h-3.5 w-3.5" />
+          배송조회
+        </button>
+      </div>
+
+      {open && (
+        <div className="mt-2.5 rounded-lg border border-border bg-bg px-3 py-2.5">
+          {loading ? (
+            <div className="flex items-center gap-2 text-xs text-inactive">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> 배송 정보를 불러오는 중…
+            </div>
+          ) : error ? (
+            <p className="text-xs text-point">{error}</p>
+          ) : tracking ? (
+            <div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-inactive">
+                <span>
+                  택배사 <strong className="text-active">{tracking.carrierName ?? "-"}</strong>
+                </span>
+                <span
+                  className={clsx(
+                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold",
+                    tracking.completed ? "bg-primary/15 text-primary" : "bg-secondary/15 text-secondary",
+                  )}
+                >
+                  {tracking.completed && <PackageCheck className="h-3 w-3" />}
+                  {tracking.completed ? "배달완료" : "배송중"}
+                </span>
+              </div>
+              {tracking.events.length > 0 ? (
+                <ol className="mt-2 space-y-2 border-l border-border pl-3">
+                  {tracking.events.map((event, i) => (
+                    <li key={i} className="relative">
+                      <span className="absolute -left-[15px] top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+                      <p className="text-xs text-active">{event.description ?? "-"}</p>
+                      <p className="text-[11px] text-inactive">
+                        {event.location ?? ""} · {event.time ?? ""}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mt-2 text-[11px] text-inactive">아직 등록된 배송 이벤트가 없습니다.</p>
+              )}
+            </div>
+          ) : null}
+        </div>
+      )}
+    </li>
   );
 }
 

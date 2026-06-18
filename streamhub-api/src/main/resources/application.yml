@@ -83,6 +83,13 @@ app:
     kakao:
       secret-key: ${PAYMENT_KAKAO_SECRET_KEY:}
       cid: ${PAYMENT_KAKAO_CID:TC0ONETIME}
+  # Delivery tracking (C8) seam. sweettracker = REAL aggregator API (스마트택배); the api-key
+  # defaults to SweetTracker's public documentation demo key so carrier list + live tracking work
+  # out of the box (override via DELIVERY_SWEETTRACKER_API_KEY). mock = offline fake timeline.
+  delivery:
+    provider: ${DELIVERY_PROVIDER:sweettracker}
+    sweettracker:
+      api-key: ${DELIVERY_SWEETTRACKER_API_KEY:eq04nwS5eQul42h6BZig3Q}
   # SMS/LMS (C6) sender seam. mock = log-only, no external send; aligo/solapi = real key
   # injection points (@ConditionalOnProperty-gated). Seeded messages are all testMode=Y.
   sms:
