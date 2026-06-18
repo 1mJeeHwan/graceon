@@ -100,18 +100,14 @@ export const STATUS_META: Record<FeatureStatus, StatusMeta> = {
   },
 };
 
-const PLACEHOLDER_THUMB = "/catalog/placeholder.png";
-
 /**
- * Full catalog. `live` cards are backed by a real route + API in this repo
- * (dashboard / member / content / action-log / churches / albums / store /
- * worship / sms / payment / order / goods / point / donation / subscription /
- * subscription-plan / billing-calendar); `mock`/`wip` cards are designed/seeded
- * but not yet navigable, so the 열기 button is disabled and viewers never hit a
- * broken link.
+ * Full catalog. Every card is `live` — backed by a real route + admin API in this
+ * repo (verified by a captured screenshot in /public/catalog). The `mock`/`wip`
+ * statuses remain in the type/badge system for future additions, but no card
+ * currently ships in those states. Each card's repoPath points at its page source.
  */
 export const FEATURES: FeatureCard[] = [
-  // ---- live (4) — verified routes in this repo ----
+  // ---- live — verified routes in this repo ----
   {
     id: "dashboard",
     domain: "support",
@@ -239,10 +235,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "community",
     title: "챗봇 상담",
     summary: "FAQ 기반 자동 응답 챗봇 메시지 처리부",
-    status: "wip",
+    status: "live",
     href: "/chat",
     gnuboard: "(레퍼런스 서비스 고유)",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/chat/page.tsx",
+    thumb: "/catalog/chat-bot.png",
     highlights: ["FAQ 자동응답", "세션 컨텍스트", "에스컬레이션"],
   },
 
@@ -326,10 +323,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "shop",
     title: "카테고리 관리",
     summary: "계층 코드 기반 3단 트리와 드래그 정렬",
-    status: "mock",
+    status: "live",
     href: "/goods/category",
     gnuboard: "영카트 §4.4 categorylist.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/goods/category/page.tsx",
+    thumb: "/catalog/goods-category.png",
     highlights: ["3단 트리", "계층 코드", "드래그 정렬"],
   },
   {
@@ -337,10 +335,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "shop",
     title: "옵션·재고 관리",
     summary: "재고·통보수량 인라인 편집과 재입고 알림",
-    status: "mock",
+    status: "live",
     href: "/goods/stock",
     gnuboard: "영카트 §4.9/4.11 stocklist",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/goods/stock/page.tsx",
+    thumb: "/catalog/goods-stock.png",
     highlights: ["재고 인라인", "품절 토글", "재입고 알림"],
   },
   {
@@ -348,10 +347,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "shop",
     title: "굿즈 문의",
     summary: "답변 상태와 미답변 SLA를 추적",
-    status: "mock",
+    status: "live",
     href: "/goods/inquiry",
     gnuboard: "영카트 §4.7 itemqalist.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/goods/inquiry/page.tsx",
+    thumb: "/catalog/goods-inquiry.png",
     highlights: ["답변 상태", "미답변 SLA 강조"],
   },
   {
@@ -359,10 +359,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "shop",
     title: "굿즈 후기",
     summary: "평점 인라인 편집과 노출 승인 토글",
-    status: "mock",
+    status: "live",
     href: "/goods/review",
     gnuboard: "영카트 §4.8 itemuselist.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/goods/review/page.tsx",
+    thumb: "/catalog/goods-review.png",
     highlights: ["평점 인라인", "노출 승인 토글"],
   },
   {
@@ -370,10 +371,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "shop",
     title: "쿠폰 관리",
     summary: "정액·정률 할인과 최소주문·최대할인 정책",
-    status: "mock",
+    status: "live",
     href: "/coupons",
     gnuboard: "영카트 §4.12 couponlist.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/coupons/page.tsx",
+    thumb: "/catalog/coupons.png",
     highlights: ["정액/정률", "최소주문·최대할인", "절사단위"],
   },
 
@@ -395,10 +397,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "member",
     title: "접속 통계",
     summary: "기간 검색과 IP/UA 파싱, 일별 집계",
-    status: "mock",
+    status: "live",
     href: "/visits",
     gnuboard: "§2.3/2.4 visit_search.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/visits/page.tsx",
+    thumb: "/catalog/visits.png",
     highlights: ["기간 검색", "IP/UA 파싱", "일별 집계"],
   },
 
@@ -408,10 +411,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "content",
     title: "콘텐츠 통계",
     summary: "조회수 Top N과 채널별 시청시간 집계",
-    status: "mock",
+    status: "live",
     href: "/content/stats",
     gnuboard: "§3.8 write_count.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/content/stats/page.tsx",
+    thumb: "/catalog/content-stats.png",
     highlights: ["조회수 Top N", "채널별 시청시간 집계"],
   },
 
@@ -421,10 +425,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "community",
     title: "게시판 관리",
     summary: "레벨 권한과 그룹/전체 적용 전파",
-    status: "mock",
+    status: "live",
     href: "/boards",
     gnuboard: "§3.1/3.2 board_list/form",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/boards/page.tsx",
+    thumb: "/catalog/boards.png",
     highlights: ["레벨 권한(1~10)", "그룹/전체 전파"],
   },
   {
@@ -432,10 +437,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "community",
     title: "공지·나눔·기도제목",
     summary: "카테고리·비밀글·추천/조회를 갖춘 글 관리",
-    status: "mock",
+    status: "live",
     href: "/posts",
     gnuboard: "§3.x write / content",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/posts/page.tsx",
+    thumb: "/catalog/posts.png",
     highlights: ["카테고리", "비밀글", "추천/조회"],
   },
   {
@@ -443,10 +449,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "community",
     title: "1:1 문의",
     summary: "답변 상태머신과 미답변 큐",
-    status: "mock",
+    status: "live",
     href: "/inquiry",
     gnuboard: "§3.6 qa_config / qa_content",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/inquiry/page.tsx",
+    thumb: "/catalog/inquiry.png",
     highlights: ["답변 상태머신(OPEN→ANSWERED)", "미답변 큐"],
   },
 
@@ -456,10 +463,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "marketing",
     title: "배너 관리",
     summary: "위치·디바이스·노출기간 필터와 순서 정렬",
-    status: "mock",
+    status: "live",
     href: "/banners",
     gnuboard: "영카트 §5.6 bannerlist.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/banners/page.tsx",
+    thumb: "/catalog/banners.png",
     highlights: ["위치/디바이스 필터", "노출기간", "순서 정렬"],
   },
   {
@@ -467,10 +475,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "marketing",
     title: "캠페인·이벤트",
     summary: "특별헌금·신간 등 연결상품 일괄 캠페인",
-    status: "wip",
+    status: "live",
     href: "/campaigns",
     gnuboard: "영카트 §5.5 itemevent.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/campaigns/page.tsx",
+    thumb: "/catalog/campaigns.png",
     highlights: ["특별헌금/신간", "연결상품 일괄", "스파이크 연동"],
   },
   {
@@ -478,10 +487,11 @@ export const FEATURES: FeatureCard[] = [
     domain: "marketing",
     title: "알림센터(발송 로그)",
     summary: "채널별 발송 로그와 성공/실패 추적 (실발송 X)",
-    status: "mock",
+    status: "live",
     href: "/notifications",
     gnuboard: "SMS §7.3 history_list.php",
-    thumb: PLACEHOLDER_THUMB,
+    repoPath: "streamhub-web/src/app/(protected)/notifications/page.tsx",
+    thumb: "/catalog/notifications.png",
     highlights: ["SMS/PUSH/EMAIL", "성공/실패", "실발송 없음"],
   },
 ];

@@ -193,6 +193,51 @@ export interface ResultDTOMemberDetail {
   resultObject?: MemberDetail;
 }
 
+export type InquiryDtoCategory =
+  (typeof InquiryDtoCategory)[keyof typeof InquiryDtoCategory];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const InquiryDtoCategory = {
+  ACCOUNT: "ACCOUNT",
+  PAYMENT: "PAYMENT",
+  DELIVERY: "DELIVERY",
+  CONTENT: "CONTENT",
+  ETC: "ETC",
+} as const;
+
+export type InquiryDtoStatus =
+  (typeof InquiryDtoStatus)[keyof typeof InquiryDtoStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const InquiryDtoStatus = {
+  OPEN: "OPEN",
+  ANSWERED: "ANSWERED",
+  CLOSED: "CLOSED",
+} as const;
+
+export interface InquiryDto {
+  id?: number;
+  memberId?: number;
+  memberName?: string;
+  category?: InquiryDtoCategory;
+  title?: string;
+  content?: string;
+  status?: InquiryDtoStatus;
+  answerContent?: string;
+  createdAt?: string;
+  answeredAt?: string;
+}
+
+export interface ResultDTOInquiryDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: InquiryDto;
+}
+
+export interface InquiryAnswerRequest {
+  answerContent: string;
+}
+
 export type GoodsCreateRequestStatus =
   (typeof GoodsCreateRequestStatus)[keyof typeof GoodsCreateRequestStatus];
 
@@ -295,6 +340,150 @@ export interface ResultDTOInteger {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: number;
+}
+
+export interface GoodsStockUpdateRequest {
+  stock?: number;
+  notiQty?: number;
+}
+
+export type GoodsStockDtoStatus =
+  (typeof GoodsStockDtoStatus)[keyof typeof GoodsStockDtoStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const GoodsStockDtoStatus = {
+  SELLING: "SELLING",
+  PAUSED: "PAUSED",
+} as const;
+
+export interface GoodsStockDto {
+  id?: number;
+  code?: string;
+  name?: string;
+  stock?: number;
+  notiQty?: number;
+  status?: GoodsStockDtoStatus;
+  soldOut?: string;
+  price?: number;
+}
+
+export interface ResultDTOGoodsStockDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: GoodsStockDto;
+}
+
+export interface GoodsReviewRatingRequest {
+  /**
+   * @minimum 1
+   * @maximum 5
+   */
+  rating?: number;
+}
+
+export interface GoodsReviewDto {
+  id?: number;
+  goodsItemId?: number;
+  memberId?: number;
+  memberName?: string;
+  rating?: number;
+  content?: string;
+  displayYn?: string;
+  createdAt?: string;
+}
+
+export interface ResultDTOGoodsReviewDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: GoodsReviewDto;
+}
+
+export interface GoodsReviewDisplayRequest {
+  displayYn: string;
+}
+
+export interface GoodsInquiryAnswerRequest {
+  answerContent: string;
+}
+
+export type GoodsInquiryDtoAnswerStatus =
+  (typeof GoodsInquiryDtoAnswerStatus)[keyof typeof GoodsInquiryDtoAnswerStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const GoodsInquiryDtoAnswerStatus = {
+  WAITING: "WAITING",
+  ANSWERED: "ANSWERED",
+} as const;
+
+export interface GoodsInquiryDto {
+  id?: number;
+  goodsItemId?: number;
+  memberId?: number;
+  memberName?: string;
+  title?: string;
+  content?: string;
+  answerStatus?: GoodsInquiryDtoAnswerStatus;
+  answerContent?: string;
+  createdAt?: string;
+  answeredAt?: string;
+}
+
+export interface ResultDTOGoodsInquiryDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: GoodsInquiryDto;
+}
+
+export interface GoodsCategorySaveRequest {
+  parentId?: number;
+  name?: string;
+  sortOrder?: number;
+  useYn?: string;
+}
+
+export interface GoodsCategoryNodeDto {
+  id?: number;
+  parentId?: number;
+  name?: string;
+  depth?: number;
+  sortOrder?: number;
+  useYn?: string;
+}
+
+export interface ResultDTOGoodsCategoryNodeDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: GoodsCategoryNodeDto;
+}
+
+export type CouponDtoDiscountType =
+  (typeof CouponDtoDiscountType)[keyof typeof CouponDtoDiscountType];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const CouponDtoDiscountType = {
+  AMOUNT: "AMOUNT",
+  PERCENT: "PERCENT",
+} as const;
+
+export interface CouponDto {
+  id?: number;
+  code?: string;
+  name?: string;
+  discountType?: CouponDtoDiscountType;
+  discountValue?: number;
+  minOrderAmount?: number;
+  maxDiscountAmount?: number;
+  roundUnit?: number;
+  startAt?: string;
+  endAt?: string;
+  useYn?: string;
+  createdAt?: string;
+}
+
+export interface ResultDTOCouponDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: CouponDto;
 }
 
 export type ContentCreateRequestType =
@@ -490,6 +679,124 @@ export interface ResultDTOChurchDetail {
   resultObject?: ChurchDetail;
 }
 
+export type CampaignDtoType =
+  (typeof CampaignDtoType)[keyof typeof CampaignDtoType];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const CampaignDtoType = {
+  SPECIAL_DONATION: "SPECIAL_DONATION",
+  NEW_RELEASE: "NEW_RELEASE",
+  EVENT: "EVENT",
+  SEASONAL: "SEASONAL",
+} as const;
+
+export type CampaignDtoStatus =
+  (typeof CampaignDtoStatus)[keyof typeof CampaignDtoStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const CampaignDtoStatus = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  ENDED: "ENDED",
+} as const;
+
+export interface CampaignDto {
+  id?: number;
+  title?: string;
+  type?: CampaignDtoType;
+  description?: string;
+  bannerImageUrl?: string;
+  linkedGoodsIds?: string;
+  targetAmount?: number;
+  startAt?: string;
+  endAt?: string;
+  status?: CampaignDtoStatus;
+  createdAt?: string;
+}
+
+export interface ResultDTOCampaignDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: CampaignDto;
+}
+
+export type CampaignStatusChangeRequestStatus =
+  (typeof CampaignStatusChangeRequestStatus)[keyof typeof CampaignStatusChangeRequestStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const CampaignStatusChangeRequestStatus = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  ENDED: "ENDED",
+} as const;
+
+export interface CampaignStatusChangeRequest {
+  status: CampaignStatusChangeRequestStatus;
+}
+
+export interface BoardDto {
+  id?: number;
+  code?: string;
+  name?: string;
+  readLevel?: number;
+  writeLevel?: number;
+  useYn?: string;
+  sortOrder?: number;
+  createdAt?: string;
+}
+
+export interface ResultDTOBoardDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: BoardDto;
+}
+
+export type BannerDtoPosition =
+  (typeof BannerDtoPosition)[keyof typeof BannerDtoPosition];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const BannerDtoPosition = {
+  MAIN_TOP: "MAIN_TOP",
+  MAIN_MIDDLE: "MAIN_MIDDLE",
+  MAIN_BOTTOM: "MAIN_BOTTOM",
+  SIDE: "SIDE",
+  POPUP: "POPUP",
+} as const;
+
+export type BannerDtoDevice =
+  (typeof BannerDtoDevice)[keyof typeof BannerDtoDevice];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const BannerDtoDevice = {
+  PC: "PC",
+  MOBILE: "MOBILE",
+  ALL: "ALL",
+} as const;
+
+export interface BannerDto {
+  id?: number;
+  title?: string;
+  position?: BannerDtoPosition;
+  device?: BannerDtoDevice;
+  imageUrl?: string;
+  linkUrl?: string;
+  startAt?: string;
+  endAt?: string;
+  sortOrder?: number;
+  useYn?: string;
+  createdAt?: string;
+}
+
+export interface ResultDTOBannerDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: BannerDto;
+}
+
+export interface BannerSortRequest {
+  sortOrder?: number;
+}
+
 export type AlbumCreateRequestGenre =
   (typeof AlbumCreateRequestGenre)[keyof typeof AlbumCreateRequestGenre];
 
@@ -677,6 +984,62 @@ export interface WorshipRegistrationListItem {
   familyCount?: number;
   testMode?: string;
   createdAt?: string;
+}
+
+export type VisitSearchRequestDeviceType =
+  (typeof VisitSearchRequestDeviceType)[keyof typeof VisitSearchRequestDeviceType];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const VisitSearchRequestDeviceType = {
+  PC: "PC",
+  MOBILE: "MOBILE",
+  TABLET: "TABLET",
+} as const;
+
+export interface VisitSearchRequest {
+  fromDate?: string;
+  toDate?: string;
+  deviceType?: VisitSearchRequestDeviceType;
+  keyword?: string;
+}
+
+export interface ResultDTOListVisitLogDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: VisitLogDto[];
+}
+
+export type VisitLogDtoDeviceType =
+  (typeof VisitLogDtoDeviceType)[keyof typeof VisitLogDtoDeviceType];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const VisitLogDtoDeviceType = {
+  PC: "PC",
+  MOBILE: "MOBILE",
+  TABLET: "TABLET",
+} as const;
+
+export interface VisitLogDto {
+  id?: number;
+  visitedAt?: string;
+  ipMasked?: string;
+  userAgent?: string;
+  browser?: string;
+  os?: string;
+  deviceType?: VisitLogDtoDeviceType;
+  path?: string;
+  memberId?: number;
+}
+
+export interface DailyCountDto {
+  date?: string;
+  count?: number;
+}
+
+export interface ResultDTOListDailyCountDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: DailyCountDto[];
 }
 
 export type SubscriptionSearchRequestStatus =
@@ -1089,6 +1452,72 @@ export interface ResultDTOResInfinityListOrderListItem {
   resultObject?: ResInfinityListOrderListItem;
 }
 
+export type NotificationSearchRequestChannel =
+  (typeof NotificationSearchRequestChannel)[keyof typeof NotificationSearchRequestChannel];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const NotificationSearchRequestChannel = {
+  SMS: "SMS",
+  PUSH: "PUSH",
+  EMAIL: "EMAIL",
+} as const;
+
+export type NotificationSearchRequestStatus =
+  (typeof NotificationSearchRequestStatus)[keyof typeof NotificationSearchRequestStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const NotificationSearchRequestStatus = {
+  SUCCESS: "SUCCESS",
+  FAIL: "FAIL",
+  PENDING: "PENDING",
+} as const;
+
+export interface NotificationSearchRequest {
+  channel?: NotificationSearchRequestChannel;
+  status?: NotificationSearchRequestStatus;
+  fromDate?: string;
+  toDate?: string;
+  keyword?: string;
+}
+
+export type NotificationLogDtoChannel =
+  (typeof NotificationLogDtoChannel)[keyof typeof NotificationLogDtoChannel];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const NotificationLogDtoChannel = {
+  SMS: "SMS",
+  PUSH: "PUSH",
+  EMAIL: "EMAIL",
+} as const;
+
+export type NotificationLogDtoStatus =
+  (typeof NotificationLogDtoStatus)[keyof typeof NotificationLogDtoStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const NotificationLogDtoStatus = {
+  SUCCESS: "SUCCESS",
+  FAIL: "FAIL",
+  PENDING: "PENDING",
+} as const;
+
+export interface NotificationLogDto {
+  id?: number;
+  channel?: NotificationLogDtoChannel;
+  targetMasked?: string;
+  title?: string;
+  content?: string;
+  status?: NotificationLogDtoStatus;
+  failReason?: string;
+  sentAt?: string;
+  createdAt?: string;
+}
+
+export interface ResultDTOListNotificationLogDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: NotificationLogDto[];
+}
+
 export type MemberSearchRequestUserStatus =
   (typeof MemberSearchRequestUserStatus)[keyof typeof MemberSearchRequestUserStatus];
 
@@ -1158,6 +1587,39 @@ export interface ResultDTOResInfinityListMemberListItem {
 
 export interface IdListRequest {
   idList: number[];
+}
+
+export type InquirySearchRequestStatus =
+  (typeof InquirySearchRequestStatus)[keyof typeof InquirySearchRequestStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const InquirySearchRequestStatus = {
+  OPEN: "OPEN",
+  ANSWERED: "ANSWERED",
+  CLOSED: "CLOSED",
+} as const;
+
+export type InquirySearchRequestCategory =
+  (typeof InquirySearchRequestCategory)[keyof typeof InquirySearchRequestCategory];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const InquirySearchRequestCategory = {
+  ACCOUNT: "ACCOUNT",
+  PAYMENT: "PAYMENT",
+  DELIVERY: "DELIVERY",
+  CONTENT: "CONTENT",
+  ETC: "ETC",
+} as const;
+
+export interface InquirySearchRequest {
+  status?: InquirySearchRequestStatus;
+  category?: InquirySearchRequestCategory;
+}
+
+export interface ResultDTOListInquiryDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: InquiryDto[];
 }
 
 export interface ResultDTOUploadResponse {
@@ -1230,6 +1692,53 @@ export interface ResultDTOResInfinityListGoodsListItem {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: ResInfinityListGoodsListItem;
+}
+
+export interface GoodsStockSearchRequest {
+  keyword?: string;
+  lowStock?: string;
+  sortByStockAsc?: boolean;
+}
+
+export interface ResultDTOListGoodsStockDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: GoodsStockDto[];
+}
+
+export interface GoodsReviewSearchRequest {
+  displayYn?: string;
+}
+
+export interface ResultDTOListGoodsReviewDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: GoodsReviewDto[];
+}
+
+export type GoodsInquirySearchRequestAnswerStatus =
+  (typeof GoodsInquirySearchRequestAnswerStatus)[keyof typeof GoodsInquirySearchRequestAnswerStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const GoodsInquirySearchRequestAnswerStatus = {
+  WAITING: "WAITING",
+  ANSWERED: "ANSWERED",
+} as const;
+
+export interface GoodsInquirySearchRequest {
+  answerStatus?: GoodsInquirySearchRequestAnswerStatus;
+}
+
+export interface ResultDTOListGoodsInquiryDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: GoodsInquiryDto[];
+}
+
+export interface ResultDTOListGoodsCategoryNodeDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: GoodsCategoryNodeDto[];
 }
 
 export interface OnceDonationRequest {
@@ -1335,6 +1844,17 @@ export interface ResultDTOListBillingCalendarItem {
   resultObject?: BillingCalendarItem[];
 }
 
+export interface CouponSearchRequest {
+  useYn?: string;
+  keyword?: string;
+}
+
+export interface ResultDTOListCouponDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: CouponDto[];
+}
+
 export type ContentSearchRequestType =
   (typeof ContentSearchRequestType)[keyof typeof ContentSearchRequestType];
 
@@ -1406,6 +1926,31 @@ export interface ResultDTOResInfinityListContentListItem {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: ResInfinityListContentListItem;
+}
+
+export interface CommunityPostSearchRequest {
+  boardId?: number;
+  category?: string;
+  keyword?: string;
+}
+
+export interface CommunityPostDto {
+  id?: number;
+  boardId?: number;
+  category?: string;
+  title?: string;
+  content?: string;
+  writerName?: string;
+  secretYn?: string;
+  recommendCount?: number;
+  viewCount?: number;
+  createdAt?: string;
+}
+
+export interface ResultDTOListCommunityPostDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: CommunityPostDto[];
 }
 
 export type ChurchSearchRequestDenomination =
@@ -1511,6 +2056,146 @@ export interface ResultDTOChatReplyDto {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: ChatReplyDto;
+}
+
+export type ChatSessionRowIntent =
+  (typeof ChatSessionRowIntent)[keyof typeof ChatSessionRowIntent];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ChatSessionRowIntent = {
+  PRODUCT_INQUIRY: "PRODUCT_INQUIRY",
+  ORDER_LOOKUP: "ORDER_LOOKUP",
+  FAQ: "FAQ",
+  FALLBACK: "FALLBACK",
+} as const;
+
+export interface ChatSessionRow {
+  sessionKey?: string;
+  lastMessage?: string;
+  lastMessageAt?: string;
+  messageCount?: number;
+  unanswered?: boolean;
+  intent?: ChatSessionRowIntent;
+}
+
+export interface ResultDTOListChatSessionRow {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ChatSessionRow[];
+}
+
+export interface ChatReplyRequest {
+  /**
+   * @minLength 0
+   * @maxLength 2000
+   */
+  content: string;
+}
+
+export type ChatMessageRowRole =
+  (typeof ChatMessageRowRole)[keyof typeof ChatMessageRowRole];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ChatMessageRowRole = {
+  USER: "USER",
+  BOT: "BOT",
+} as const;
+
+export type ChatMessageRowIntent =
+  (typeof ChatMessageRowIntent)[keyof typeof ChatMessageRowIntent];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ChatMessageRowIntent = {
+  PRODUCT_INQUIRY: "PRODUCT_INQUIRY",
+  ORDER_LOOKUP: "ORDER_LOOKUP",
+  FAQ: "FAQ",
+  FALLBACK: "FALLBACK",
+} as const;
+
+export interface ChatMessageRow {
+  id?: number;
+  role?: ChatMessageRowRole;
+  intent?: ChatMessageRowIntent;
+  content?: string;
+  createdAt?: string;
+}
+
+export interface ResultDTOChatMessageRow {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ChatMessageRow;
+}
+
+export type CampaignSearchRequestType =
+  (typeof CampaignSearchRequestType)[keyof typeof CampaignSearchRequestType];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const CampaignSearchRequestType = {
+  SPECIAL_DONATION: "SPECIAL_DONATION",
+  NEW_RELEASE: "NEW_RELEASE",
+  EVENT: "EVENT",
+  SEASONAL: "SEASONAL",
+} as const;
+
+export type CampaignSearchRequestStatus =
+  (typeof CampaignSearchRequestStatus)[keyof typeof CampaignSearchRequestStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const CampaignSearchRequestStatus = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  ENDED: "ENDED",
+} as const;
+
+export interface CampaignSearchRequest {
+  type?: CampaignSearchRequestType;
+  status?: CampaignSearchRequestStatus;
+}
+
+export interface ResultDTOListCampaignDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: CampaignDto[];
+}
+
+export interface ResultDTOListBoardDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: BoardDto[];
+}
+
+export type BannerSearchRequestPosition =
+  (typeof BannerSearchRequestPosition)[keyof typeof BannerSearchRequestPosition];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const BannerSearchRequestPosition = {
+  MAIN_TOP: "MAIN_TOP",
+  MAIN_MIDDLE: "MAIN_MIDDLE",
+  MAIN_BOTTOM: "MAIN_BOTTOM",
+  SIDE: "SIDE",
+  POPUP: "POPUP",
+} as const;
+
+export type BannerSearchRequestDevice =
+  (typeof BannerSearchRequestDevice)[keyof typeof BannerSearchRequestDevice];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const BannerSearchRequestDevice = {
+  PC: "PC",
+  MOBILE: "MOBILE",
+  ALL: "ALL",
+} as const;
+
+export interface BannerSearchRequest {
+  position?: BannerSearchRequestPosition;
+  device?: BannerSearchRequestDevice;
+  useYn?: string;
+}
+
+export interface ResultDTOListBannerDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: BannerDto[];
 }
 
 export type AlbumSearchRequestGenre =
@@ -2091,6 +2776,27 @@ export interface TrackingEvent {
   description?: string;
 }
 
+export interface PathCountDto {
+  path?: string;
+  count?: number;
+}
+
+export interface ResultDTOVisitSummaryDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: VisitSummaryDto;
+}
+
+export type VisitSummaryDtoDeviceBreakdown = { [key: string]: number };
+
+export interface VisitSummaryDto {
+  totalVisits?: number;
+  todayVisits?: number;
+  uniqueIpApprox?: number;
+  topPaths?: PathCountDto[];
+  deviceBreakdown?: VisitSummaryDtoDeviceBreakdown;
+}
+
 export interface ResultDTOListPlanResponse {
   resultCode?: string;
   resultMessage?: string;
@@ -2184,6 +2890,28 @@ export interface ResultDTOListCarrier {
   resultObject?: Carrier[];
 }
 
+export interface ResultDTONotificationLogDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: NotificationLogDto;
+}
+
+export type NotificationSummaryDtoByChannel = { [key: string]: number };
+
+export interface NotificationSummaryDto {
+  total?: number;
+  successCount?: number;
+  failCount?: number;
+  pendingCount?: number;
+  byChannel?: NotificationSummaryDtoByChannel;
+}
+
+export interface ResultDTONotificationSummaryDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: NotificationSummaryDto;
+}
+
 export interface GoodsCategoryDto {
   id?: number;
   parentId?: number;
@@ -2261,6 +2989,12 @@ export interface ResultDTOListChannelDto {
   resultObject?: ChannelDto[];
 }
 
+export interface ResultDTOCommunityPostDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: CommunityPostDto;
+}
+
 export interface CodeLabel {
   code?: string;
   label?: string;
@@ -2303,6 +3037,12 @@ export interface ResultDTOListChatHistoryItem {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: ChatHistoryItem[];
+}
+
+export interface ResultDTOListChatMessageRow {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ChatMessageRow[];
 }
 
 export interface MeResponse {

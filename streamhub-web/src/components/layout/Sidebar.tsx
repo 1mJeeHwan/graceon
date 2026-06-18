@@ -22,6 +22,19 @@ import {
   Disc3,
   Store,
   MessageSquare,
+  BarChart3,
+  Activity,
+  FolderTree,
+  Boxes,
+  MessageCircleQuestion,
+  Star,
+  Ticket,
+  FileText,
+  Headset,
+  Bot,
+  Image as ImageIcon,
+  Megaphone,
+  Bell,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -46,6 +59,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "통합 운영 대시보드", href: "/admin-ops", icon: Gauge },
       { label: "대시보드", href: "/dashboard", icon: LayoutDashboard },
       { label: "기능 카탈로그", href: "/catalog", icon: LayoutGrid },
+      { label: "접속 통계", href: "/visits", icon: Activity },
     ],
   },
   {
@@ -54,6 +68,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "회원관리", href: "/member", icon: Users },
       { label: "포인트 원장", href: "/point", icon: Coins },
       { label: "콘텐츠관리", href: "/content", icon: FileVideo },
+      { label: "콘텐츠 통계", href: "/content/stats", icon: BarChart3 },
     ],
   },
   {
@@ -67,9 +82,14 @@ const NAV_SECTIONS: NavSection[] = [
     title: "커머스",
     items: [
       { label: "굿즈관리", href: "/goods", icon: ShoppingBag },
+      { label: "카테고리 관리", href: "/goods/category", icon: FolderTree },
+      { label: "옵션·재고 관리", href: "/goods/stock", icon: Boxes },
+      { label: "굿즈 문의", href: "/goods/inquiry", icon: MessageCircleQuestion },
+      { label: "굿즈 후기", href: "/goods/review", icon: Star },
       { label: "주문관리", href: "/order", icon: ClipboardList },
       { label: "앨범관리", href: "/albums", icon: Disc3 },
       { label: "매장관리", href: "/stores", icon: Store },
+      { label: "쿠폰 관리", href: "/coupons", icon: Ticket },
       { label: "결제내역", href: "/payment", icon: CreditCard },
     ],
   },
@@ -84,7 +104,21 @@ const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "소통",
-    items: [{ label: "SMS", href: "/sms", icon: MessageSquare }],
+    items: [
+      { label: "게시판 관리", href: "/boards", icon: ClipboardList },
+      { label: "게시글 관리", href: "/posts", icon: FileText },
+      { label: "1:1 문의", href: "/inquiry", icon: Headset },
+      { label: "챗봇 상담", href: "/chat", icon: Bot },
+      { label: "SMS", href: "/sms", icon: MessageSquare },
+    ],
+  },
+  {
+    title: "마케팅",
+    items: [
+      { label: "배너 관리", href: "/banners", icon: ImageIcon },
+      { label: "캠페인·이벤트", href: "/campaigns", icon: Megaphone },
+      { label: "알림센터", href: "/notifications", icon: Bell },
+    ],
   },
   {
     title: "시스템",
