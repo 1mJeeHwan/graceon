@@ -1,0 +1,13 @@
+# Deploy image: copies a pre-built jar onto an amd64 JRE base. No in-container Maven build, so a
+# cross-arch (linux/amd64) build from an arm64 host needs no emulation of a compile step — only the
+# base image + a file copy. Build the jar first: `./mvnw -q clean package -DskipTests`.
+# (The committed multi-stage Dockerfile remains the self-contained CI build.)
+FROM --platform=linux/amd64 eclipse-temurin:21-jre
+WORKDIR /app
+RUN useradd -r -u 1001 appuser
+COPY target/streamhub-api-*.jar app.jar
+USER appuser
+EXPOSE 8080
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=70 -XX:+UseContainerSupport"
+ENV SPRING_PROFILES_ACTIVE=prod
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

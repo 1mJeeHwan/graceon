@@ -20,6 +20,10 @@ JWT_SECRET=$(aws ssm get-parameter --name "${jwt_secret_param}" --with-decryptio
 mkdir -p /etc/streamhub
 cat > /etc/streamhub/api.env <<EOF
 SPRING_PROFILES_ACTIVE=prod
+# First boot: create the schema + run the self-seeders on the empty RDS. The prod profile
+# defaults ddl-auto to validate; set update here so the bootstrap succeeds. Seeders are idempotent
+# (count>0 skip), so leaving it as update is safe across restarts for this demo.
+JPA_DDL_AUTO=update
 DB_HOST=${db_host}
 DB_PORT=3306
 DB_NAME=${db_name}

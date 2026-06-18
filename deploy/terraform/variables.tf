@@ -22,9 +22,12 @@ variable "s3_bucket_name" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance type. Free-tier in ap-northeast-2 (Seoul) is t2.micro (NOT t3.micro)."
+  # The 2025 AWS "free account plan" restricts launches to its free-tier-eligible types
+  # (t3.micro / t4g.micro / t3.small …) — the older t2.micro is rejected there. t3.micro works
+  # with the AL2023 x86_64 AMI. (On a legacy 12-month free-tier account, t2.micro is the free one.)
+  description = "EC2 instance type. New free-tier accounts: t3.micro (t2.micro is rejected)."
   type        = string
-  default     = "t2.micro"
+  default     = "t3.micro"
 }
 
 variable "db_instance_class" {
