@@ -11,6 +11,9 @@ public final class AuthoritiesConstants {
     /** Church manager — scoped to their own church's data. */
     public static final String CHURCH_MANAGER = "CHURCH_MANAGER";
 
+    /** Read-only operator — view-only access to operational pages. */
+    public static final String VIEWER = "VIEWER";
+
     private AuthoritiesConstants() {
     }
 }

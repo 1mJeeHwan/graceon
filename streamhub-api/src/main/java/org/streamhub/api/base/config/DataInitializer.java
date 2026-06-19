@@ -116,6 +116,7 @@ public class DataInitializer implements CommandLineRunner {
     private void seedAdmins() {
         seedAdmin("admin", "admin1234", "홍길동", Role.SYSTEM, null);
         seedAdmin("manager", "manager1234", "김영희", Role.CHURCH_MANAGER, 1L);
+        seedAdmin("viewer", "viewer1234", "이몽룡", Role.VIEWER, null);
     }
 
     private void seedAdmin(String loginId, String rawPassword, String name, Role role, Long churchId) {

@@ -6,6 +6,8 @@ package org.streamhub.api.v1.admin.entity;
 public enum Role {
     /** System administrator — full access. */
     SYSTEM,
-    /** Church manager — scoped to their own church. */
-    CHURCH_MANAGER
+    /** Church manager — read/write scoped to their own church. */
+    CHURCH_MANAGER,
+    /** Read-only operator — may view operational pages but cannot mutate. */
+    VIEWER
 }

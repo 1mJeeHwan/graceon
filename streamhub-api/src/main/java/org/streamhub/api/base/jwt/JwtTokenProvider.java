@@ -7,6 +7,7 @@ import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,6 +16,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.streamhub.api.base.exception.ApiException;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.security.AdminPrincipal;
+import org.streamhub.api.base.security.RolePermissions;
 import org.streamhub.api.v1.admin.entity.AdminAccount;
 import org.streamhub.api.v1.member.entity.Member;
 
@@ -102,7 +104,11 @@ public class JwtTokenProvider {
                 ? null
                 : jwt.getClaim(CLAIM_CHURCH_ID).asLong();
         AdminPrincipal principal = new AdminPrincipal(adminId, role, churchId);
-        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+        // Grant the role itself (legacy role-based checks) plus its resource:action permissions
+        // (fine-grained @PreAuthorize("hasAuthority('order:read')")).
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(role));
+        RolePermissions.forRole(role).forEach(p -> authorities.add(new SimpleGrantedAuthority(p)));
         return new UsernamePasswordAuthenticationToken(principal, null, authorities);
     }
 

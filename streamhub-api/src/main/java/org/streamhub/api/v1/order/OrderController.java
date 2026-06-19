@@ -31,8 +31,7 @@ import org.streamhub.api.v1.order.dto.OrderTrackingRequest;
 @Tag(name = "Order", description = "주문 관리")
 @RestController
 @RequestMapping("/v1/order")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('order:read')") // class default = read; mutations require order:write
 public class OrderController {
 
     private final OrderService orderService;
@@ -60,6 +59,7 @@ public class OrderController {
 
     @Operation(summary = "주문 상태 변경",
             description = "상태머신 전이 + 재고 차감/복원 + 입금/환불 영수증을 한 트랜잭션으로 처리.")
+    @PreAuthorize("hasAuthority('order:write')")
     @PatchMapping("/{id}/status")
     public ResultDTO<OrderDetail> changeStatus(
             @PathVariable Long id, @Valid @RequestBody OrderStatusChangeRequest request,
@@ -68,6 +68,7 @@ public class OrderController {
     }
 
     @Operation(summary = "운송장 등록", description = "운송장 입력. READY 상태면 SHIPPING으로 자동 승격.")
+    @PreAuthorize("hasAuthority('order:write')")
     @PatchMapping("/{id}/tracking")
     public ResultDTO<OrderDetail> changeTracking(
             @PathVariable Long id, @Valid @RequestBody OrderTrackingRequest request,
@@ -91,6 +92,7 @@ public class OrderController {
 
     @Operation(summary = "배송 조회·상태 동기화",
             description = "택배사 배송상태를 조회하고, 배달완료면 주문을 DONE으로(이동중이면 SHIPPING으로) 자동 전이한다.")
+    @PreAuthorize("hasAuthority('order:write')")
     @PatchMapping("/{id}/delivery-sync")
     public ResultDTO<Tracking> deliverySync(
             @PathVariable Long id, @AuthenticationPrincipal AdminPrincipal principal) {

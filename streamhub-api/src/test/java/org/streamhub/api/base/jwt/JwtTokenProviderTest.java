@@ -59,9 +59,10 @@ class JwtTokenProviderTest {
         AdminPrincipal principal = (AdminPrincipal) auth.getPrincipal();
         assertThat(principal.id()).isEqualTo(1L);
         assertThat(principal.isSystem()).isTrue();
+        // Authorities now carry the role plus its resource:action permissions (SYSTEM = all).
         assertThat(auth.getAuthorities())
                 .extracting(Object::toString)
-                .containsExactly(AuthoritiesConstants.SYSTEM);
+                .contains(AuthoritiesConstants.SYSTEM, "order:read", "order:write", "security:write");
     }
 
     @Test
