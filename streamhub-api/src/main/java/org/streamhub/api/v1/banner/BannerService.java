@@ -76,7 +76,7 @@ public class BannerService {
                 .position(request.getPosition())
                 .device(request.getDevice())
                 .targetType(request.getTargetType())
-                .imageUrl(request.getImageUrl())
+                .imageUrl(defaultImg(request.getImageUrl()))
                 .linkUrl(request.getLinkUrl())
                 .startAt(request.getStartAt())
                 .endAt(request.getEndAt())
@@ -94,7 +94,7 @@ public class BannerService {
                 .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
         banner.update(
                 request.getTitle(), request.getSubtitle(), request.getPosition(), request.getDevice(),
-                request.getTargetType(), request.getImageUrl(), request.getLinkUrl(), request.getStartAt(),
+                request.getTargetType(), defaultImg(request.getImageUrl()), request.getLinkUrl(), request.getStartAt(),
                 request.getEndAt(), request.getSortOrder(), defaultYn(request.getUseYn()));
         bannerRepository.saveAndFlush(banner);
         actionLogPublisher.publish("BANNER_UPDATE", "BANNER", String.valueOf(id), request.getTitle());
@@ -123,5 +123,10 @@ public class BannerService {
 
     private String defaultYn(String value) {
         return value == null || value.isBlank() ? "Y" : value;
+    }
+
+    /** Coerce null image to "" — the live BANNER.image_url column is NOT NULL (blank renders as gradient). */
+    private String defaultImg(String value) {
+        return value == null ? "" : value;
     }
 }
