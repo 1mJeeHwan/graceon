@@ -13,6 +13,7 @@ import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.security.AdminPrincipal;
 import org.streamhub.api.base.security.AuthoritiesConstants;
+import org.streamhub.api.base.util.SortResolver;
 import org.streamhub.api.v1.actionlog.ActionLogPublisher;
 import org.streamhub.api.v1.goods.repository.GoodsItemRepository;
 import org.streamhub.api.v1.goods.repository.GoodsOptionRepository;
@@ -64,6 +65,18 @@ public class OrderService {
     /** Statuses in which stock has already been deducted (deducted on {@code PAID}). */
     private static final Set<OrderStatus> STOCK_DEDUCTED =
             Set.of(OrderStatus.PAID, OrderStatus.READY, OrderStatus.SHIPPING, OrderStatus.DONE);
+
+    /** Whitelisted sort keys (OrderListItem field → SQL column) for server-side list sorting. */
+    private static final Map<String, String> ORDER_SORT_COLUMNS = Map.of(
+            "orderNo", "o.order_no",
+            "orderedName", "o.ordered_name",
+            "receiverName", "o.receiver_name",
+            "itemCount", "item_count",
+            "total", "o.total",
+            "status", "o.status",
+            "payMethod", "o.pay_method",
+            "trackingNo", "o.tracking_no",
+            "orderedAt", "o.ordered_at");
 
     private final OrderMapper orderMapper;
     private final OrderRepository orderRepository;
@@ -118,10 +131,12 @@ public class OrderService {
         String payMethod = blankToNull(request.payMethod());
         Long churchId = scopedChurchId(request.churchId(), principal);
         int size = request.pageSizeOrDefault();
+        String orderBy = SortResolver.resolve(request.sortBy(), request.sortDir(),
+                ORDER_SORT_COLUMNS, "o.id", "o.ordered_at DESC, o.id DESC");
 
         List<OrderListItem> orders = orderMapper.selectList(
                 searchField, keyword, status, payMethod, churchId,
-                request.fromDate(), request.toDate(), request.offset(), size);
+                request.fromDate(), request.toDate(), orderBy, request.offset(), size);
         long total = orderMapper.countList(
                 searchField, keyword, status, payMethod, churchId,
                 request.fromDate(), request.toDate());

@@ -10,6 +10,7 @@ import {
   type GridReadyEvent,
   type ICellRendererParams,
   type RowClickedEvent,
+  type SortChangedEvent,
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
@@ -40,6 +41,8 @@ const PAY_METHOD_LABEL: Record<string, string> = {
 
 interface OrderGridProps {
   rows: OrderListItem[];
+  /** Server-side sort callback: the column field + direction (null when sorting is cleared). */
+  onSortChange?: (sortBy: string | null, sortDir: "asc" | "desc" | null) => void;
 }
 
 /**
@@ -47,7 +50,7 @@ interface OrderGridProps {
  * It is read-only — clicking a row (or the 상세 button) navigates to the
  * order detail page where status transitions happen.
  */
-export default function OrderGrid({ rows }: OrderGridProps) {
+export default function OrderGrid({ rows, onSortChange }: OrderGridProps) {
   const router = useRouter();
 
   const columnDefs = useMemo<ColDef<OrderListItem>[]>(
@@ -146,6 +149,13 @@ export default function OrderGrid({ rows }: OrderGridProps) {
     event.api.sizeColumnsToFit();
   };
 
+  // Server-side sort: report the active sort column so the page refetches the whole result set
+  // sorted (not just the visible page). Single-column sort.
+  const handleSortChanged = (event: SortChangedEvent) => {
+    const sorted = event.api.getColumnState().find((col) => col.sort);
+    onSortChange?.((sorted?.colId as string) ?? null, (sorted?.sort as "asc" | "desc") ?? null);
+  };
+
   const handleRowClicked = (event: RowClickedEvent<OrderListItem>) => {
     const id = event.data?.id;
     if (id != null) {
@@ -162,6 +172,7 @@ export default function OrderGrid({ rows }: OrderGridProps) {
         defaultColDef={defaultColDef}
         suppressCellFocus
         onGridReady={handleGridReady}
+        onSortChanged={handleSortChanged}
         onRowClicked={handleRowClicked}
         overlayNoRowsTemplate="조회된 주문이 없습니다."
       />

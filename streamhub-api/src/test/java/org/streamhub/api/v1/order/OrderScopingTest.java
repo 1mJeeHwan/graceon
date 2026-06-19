@@ -183,26 +183,26 @@ class OrderScopingTest {
     @Test
     void list_forManager_isPinnedToOwnChurch_ignoringRequestedChurchId() {
         // Manager requests church 999 but is forced to church 100 in the mapper call.
-        when(orderMapper.selectList(any(), any(), any(), any(), eq(100L), any(), any(), anyInt(), anyInt()))
+        when(orderMapper.selectList(any(), any(), any(), any(), eq(100L), any(), any(), any(), anyInt(), anyInt()))
                 .thenReturn(List.of());
         when(orderMapper.countList(any(), any(), any(), any(), eq(100L), any(), any())).thenReturn(0L);
 
         orderService().list(new org.streamhub.api.v1.order.dto.OrderSearchRequest(
-                0, 10, null, null, null, null, 999L, null, null), MANAGER_100);
+                0, 10, null, null, null, null, 999L, null, null, null, null), MANAGER_100);
 
-        verify(orderMapper).selectList(any(), any(), any(), any(), eq(100L), any(), any(), anyInt(), anyInt());
+        verify(orderMapper).selectList(any(), any(), any(), any(), eq(100L), any(), any(), any(), anyInt(), anyInt());
     }
 
     @Test
     void list_forSystem_honorsRequestedChurchId() {
         // SYSTEM honors the requested church filter (999) unchanged.
-        when(orderMapper.selectList(any(), any(), any(), any(), eq(999L), any(), any(), anyInt(), anyInt()))
+        when(orderMapper.selectList(any(), any(), any(), any(), eq(999L), any(), any(), any(), anyInt(), anyInt()))
                 .thenReturn(List.of());
         when(orderMapper.countList(any(), any(), any(), any(), eq(999L), any(), any())).thenReturn(0L);
 
         orderService().list(new org.streamhub.api.v1.order.dto.OrderSearchRequest(
-                0, 10, null, null, null, null, 999L, null, null), SYSTEM);
+                0, 10, null, null, null, null, 999L, null, null, null, null), SYSTEM);
 
-        verify(orderMapper).selectList(any(), any(), any(), any(), eq(999L), any(), any(), anyInt(), anyInt());
+        verify(orderMapper).selectList(any(), any(), any(), any(), eq(999L), any(), any(), any(), anyInt(), anyInt());
     }
 }

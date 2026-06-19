@@ -60,7 +60,7 @@
         FROM ORDERS o
             JOIN MEMBER m ON o.member_id = m.id
         <include refid="searchWhere"/>
-        ORDER BY o.ordered_at DESC, o.id DESC
+        ORDER BY ${orderBy}
         LIMIT #{offset}, #{size}
     </select>
 
