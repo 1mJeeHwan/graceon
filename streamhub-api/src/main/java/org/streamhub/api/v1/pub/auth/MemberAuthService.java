@@ -27,23 +27,30 @@ public class MemberAuthService {
     private final ChurchRepository churchRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final org.streamhub.api.v1.security.SecurityMonitor securityMonitor;
 
     public MemberAuthService(
             MemberRepository memberRepository,
             ChurchRepository churchRepository,
             PasswordEncoder passwordEncoder,
-            JwtTokenProvider tokenProvider) {
+            JwtTokenProvider tokenProvider,
+            org.streamhub.api.v1.security.SecurityMonitor securityMonitor) {
         this.memberRepository = memberRepository;
         this.churchRepository = churchRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
+        this.securityMonitor = securityMonitor;
     }
 
     @Transactional(readOnly = true)
     public MemberAuthResponse login(MemberLoginRequest request) {
         Member member = memberRepository.findByEmail(request.email())
-                .orElseThrow(() -> new ApiException(ResultCode.LOGIN_FAILED));
+                .orElseThrow(() -> {
+                    securityMonitor.recordAuthFailure(request.email(), "MEMBER");
+                    return new ApiException(ResultCode.LOGIN_FAILED);
+                });
         if (!passwordEncoder.matches(request.password(), member.getPassword())) {
+            securityMonitor.recordAuthFailure(request.email(), "MEMBER");
             throw new ApiException(ResultCode.LOGIN_FAILED);
         }
         if (member.getUserStatus() != UserStatus.CONFIRMED) {

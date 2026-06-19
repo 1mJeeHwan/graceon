@@ -1,10 +1,13 @@
 package org.streamhub.api.base.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,6 +18,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.response.ResultDTO;
+import org.streamhub.api.base.security.AdminPrincipal;
+import org.streamhub.api.v1.security.SecurityMonitor;
 
 /**
  * Translates exceptions into {@link ResultDTO} responses with the appropriate HTTP status.
@@ -23,10 +28,20 @@ import org.streamhub.api.base.response.ResultDTO;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private final SecurityMonitor securityMonitor;
+
+    public GlobalExceptionHandler(SecurityMonitor securityMonitor) {
+        this.securityMonitor = securityMonitor;
+    }
+
     @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ResultDTO<Void>> handleApiException(ApiException ex) {
+    public ResponseEntity<ResultDTO<Void>> handleApiException(ApiException ex, HttpServletRequest request) {
         ResultCode code = ex.getResultCode();
         log.warn("ApiException: {} - {}", code.getCode(), ex.getMessage());
+        if (code == ResultCode.FORBIDDEN) {
+            // Service-thrown FORBIDDEN: cross-tenant / IDOR-style access attempt.
+            recordAccessDenied(request);
+        }
         return ResponseEntity.status(code.getHttpStatus())
                 .body(ResultDTO.error(code, ex.getMessage()));
     }
@@ -42,9 +57,25 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ResultDTO<Void>> handleAccessDenied(AccessDeniedException ex) {
+    public ResponseEntity<ResultDTO<Void>> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+        recordAccessDenied(request);
         return ResponseEntity.status(ResultCode.FORBIDDEN.getHttpStatus())
                 .body(ResultDTO.error(ResultCode.FORBIDDEN));
+    }
+
+    /**
+     * Records an ACCESS_DENIED security event for the current request. Best-effort: any failure
+     * is swallowed by {@link SecurityMonitor} so the original 403 response is unaffected.
+     */
+    private void recordAccessDenied(HttpServletRequest request) {
+        String actorType = "ANON";
+        Long actorId = null;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof AdminPrincipal principal) {
+            actorType = principal.role();
+            actorId = principal.id();
+        }
+        securityMonitor.recordAccessDenied(request.getRequestURI(), actorType, actorId);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

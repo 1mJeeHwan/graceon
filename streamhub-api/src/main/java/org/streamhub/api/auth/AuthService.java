@@ -30,25 +30,32 @@ public class AuthService {
     private final JwtTokenProvider tokenProvider;
     private final StringRedisTemplate redisTemplate;
     private final org.streamhub.api.v1.actionlog.ActionLogPublisher actionLogPublisher;
+    private final org.streamhub.api.v1.security.SecurityMonitor securityMonitor;
 
     public AuthService(
             AdminAccountRepository adminRepository,
             PasswordEncoder passwordEncoder,
             JwtTokenProvider tokenProvider,
             StringRedisTemplate redisTemplate,
-            org.streamhub.api.v1.actionlog.ActionLogPublisher actionLogPublisher) {
+            org.streamhub.api.v1.actionlog.ActionLogPublisher actionLogPublisher,
+            org.streamhub.api.v1.security.SecurityMonitor securityMonitor) {
         this.adminRepository = adminRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
         this.redisTemplate = redisTemplate;
         this.actionLogPublisher = actionLogPublisher;
+        this.securityMonitor = securityMonitor;
     }
 
     @Transactional(readOnly = true)
     public TokenResponse login(LoginRequest request) {
         AdminAccount admin = adminRepository.findByLoginId(request.loginId())
-                .orElseThrow(() -> new ApiException(ResultCode.LOGIN_FAILED));
+                .orElseThrow(() -> {
+                    securityMonitor.recordAuthFailure(request.loginId(), "ADMIN");
+                    return new ApiException(ResultCode.LOGIN_FAILED);
+                });
         if (!passwordEncoder.matches(request.password(), admin.getPassword())) {
+            securityMonitor.recordAuthFailure(request.loginId(), "ADMIN");
             throw new ApiException(ResultCode.LOGIN_FAILED);
         }
         TokenResponse tokens = issueTokens(admin);

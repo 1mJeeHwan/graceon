@@ -39,6 +39,9 @@ class MemberAuthServiceTest {
     @Mock
     private JwtTokenProvider tokenProvider;
 
+    @Mock
+    private org.streamhub.api.v1.security.SecurityMonitor securityMonitor;
+
     @InjectMocks
     private MemberAuthService memberAuthService;
 
