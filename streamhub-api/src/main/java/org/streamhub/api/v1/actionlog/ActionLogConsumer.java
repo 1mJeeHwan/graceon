@@ -35,6 +35,7 @@ public class ActionLogConsumer {
                 .targetType(message.targetType())
                 .targetId(message.targetId())
                 .detail(message.detail())
+                .ip(message.ip())
                 .build());
         log.debug("Recorded action log: {} by {}", message.action(), adminName);
     }

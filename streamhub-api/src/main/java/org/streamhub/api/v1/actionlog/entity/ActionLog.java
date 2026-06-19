@@ -48,18 +48,23 @@ public class ActionLog {
     @Column(name = "detail", length = 500)
     private String detail;
 
+    /** Originating client IP of the operator's request (null for off-request/system actions). */
+    @Column(name = "ip", length = 45)
+    private String ip;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Builder
     private ActionLog(Long adminId, String adminName, String action, String targetType,
-                      String targetId, String detail, LocalDateTime createdAt) {
+                      String targetId, String detail, String ip, LocalDateTime createdAt) {
         this.adminId = adminId;
         this.adminName = adminName;
         this.action = action;
         this.targetType = targetType;
         this.targetId = targetId;
         this.detail = detail;
+        this.ip = ip;
         this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
     }
 }

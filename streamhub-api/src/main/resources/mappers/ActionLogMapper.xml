@@ -17,7 +17,7 @@
     </sql>
 
     <select id="selectList" resultType="org.streamhub.api.v1.actionlog.dto.ActionLogItem">
-        SELECT id, admin_id, admin_name, action, target_type, target_id, detail, created_at
+        SELECT id, admin_id, admin_name, action, target_type, target_id, detail, ip, created_at
         FROM ACTION_LOG
         <include refid="searchWhere"/>
         ORDER BY created_at DESC, id DESC

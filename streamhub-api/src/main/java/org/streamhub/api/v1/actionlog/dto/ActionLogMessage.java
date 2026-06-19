@@ -10,6 +10,7 @@ package org.streamhub.api.v1.actionlog.dto;
  * @param targetType affected entity type (MEMBER, CONTENT, ...)
  * @param targetId   affected entity id (as string; may be a comma list for bulk)
  * @param detail     human-readable detail
+ * @param ip         originating client IP captured at publish time (null when off-request)
  */
 public record ActionLogMessage(
         Long adminId,
@@ -17,5 +18,6 @@ public record ActionLogMessage(
         String action,
         String targetType,
         String targetId,
-        String detail) {
+        String detail,
+        String ip) {
 }

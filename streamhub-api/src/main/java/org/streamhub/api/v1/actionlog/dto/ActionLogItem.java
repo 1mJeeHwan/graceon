@@ -17,5 +17,6 @@ public class ActionLogItem {
     private String targetType;
     private String targetId;
     private String detail;
+    private String ip;
     private LocalDateTime createdAt;
 }
