@@ -239,8 +239,12 @@ export default function ContentAddPage() {
                 id="mediaUrl"
                 type="text"
                 className={FIELD_CLASS}
+                placeholder="영상: 유튜브 링크(https://youtu.be/...) · 음원: 오디오 URL"
                 {...register("mediaUrl")}
               />
+              <p className="mt-1 text-xs text-slate-400">
+                영상은 유튜브 링크를 붙여넣으면 사용자 화면에 임베드 재생됩니다(별도 업로드 불필요).
+              </p>
             </div>
 
             {/* Duration */}

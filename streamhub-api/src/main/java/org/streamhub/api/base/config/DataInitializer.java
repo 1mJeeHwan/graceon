@@ -354,18 +354,18 @@ public class DataInitializer implements CommandLineRunner {
     private static final String[] TITLE_PREFIX = {"주일", "수요", "새벽", "금요", "특별"};
     private static final String[] TITLE_SUFFIX = {"예배 실황", "찬양 모음", "말씀 나눔", "기도회", "성가대 특송"};
 
-    // Real, publicly playable sample media so the user site can actually play content.
-    // NOTE: Google's gtv-videos-bucket samples now return 403, so we use W3C / test-videos.co.uk
-    // / Blender mirrors, all verified reachable (HTTP 206, video/mp4).
+    // Video content is served via YouTube embeds (no media hosting/storage needed) — the user-site
+    // VideoPlayer detects a YouTube link and embeds it. Public Blender open-movie uploads are used
+    // as stable demo videos; a direct .mp4 URL would still play via the player's fallback.
     private static final String[] SAMPLE_VIDEOS = {
-            "https://media.w3.org/2010/05/sintel/trailer.mp4",
-            "https://media.w3.org/2010/05/bunny/trailer.mp4",
-            "https://media.w3.org/2010/05/video/movie_300.mp4",
-            "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4",
-            "https://test-videos.co.uk/vids/jellyfish/mp4/h264/360/Jellyfish_360_10s_1MB.mp4",
-            "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4",
-            "https://test-videos.co.uk/vids/sintel/mp4/h264/360/Sintel_360_10s_1MB.mp4",
-            "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
+            "https://youtu.be/aqz-KE-bpKQ", // Big Buck Bunny
+            "https://youtu.be/eRsGyueVLvQ", // Sintel
+            "https://youtu.be/R6MlUcmOul8", // Tears of Steel
+            "https://youtu.be/TLkA0RELQ1g", // Elephant's Dream
+            "https://youtu.be/Z3rNk5wPjjE", // Caminandes: Gran Dillama
+            "https://youtu.be/WhWc3b3KhnY", // Spring
+            "https://youtu.be/UXqq0ZvbOnk", // Charge
+            "https://youtu.be/GfO-3Oir-qM", // Cosmos Laundromat
     };
     private static final String[] SAMPLE_AUDIOS = {
             "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
