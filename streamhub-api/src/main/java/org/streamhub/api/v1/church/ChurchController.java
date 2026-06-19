@@ -32,8 +32,7 @@ import org.streamhub.api.v1.content.dto.UploadResponse;
 @Tag(name = "Church", description = "교회찾기 — 교회 관리")
 @RestController
 @RequestMapping("/v1/churches")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('church:read')") // class default = read; mutations require church:write
 public class ChurchController {
 
     private final ChurchService churchService;
@@ -57,12 +56,14 @@ public class ChurchController {
     }
 
     @Operation(summary = "교회 등록")
+    @PreAuthorize("hasAuthority('church:write')")
     @PostMapping
     public ResultDTO<ChurchDetail> create(@Valid @RequestBody ChurchUpsertRequest request) {
         return ResultDTO.ok(churchService.create(request));
     }
 
     @Operation(summary = "교회 수정")
+    @PreAuthorize("hasAuthority('church:write')")
     @PutMapping("/{id}")
     public ResultDTO<ChurchDetail> update(
             @PathVariable Long id, @Valid @RequestBody ChurchUpsertRequest request) {
@@ -70,6 +71,7 @@ public class ChurchController {
     }
 
     @Operation(summary = "교회 삭제")
+    @PreAuthorize("hasAuthority('church:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         churchService.delete(id);
@@ -83,6 +85,7 @@ public class ChurchController {
     }
 
     @Operation(summary = "교회 이미지 업로드", description = "썸네일을 스토리지에 업로드하고 key/url을 반환한다.")
+    @PreAuthorize("hasAuthority('church:write')")
     @PostMapping("/upload")
     public ResultDTO<UploadResponse> upload(@RequestParam("file") MultipartFile file) {
         String key = storageService.upload(file, "church");

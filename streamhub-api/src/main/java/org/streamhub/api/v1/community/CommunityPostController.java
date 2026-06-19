@@ -24,8 +24,7 @@ import org.streamhub.api.v1.community.dto.CommunityPostSearchRequest;
 @Tag(name = "Post", description = "커뮤니티 게시글 관리")
 @RestController
 @RequestMapping("/v1/community-post")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('community:read')") // class default = read; mutations require community:write
 public class CommunityPostController {
 
     private final CommunityPostService postService;
@@ -47,12 +46,14 @@ public class CommunityPostController {
     }
 
     @Operation(summary = "게시글 등록", description = "글 관리 작성 화면에서 새 게시글을 등록한다.")
+    @PreAuthorize("hasAuthority('community:write')")
     @PostMapping
     public ResultDTO<CommunityPostDto> create(@Valid @RequestBody CommunityPostSaveRequest request) {
         return ResultDTO.ok(postService.create(request));
     }
 
     @Operation(summary = "게시글 수정", description = "기존 게시글의 작성 항목을 수정한다(조회수/추천수 유지).")
+    @PreAuthorize("hasAuthority('community:write')")
     @PutMapping("/{id}")
     public ResultDTO<CommunityPostDto> update(
             @PathVariable Long id, @Valid @RequestBody CommunityPostSaveRequest request) {
@@ -60,6 +61,7 @@ public class CommunityPostController {
     }
 
     @Operation(summary = "게시글 삭제")
+    @PreAuthorize("hasAuthority('community:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         postService.delete(id);

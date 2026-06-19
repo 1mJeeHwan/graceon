@@ -22,8 +22,7 @@ import org.streamhub.api.v1.store.dto.StoreDto;
 @Tag(name = "Store", description = "오프라인 직영매장 관리")
 @RestController
 @RequestMapping("/v1/store")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('store:read')") // class default = read; mutations require store:write
 public class StoreController {
 
     private final StoreService storeService;
@@ -39,18 +38,21 @@ public class StoreController {
     }
 
     @Operation(summary = "매장 등록")
+    @PreAuthorize("hasAuthority('store:write')")
     @PostMapping
     public ResultDTO<StoreDto> create(@Valid @RequestBody StoreDto request) {
         return ResultDTO.ok(storeService.create(request));
     }
 
     @Operation(summary = "매장 수정")
+    @PreAuthorize("hasAuthority('store:write')")
     @PutMapping("/{id}")
     public ResultDTO<StoreDto> update(@PathVariable Long id, @Valid @RequestBody StoreDto request) {
         return ResultDTO.ok(storeService.update(id, request));
     }
 
     @Operation(summary = "매장 삭제")
+    @PreAuthorize("hasAuthority('store:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         storeService.delete(id);

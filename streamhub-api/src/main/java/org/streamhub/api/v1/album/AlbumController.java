@@ -30,8 +30,7 @@ import org.streamhub.api.v1.goods.dto.UploadResponse;
 @Tag(name = "Album", description = "CCM 음반 관리")
 @RestController
 @RequestMapping("/v1/album")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('album:read')") // class default = read; mutations require album:write
 public class AlbumController {
 
     private final AlbumService albumService;
@@ -55,12 +54,14 @@ public class AlbumController {
     }
 
     @Operation(summary = "앨범 등록", description = "판매 활성 시 브리지 GOODS_ITEM을 자동 생성한다.")
+    @PreAuthorize("hasAuthority('album:write')")
     @PostMapping
     public ResultDTO<AlbumDetail> create(@Valid @RequestBody AlbumCreateRequest request) {
         return ResultDTO.ok(albumService.create(request));
     }
 
     @Operation(summary = "앨범 수정", description = "트랙/브리지 GOODS_ITEM을 동기화한다.")
+    @PreAuthorize("hasAuthority('album:write')")
     @PutMapping("/{id}")
     public ResultDTO<AlbumDetail> update(
             @PathVariable Long id, @Valid @RequestBody AlbumCreateRequest request) {
@@ -68,6 +69,7 @@ public class AlbumController {
     }
 
     @Operation(summary = "앨범 삭제", description = "트랙은 삭제, 브리지 GOODS_ITEM은 미판매 전환(주문이력 보호).")
+    @PreAuthorize("hasAuthority('album:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         albumService.delete(id);
@@ -75,6 +77,7 @@ public class AlbumController {
     }
 
     @Operation(summary = "커버 이미지 업로드", description = "앨범 커버를 스토리지에 업로드하고 key/url을 반환한다.")
+    @PreAuthorize("hasAuthority('album:write')")
     @PostMapping("/upload")
     public ResultDTO<UploadResponse> upload(@RequestParam("file") MultipartFile file) {
         String key = storageService.upload(file, "album");

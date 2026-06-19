@@ -25,8 +25,7 @@ import org.streamhub.api.v1.banner.dto.BannerSortRequest;
 @Tag(name = "Banner", description = "프론트 배너 관리")
 @RestController
 @RequestMapping("/v1/banner")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('banner:read')") // class default = read; mutations require banner:write
 public class BannerController {
 
     private final BannerService bannerService;
@@ -48,18 +47,21 @@ public class BannerController {
     }
 
     @Operation(summary = "배너 등록")
+    @PreAuthorize("hasAuthority('banner:write')")
     @PostMapping
     public ResultDTO<BannerDto> create(@Valid @RequestBody BannerDto request) {
         return ResultDTO.ok(bannerService.create(request));
     }
 
     @Operation(summary = "배너 수정")
+    @PreAuthorize("hasAuthority('banner:write')")
     @PutMapping("/{id}")
     public ResultDTO<BannerDto> update(@PathVariable Long id, @Valid @RequestBody BannerDto request) {
         return ResultDTO.ok(bannerService.update(id, request));
     }
 
     @Operation(summary = "배너 정렬순서 변경", description = "드래그 정렬용 정렬순서 단건 변경.")
+    @PreAuthorize("hasAuthority('banner:write')")
     @PutMapping("/{id}/sort")
     public ResultDTO<BannerDto> updateSort(
             @PathVariable Long id, @Valid @RequestBody BannerSortRequest request) {
@@ -67,6 +69,7 @@ public class BannerController {
     }
 
     @Operation(summary = "배너 삭제")
+    @PreAuthorize("hasAuthority('banner:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         bannerService.delete(id);

@@ -28,8 +28,7 @@ import org.streamhub.api.v1.member.dto.MemberUpdateRequest;
 @Tag(name = "Member", description = "회원관리")
 @RestController
 @RequestMapping("/v1/member")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('member:read')") // class default = read; mutations require member:write
 public class MemberController {
 
     private final MemberService memberService;
@@ -55,6 +54,7 @@ public class MemberController {
     }
 
     @Operation(summary = "회원 수정")
+    @PreAuthorize("hasAuthority('member:write')")
     @PutMapping("/{id}")
     public ResultDTO<MemberDetail> update(
             @PathVariable Long id,
@@ -64,6 +64,7 @@ public class MemberController {
     }
 
     @Operation(summary = "회원 일괄 승인", description = "선택한 회원을 CONFIRMED로 변경한다.")
+    @PreAuthorize("hasAuthority('member:write')")
     @PostMapping("/approve")
     public ResultDTO<Integer> approve(
             @Valid @RequestBody IdListRequest request,
@@ -72,6 +73,7 @@ public class MemberController {
     }
 
     @Operation(summary = "회원 일괄 거부", description = "선택한 회원을 INACTIVE로 변경한다.")
+    @PreAuthorize("hasAuthority('member:write')")
     @PostMapping("/deny")
     public ResultDTO<Integer> deny(
             @Valid @RequestBody IdListRequest request,

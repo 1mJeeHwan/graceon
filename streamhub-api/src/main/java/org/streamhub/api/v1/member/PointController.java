@@ -26,8 +26,7 @@ import org.streamhub.api.v1.member.dto.PointLedgerSearchRequest;
 @Tag(name = "Point", description = "포인트 원장 관리")
 @RestController
 @RequestMapping("/v1/point")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('point:read')") // class default = read; mutations require point:write
 public class PointController {
 
     private final PointService pointService;
@@ -55,6 +54,7 @@ public class PointController {
     }
 
     @Operation(summary = "포인트 수동 지급/차감", description = "원장 기록과 회원 누적 포인트를 한 트랜잭션에서 동기화한다. delta 음수는 차감.")
+    @PreAuthorize("hasAuthority('point:write')")
     @PostMapping("/grant")
     public ResultDTO<PointLedgerListItem> grant(
             @Valid @RequestBody PointGrantRequest request,

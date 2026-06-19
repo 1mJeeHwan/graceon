@@ -23,8 +23,7 @@ import org.streamhub.api.v1.coupon.dto.CouponSearchRequest;
 @Tag(name = "Coupon", description = "할인 쿠폰 관리")
 @RestController
 @RequestMapping("/v1/coupon")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('coupon:read')") // class default = read; mutations require coupon:write
 public class CouponController {
 
     private final CouponService couponService;
@@ -46,18 +45,21 @@ public class CouponController {
     }
 
     @Operation(summary = "쿠폰 등록")
+    @PreAuthorize("hasAuthority('coupon:write')")
     @PostMapping
     public ResultDTO<CouponDto> create(@Valid @RequestBody CouponDto request) {
         return ResultDTO.ok(couponService.create(request));
     }
 
     @Operation(summary = "쿠폰 수정")
+    @PreAuthorize("hasAuthority('coupon:write')")
     @PutMapping("/{id}")
     public ResultDTO<CouponDto> update(@PathVariable Long id, @Valid @RequestBody CouponDto request) {
         return ResultDTO.ok(couponService.update(id, request));
     }
 
     @Operation(summary = "쿠폰 삭제")
+    @PreAuthorize("hasAuthority('coupon:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         couponService.delete(id);

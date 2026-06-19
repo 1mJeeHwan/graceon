@@ -23,8 +23,7 @@ import org.streamhub.api.v1.goods.category.dto.GoodsCategorySaveRequest;
 @Tag(name = "GoodsCategory", description = "굿즈샵 카테고리 관리")
 @RestController
 @RequestMapping("/v1/goods-category")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('goods:read')") // class default = read; mutations require goods:write
 public class GoodsCategoryController {
 
     private final GoodsCategoryAdminService goodsCategoryAdminService;
@@ -40,12 +39,14 @@ public class GoodsCategoryController {
     }
 
     @Operation(summary = "카테고리 등록")
+    @PreAuthorize("hasAuthority('goods:write')")
     @PostMapping
     public ResultDTO<GoodsCategoryNodeDto> create(@Valid @RequestBody GoodsCategorySaveRequest request) {
         return ResultDTO.ok(goodsCategoryAdminService.create(request));
     }
 
     @Operation(summary = "카테고리 수정", description = "이름/정렬순서/사용여부를 수정한다.")
+    @PreAuthorize("hasAuthority('goods:write')")
     @PutMapping("/{id}")
     public ResultDTO<GoodsCategoryNodeDto> update(
             @PathVariable Long id, @Valid @RequestBody GoodsCategorySaveRequest request) {
@@ -53,6 +54,7 @@ public class GoodsCategoryController {
     }
 
     @Operation(summary = "카테고리 삭제")
+    @PreAuthorize("hasAuthority('goods:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         goodsCategoryAdminService.delete(id);

@@ -22,8 +22,7 @@ import org.streamhub.api.v1.goods.stock.dto.GoodsStockUpdateRequest;
 @Tag(name = "GoodsStock", description = "굿즈샵 재고 관리")
 @RestController
 @RequestMapping("/v1/goods-stock")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('goods:read')") // class default = read; mutations require goods:write
 public class GoodsStockController {
 
     private final GoodsStockService goodsStockService;
@@ -39,6 +38,7 @@ public class GoodsStockController {
     }
 
     @Operation(summary = "재고 수정", description = "재고수량(및 선택적으로 알림기준수량)을 수정한다.")
+    @PreAuthorize("hasAuthority('goods:write')")
     @PutMapping("/{id}/stock")
     public ResultDTO<GoodsStockDto> updateStock(
             @PathVariable Long id, @RequestBody GoodsStockUpdateRequest request) {
@@ -46,6 +46,7 @@ public class GoodsStockController {
     }
 
     @Operation(summary = "품절 토글", description = "품절 여부(Y/N)를 전환한다.")
+    @PreAuthorize("hasAuthority('goods:write')")
     @PutMapping("/{id}/soldout")
     public ResultDTO<GoodsStockDto> toggleSoldOut(@PathVariable Long id) {
         return ResultDTO.ok(goodsStockService.toggleSoldOut(id));

@@ -25,8 +25,7 @@ import org.streamhub.api.v1.campaign.dto.CampaignStatusChangeRequest;
 @Tag(name = "Campaign", description = "캠페인·이벤트 관리")
 @RestController
 @RequestMapping("/v1/campaign")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('campaign:read')") // class default = read; mutations require campaign:write
 public class CampaignController {
 
     private final CampaignService campaignService;
@@ -48,18 +47,21 @@ public class CampaignController {
     }
 
     @Operation(summary = "캠페인 등록")
+    @PreAuthorize("hasAuthority('campaign:write')")
     @PostMapping
     public ResultDTO<CampaignDto> create(@Valid @RequestBody CampaignDto request) {
         return ResultDTO.ok(campaignService.create(request));
     }
 
     @Operation(summary = "캠페인 수정")
+    @PreAuthorize("hasAuthority('campaign:write')")
     @PutMapping("/{id}")
     public ResultDTO<CampaignDto> update(@PathVariable Long id, @Valid @RequestBody CampaignDto request) {
         return ResultDTO.ok(campaignService.update(id, request));
     }
 
     @Operation(summary = "캠페인 상태 변경")
+    @PreAuthorize("hasAuthority('campaign:write')")
     @PutMapping("/{id}/status")
     public ResultDTO<CampaignDto> changeStatus(
             @PathVariable Long id, @Valid @RequestBody CampaignStatusChangeRequest request) {
@@ -67,6 +69,7 @@ public class CampaignController {
     }
 
     @Operation(summary = "캠페인 삭제")
+    @PreAuthorize("hasAuthority('campaign:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         campaignService.delete(id);

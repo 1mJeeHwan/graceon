@@ -24,8 +24,7 @@ import org.streamhub.api.v1.inquiry.dto.InquirySearchRequest;
 @Tag(name = "Inquiry", description = "1:1 고객 문의 관리")
 @RestController
 @RequestMapping("/v1/inquiry")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('inquiry:read')") // class default = read; mutations require inquiry:write
 public class InquiryController {
 
     private final InquiryService inquiryService;
@@ -47,18 +46,21 @@ public class InquiryController {
     }
 
     @Operation(summary = "문의 답변", description = "답변 등록 후 상태를 ANSWERED로 변경한다.")
+    @PreAuthorize("hasAuthority('inquiry:write')")
     @PutMapping("/{id}/answer")
     public ResultDTO<InquiryDto> answer(@PathVariable Long id, @Valid @RequestBody InquiryAnswerRequest request) {
         return ResultDTO.ok(inquiryService.answer(id, request));
     }
 
     @Operation(summary = "문의 종료", description = "상태를 CLOSED로 변경한다.")
+    @PreAuthorize("hasAuthority('inquiry:write')")
     @PutMapping("/{id}/close")
     public ResultDTO<InquiryDto> close(@PathVariable Long id) {
         return ResultDTO.ok(inquiryService.close(id));
     }
 
     @Operation(summary = "문의 삭제")
+    @PreAuthorize("hasAuthority('inquiry:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         inquiryService.delete(id);

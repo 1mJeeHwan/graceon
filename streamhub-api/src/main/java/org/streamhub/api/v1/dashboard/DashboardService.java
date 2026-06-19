@@ -52,7 +52,7 @@ public class DashboardService {
      * @return the populated summary
      */
     @Cacheable(cacheNames = "dashboardSummary",
-            key = "#principal.isSystem() ? 'all' : #principal.churchId()")
+            key = "#principal.isUnscoped() ? 'all' : #principal.churchId()")
     public DashboardSummaryResponse getSummary(AdminPrincipal principal) {
         log.info("Computing dashboard summary (cache miss)");
 
@@ -99,7 +99,7 @@ public class DashboardService {
      * @return the densified timeseries
      */
     @Cacheable(cacheNames = "dashboardTimeseries",
-            key = "#days + '-' + (#principal.isSystem() ? 'all' : #principal.churchId())")
+            key = "#days + '-' + (#principal.isUnscoped() ? 'all' : #principal.churchId())")
     public TimeseriesResponse getTimeseries(int days, AdminPrincipal principal) {
         log.info("Computing dashboard timeseries for {} days (cache miss)", days);
 
@@ -167,7 +167,7 @@ public class DashboardService {
 
     /** Resolves the church filter: CHURCH_MANAGER is pinned to its own church, SYSTEM sees all. */
     private Long scopedChurchId(AdminPrincipal principal) {
-        return principal.isSystem() ? null : principal.churchId();
+        return principal.isUnscoped() ? null : principal.churchId();
     }
 
     /** Builds a completed Korean sentence for one feed row. */

@@ -22,8 +22,7 @@ import org.streamhub.api.v1.goods.review.dto.GoodsReviewSearchRequest;
 @Tag(name = "GoodsReview", description = "굿즈 상품후기 관리")
 @RestController
 @RequestMapping("/v1/goods-review")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('goods:read')") // class default = read; mutations require goods:write
 public class GoodsReviewController {
 
     private final GoodsReviewService goodsReviewService;
@@ -39,6 +38,7 @@ public class GoodsReviewController {
     }
 
     @Operation(summary = "상품후기 노출여부 변경")
+    @PreAuthorize("hasAuthority('goods:write')")
     @PutMapping("/{id}/display")
     public ResultDTO<GoodsReviewDto> display(@PathVariable Long id,
             @Valid @RequestBody GoodsReviewDisplayRequest request) {
@@ -46,6 +46,7 @@ public class GoodsReviewController {
     }
 
     @Operation(summary = "상품후기 별점 수정")
+    @PreAuthorize("hasAuthority('goods:write')")
     @PutMapping("/{id}/rating")
     public ResultDTO<GoodsReviewDto> rating(@PathVariable Long id,
             @Valid @RequestBody GoodsReviewRatingRequest request) {
@@ -53,6 +54,7 @@ public class GoodsReviewController {
     }
 
     @Operation(summary = "상품후기 삭제")
+    @PreAuthorize("hasAuthority('goods:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         goodsReviewService.delete(id);

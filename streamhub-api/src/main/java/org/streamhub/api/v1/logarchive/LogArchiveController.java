@@ -15,7 +15,7 @@ import org.streamhub.api.base.response.ResultDTO;
 @Tag(name = "LogArchive", description = "로그 아카이브")
 @RestController
 @RequestMapping("/v1/admin/log-archive")
-@PreAuthorize("hasAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM)")
+@PreAuthorize("hasAuthority('logarchive:read')") // SYSTEM-only resource; class default = read, mutations require logarchive:write
 public class LogArchiveController {
 
     private final LogArchiveService logArchiveService;
@@ -26,6 +26,7 @@ public class LogArchiveController {
 
     @Operation(summary = "로그 아카이브 수동 실행",
             description = "보관 기간이 지난 감사/보안 로그를 S3에 아카이브 후 삭제하고 처리 건수를 반환한다.")
+    @PreAuthorize("hasAuthority('logarchive:write')")
     @PostMapping("/run")
     public ResultDTO<LogArchiveService.ArchiveResult> run() {
         return ResultDTO.ok(logArchiveService.archiveAndPurge());

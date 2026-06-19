@@ -26,8 +26,7 @@ import org.streamhub.api.v1.donation.dto.OnceDonationRequest;
 @Tag(name = "Donation", description = "후원 내역 / 결제일정 관리")
 @RestController
 @RequestMapping("/v1/donation")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('donation:read')") // SYSTEM-only resource; mutations require donation:write
 public class DonationController {
 
     private final DonationService donationService;
@@ -47,6 +46,7 @@ public class DonationController {
     }
 
     @Operation(summary = "단건 후원 등록", description = "수기 단건 후원 등록(테스트 모드).")
+    @PreAuthorize("hasAuthority('donation:write')")
     @PostMapping("/once")
     public ResultDTO<DonationListItem> createOnce(
             @Valid @RequestBody OnceDonationRequest request,
@@ -64,7 +64,7 @@ public class DonationController {
 
     @Operation(summary = "정기청구 수동 실행", description = "데모용 — 도래한 구독을 즉시 청구하고 처리 건수를 반환한다(SYSTEM 전용).")
     @PostMapping("/run-billing")
-    @PreAuthorize("hasAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM)")
+    @PreAuthorize("hasAuthority('donation:write')")
     public ResultDTO<Integer> runBilling() {
         return ResultDTO.ok(billingScheduler.runDueBillingNow());
     }

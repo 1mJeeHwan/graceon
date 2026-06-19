@@ -32,8 +32,7 @@ import org.streamhub.api.v1.goods.dto.UploadResponse;
 @Tag(name = "Goods", description = "굿즈샵 상품 관리")
 @RestController
 @RequestMapping("/v1/goods")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('goods:read')") // class default = read; mutations require goods:write
 public class GoodsController {
 
     private final GoodsService goodsService;
@@ -61,12 +60,14 @@ public class GoodsController {
     }
 
     @Operation(summary = "굿즈 등록")
+    @PreAuthorize("hasAuthority('goods:write')")
     @PostMapping
     public ResultDTO<GoodsDetail> create(@Valid @RequestBody GoodsCreateRequest request) {
         return ResultDTO.ok(goodsService.create(request));
     }
 
     @Operation(summary = "굿즈 수정")
+    @PreAuthorize("hasAuthority('goods:write')")
     @PutMapping("/{id}")
     public ResultDTO<GoodsDetail> update(
             @PathVariable Long id, @Valid @RequestBody GoodsCreateRequest request) {
@@ -74,6 +75,7 @@ public class GoodsController {
     }
 
     @Operation(summary = "굿즈 삭제")
+    @PreAuthorize("hasAuthority('goods:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         goodsService.delete(id);
@@ -81,12 +83,14 @@ public class GoodsController {
     }
 
     @Operation(summary = "굿즈 인라인 일괄수정", description = "AG Grid에서 변경된 행만 반영. 반영 행수를 반환.")
+    @PreAuthorize("hasAuthority('goods:write')")
     @PutMapping("/bulk")
     public ResultDTO<Integer> bulkUpdate(@Valid @RequestBody GoodsBulkUpdateRequest request) {
         return ResultDTO.ok(goodsService.bulkUpdate(request));
     }
 
     @Operation(summary = "굿즈 이미지 업로드", description = "썸네일/추가 이미지를 스토리지에 업로드하고 key/url을 반환한다.")
+    @PreAuthorize("hasAuthority('goods:write')")
     @PostMapping("/upload")
     public ResultDTO<UploadResponse> upload(@RequestParam("file") MultipartFile file) {
         String key = storageService.upload(file, "goods");

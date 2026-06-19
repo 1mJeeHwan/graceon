@@ -95,7 +95,7 @@ public class ContentService {
      */
     @Transactional(readOnly = true)
     public List<org.streamhub.api.v1.content.dto.ChannelDto> listChannels(AdminPrincipal principal) {
-        List<Channel> channels = principal.isSystem()
+        List<Channel> channels = principal.isUnscoped()
                 ? channelRepository.findAll()
                 : channelRepository.findByChurchId(principal.churchId());
         return channels.stream()
@@ -119,7 +119,7 @@ public class ContentService {
         // A non-SYSTEM operator must carry a church scope; a null churchId here would degrade the
         // mapper filter to "IS NULL" and leak every church's content, so fail closed instead.
         Long churchId = null;
-        if (!principal.isSystem()) {
+        if (!principal.isUnscoped()) {
             churchId = principal.churchId();
             if (churchId == null) {
                 throw new ApiException(ResultCode.FORBIDDEN);
@@ -261,7 +261,7 @@ public class ContentService {
      * a non-existent channel and another church's channel (no cross-tenant enumeration).
      */
     private void ensureChannelInScope(Long channelId, AdminPrincipal principal) {
-        if (principal.isSystem()) {
+        if (principal.isUnscoped()) {
             return;
         }
         Channel channel = channelRepository.findById(channelId)

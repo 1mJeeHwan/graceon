@@ -23,8 +23,7 @@ import org.streamhub.api.v1.donation.dto.PlanResponse;
 @Tag(name = "SubscriptionPlan", description = "멤버십 플랜 관리")
 @RestController
 @RequestMapping("/v1/subscription-plan")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('subscription-plan:read')") // SYSTEM-only resource; mutations require subscription-plan:write
 public class SubscriptionPlanController {
 
     private final SubscriptionPlanService subscriptionPlanService;
@@ -46,12 +45,14 @@ public class SubscriptionPlanController {
     }
 
     @Operation(summary = "멤버십 플랜 등록")
+    @PreAuthorize("hasAuthority('subscription-plan:write')")
     @PostMapping
     public ResultDTO<PlanResponse> create(@Valid @RequestBody PlanCreateRequest request) {
         return ResultDTO.ok(subscriptionPlanService.create(request));
     }
 
     @Operation(summary = "멤버십 플랜 수정")
+    @PreAuthorize("hasAuthority('subscription-plan:write')")
     @PutMapping("/{id}")
     public ResultDTO<PlanResponse> update(
             @PathVariable Long id, @Valid @RequestBody PlanCreateRequest request) {
@@ -60,7 +61,7 @@ public class SubscriptionPlanController {
 
     @Operation(summary = "멤버십 플랜 삭제", description = "파괴적 액션 — SYSTEM 전용.")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM)")
+    @PreAuthorize("hasAuthority('subscription-plan:write')")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         subscriptionPlanService.delete(id);
         return ResultDTO.ok();

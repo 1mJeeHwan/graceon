@@ -18,7 +18,7 @@ import org.streamhub.api.v1.actionlog.dto.ActionLogSearchRequest;
 @Tag(name = "ActionLog", description = "감사 로그")
 @RestController
 @RequestMapping("/v1/action-log")
-@PreAuthorize("hasAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM)")
+@PreAuthorize("hasAuthority('actionlog:read')") // SYSTEM-only resource; read-only controller (POST /list is search)
 public class ActionLogController {
 
     private final ActionLogService actionLogService;

@@ -20,8 +20,7 @@ import org.streamhub.api.v1.statistics.dto.TrendPoint;
 @Tag(name = "Statistics", description = "통계 대시보드")
 @RestController
 @RequestMapping("/v1/statistics")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('analytics:read')") // class default = read; this controller is read-only
 public class StatController {
 
     private final StatService statService;

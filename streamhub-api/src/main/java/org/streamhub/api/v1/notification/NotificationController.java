@@ -23,8 +23,7 @@ import org.streamhub.api.v1.notification.dto.NotificationSummaryDto;
 @Tag(name = "Notification", description = "알림센터 발송 로그")
 @RestController
 @RequestMapping("/v1/notification")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('notification:read')") // class default = read; mutations require notification:write
 public class NotificationController {
 
     private final NotificationService notificationService;
@@ -52,6 +51,7 @@ public class NotificationController {
     }
 
     @Operation(summary = "발송 로그 삭제")
+    @PreAuthorize("hasAuthority('notification:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         notificationService.delete(id);

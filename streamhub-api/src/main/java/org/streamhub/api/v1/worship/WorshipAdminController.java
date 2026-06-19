@@ -26,8 +26,7 @@ import org.streamhub.api.v1.worship.dto.WorshipStatusChangeRequest;
 @Tag(name = "Worship", description = "예배·새가족 신청 관리 (데모/테스트 모드, 실알림 미발송)")
 @RestController
 @RequestMapping("/v1/worship")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('worship:read')") // class default = read; mutations require worship:write
 public class WorshipAdminController {
 
     private final WorshipService worshipService;
@@ -53,6 +52,7 @@ public class WorshipAdminController {
 
     @Operation(summary = "신청 상태 변경",
             description = "상태머신 전이(RECEIVED→CONTACTED→COMPLETED, 분기 CANCELED) + 메모 갱신.")
+    @PreAuthorize("hasAuthority('worship:write')")
     @PatchMapping("/{id}/status")
     public ResultDTO<WorshipRegistrationDetail> changeStatus(
             @PathVariable Long id, @Valid @RequestBody WorshipStatusChangeRequest request,

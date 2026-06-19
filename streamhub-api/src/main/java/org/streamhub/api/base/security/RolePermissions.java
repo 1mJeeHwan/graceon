@@ -24,15 +24,22 @@ public final class RolePermissions {
     private static final String READ = ":read";
     private static final String WRITE = ":write";
 
-    /** Operational resources a manager/viewer may touch (one per admin domain/page). */
+    /**
+     * Operational resources a manager/viewer may touch (one per admin domain/page). Mirrors the
+     * controllers currently open to SYSTEM + CHURCH_MANAGER — VIEWER additionally gets read on these.
+     */
     private static final List<String> OPERATIONAL = List.of(
-            "order", "payment", "donation", "subscription", "member", "point", "content", "goods",
+            "order", "payment", "subscription", "member", "point", "content", "album", "goods",
             "coupon", "campaign", "banner", "board", "community", "worship", "visit", "store",
-            "church", "sms", "notification", "analytics", "chat", "dashboard");
+            "church", "sms", "notification", "analytics", "chat", "dashboard", "inquiry");
 
-    /** System-only resources (audit, security monitoring, log archival, admin accounts). */
+    /**
+     * System-only resources (SYSTEM gets read+write; MANAGER/VIEWER get nothing). Mirrors the
+     * controllers currently restricted to SYSTEM: audit log, security monitoring, log archival,
+     * admin accounts, donations, and subscription plans.
+     */
     private static final List<String> SYSTEM_ONLY = List.of(
-            "security", "actionlog", "logarchive", "admin");
+            "security", "actionlog", "logarchive", "admin", "donation", "subscription-plan");
 
     private RolePermissions() {
     }

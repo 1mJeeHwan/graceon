@@ -22,8 +22,7 @@ import org.streamhub.api.v1.goods.inquiry.dto.GoodsInquirySearchRequest;
 @Tag(name = "GoodsInquiry", description = "굿즈 상품문의 관리")
 @RestController
 @RequestMapping("/v1/goods-inquiry")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('goods:read')") // class default = read; mutations require goods:write
 public class GoodsInquiryController {
 
     private final GoodsInquiryService goodsInquiryService;
@@ -45,6 +44,7 @@ public class GoodsInquiryController {
     }
 
     @Operation(summary = "상품문의 답변 등록")
+    @PreAuthorize("hasAuthority('goods:write')")
     @PutMapping("/{id}/answer")
     public ResultDTO<GoodsInquiryDto> answer(@PathVariable Long id,
             @Valid @RequestBody GoodsInquiryAnswerRequest request) {
@@ -52,6 +52,7 @@ public class GoodsInquiryController {
     }
 
     @Operation(summary = "상품문의 삭제")
+    @PreAuthorize("hasAuthority('goods:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         goodsInquiryService.delete(id);

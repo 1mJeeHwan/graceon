@@ -22,8 +22,7 @@ import org.streamhub.api.v1.analytics.dto.TimeseriesPointDto;
 @Tag(name = "Analytics", description = "콘텐츠 분석")
 @RestController
 @RequestMapping("/v1/analytics")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('analytics:read')") // class default = read; this controller is read-only
 public class AnalyticsController {
 
     private final AnalyticsService analyticsService;

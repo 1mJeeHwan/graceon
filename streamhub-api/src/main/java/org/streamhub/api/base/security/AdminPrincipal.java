@@ -14,4 +14,13 @@ public record AdminPrincipal(Long id, String role, Long churchId) {
     public boolean isSystem() {
         return AuthoritiesConstants.SYSTEM.equals(role);
     }
+
+    /**
+     * True for roles that read across all churches (SYSTEM and the global read-only VIEWER). Drives
+     * read-scope bypass: a VIEWER has no church of its own, so it is treated as unscoped for reads
+     * (writes are blocked by permissions, not scope).
+     */
+    public boolean isUnscoped() {
+        return isSystem() || AuthoritiesConstants.VIEWER.equals(role);
+    }
 }

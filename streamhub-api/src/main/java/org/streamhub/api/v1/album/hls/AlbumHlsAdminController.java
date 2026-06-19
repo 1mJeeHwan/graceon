@@ -32,8 +32,7 @@ import org.streamhub.api.v1.album.repository.TrackRepository;
 @Tag(name = "Album HLS Admin", description = "암호화 풀트랙 패키징 (관리자)")
 @RestController
 @RequestMapping("/v1/album/tracks/{trackId}")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('album:read')") // class default = read; packaging mutations require album:write
 public class AlbumHlsAdminController {
 
     private final HlsPackagingService packagingService;
@@ -49,6 +48,7 @@ public class AlbumHlsAdminController {
     }
 
     @Operation(summary = "풀트랙 업로드·암호화", description = "오디오 파일을 AES-128 암호화 HLS로 패키징해 저장한다.")
+    @PreAuthorize("hasAuthority('album:write')")
     @PostMapping("/audio")
     public ResultDTO<String> uploadAudio(@PathVariable Long trackId,
                                          @RequestParam("file") MultipartFile file) {
@@ -64,6 +64,7 @@ public class AlbumHlsAdminController {
     }
 
     @Operation(summary = "데모 풀트랙 패키징", description = "트랙의 데모 샘플(previewUrl)을 받아 암호화 HLS로 패키징한다(파이프라인 시연용).")
+    @PreAuthorize("hasAuthority('album:write')")
     @PostMapping("/audio/demo")
     public ResultDTO<String> packageDemo(@PathVariable Long trackId) {
         Track track = trackRepository.findById(trackId)

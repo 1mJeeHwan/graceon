@@ -22,8 +22,7 @@ import org.streamhub.api.v1.dashboard.dto.TimeseriesResponse;
 @Tag(name = "Dashboard", description = "통합 운영 대시보드")
 @RestController
 @RequestMapping("/v1/dashboard")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('dashboard:read')") // class default = read; this controller is read-only
 public class DashboardController {
 
     private final DashboardService dashboardService;

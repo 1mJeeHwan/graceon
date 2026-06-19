@@ -24,8 +24,7 @@ import org.streamhub.api.v1.chat.admin.dto.ChatSessionRow;
 @Tag(name = "ChatAdmin", description = "관리자 챗봇 상담 콘솔")
 @RestController
 @RequestMapping("/v1/chat-admin")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('chat:read')") // class default = read; mutations require chat:write
 public class ChatAdminController {
 
     private final ChatAdminService chatAdminService;
@@ -47,6 +46,7 @@ public class ChatAdminController {
     }
 
     @Operation(summary = "상담원 수동 답변", description = "해당 세션에 운영자(BOT) 답변을 추가한다.")
+    @PreAuthorize("hasAuthority('chat:write')")
     @PostMapping("/sessions/{sessionKey}/reply")
     public ResultDTO<ChatMessageRow> reply(
             @PathVariable String sessionKey, @Valid @RequestBody ChatReplyRequest request) {

@@ -22,8 +22,7 @@ import org.streamhub.api.v1.visit.dto.VisitSummaryDto;
 @Tag(name = "Visit", description = "접속 통계")
 @RestController
 @RequestMapping("/v1/visit")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('visit:read')") // class default = read; read-only statistics controller
 public class VisitController {
 
     private final VisitService visitService;

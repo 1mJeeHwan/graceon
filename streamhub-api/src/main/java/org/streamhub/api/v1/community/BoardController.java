@@ -21,8 +21,7 @@ import org.streamhub.api.v1.community.dto.BoardDto;
 @Tag(name = "Board", description = "커뮤니티 게시판 관리")
 @RestController
 @RequestMapping("/v1/board")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('board:read')") // class default = read; mutations require board:write
 public class BoardController {
 
     private final BoardService boardService;
@@ -38,18 +37,21 @@ public class BoardController {
     }
 
     @Operation(summary = "게시판 등록")
+    @PreAuthorize("hasAuthority('board:write')")
     @PostMapping
     public ResultDTO<BoardDto> create(@Valid @RequestBody BoardDto request) {
         return ResultDTO.ok(boardService.create(request));
     }
 
     @Operation(summary = "게시판 수정")
+    @PreAuthorize("hasAuthority('board:write')")
     @PutMapping("/{id}")
     public ResultDTO<BoardDto> update(@PathVariable Long id, @Valid @RequestBody BoardDto request) {
         return ResultDTO.ok(boardService.update(id, request));
     }
 
     @Operation(summary = "게시판 삭제")
+    @PreAuthorize("hasAuthority('board:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(@PathVariable Long id) {
         boardService.delete(id);

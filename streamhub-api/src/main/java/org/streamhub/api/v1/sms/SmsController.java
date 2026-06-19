@@ -21,8 +21,7 @@ import org.streamhub.api.v1.sms.dto.SmsSendRequest;
 @Tag(name = "Sms", description = "문자(SMS/LMS) 발송·내역 (데모/테스트 모드)")
 @RestController
 @RequestMapping("/v1/sms")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('sms:read')") // class default = read; send requires sms:write
 public class SmsController {
 
     private final SmsService smsService;
@@ -38,6 +37,7 @@ public class SmsController {
     }
 
     @Operation(summary = "커스텀 문자 발송", description = "관리자 직접 발송. 실제 발송되지 않으며 로그만 저장된다(테스트).")
+    @PreAuthorize("hasAuthority('sms:write')")
     @PostMapping("/send")
     public ResultDTO<SmsListItem> send(@Valid @RequestBody SmsSendRequest request) {
         return ResultDTO.ok(smsService.send(request));

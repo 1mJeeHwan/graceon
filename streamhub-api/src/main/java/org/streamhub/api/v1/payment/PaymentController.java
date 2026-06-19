@@ -29,8 +29,7 @@ import org.streamhub.api.v1.payment.dto.PaymentSearchRequest;
 @Tag(name = "Payment", description = "결제 요청·승인·영수증 (데모/테스트 모드, 실 PG 미연동)")
 @RestController
 @RequestMapping("/v1/payment")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('payment:read')") // class default = read; mutations require payment:write
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -49,6 +48,7 @@ public class PaymentController {
     }
 
     @Operation(summary = "결제 요청", description = "주문에 대해 (가짜) 결제를 요청하고 거래번호를 발급한다.")
+    @PreAuthorize("hasAuthority('payment:write')")
     @PostMapping("/request")
     public ResultDTO<PaymentResultDto> request(
             @Valid @RequestBody PayRequestCommand request,
@@ -58,6 +58,7 @@ public class PaymentController {
 
     @Operation(summary = "결제 승인",
             description = "요청된 결제를 (가짜) 승인하고 주문을 PAID로 전이 + 영수증을 발급한다.")
+    @PreAuthorize("hasAuthority('payment:write')")
     @PostMapping("/approve")
     public ResultDTO<PaymentResultDto> approve(
             @Valid @RequestBody PayApproveCommand request,
@@ -68,6 +69,7 @@ public class PaymentController {
     @Operation(summary = "결제 취소/환불",
             description = "승인된 결제를 PG에 취소 요청한 뒤(실 PG 연동 시 실제 환불), 주문을 CANCEL/RETURN으로 전이하고 "
                     + "재고 복원 + 환불(REFUND) 영수증을 발급한다. PG 취소를 먼저 호출해 실패 시 내부 원장 반전이 일어나지 않는다.")
+    @PreAuthorize("hasAuthority('payment:write')")
     @PostMapping("/refund")
     public ResultDTO<PaymentResultDto> refund(
             @Valid @RequestBody PayCancelCommand request,

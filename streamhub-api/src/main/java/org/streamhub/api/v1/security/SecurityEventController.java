@@ -18,7 +18,7 @@ import org.streamhub.api.v1.security.dto.SecurityEventItem;
 @Tag(name = "SecurityEvent", description = "보안 이벤트")
 @RestController
 @RequestMapping("/v1/security-events")
-@PreAuthorize("hasAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM)")
+@PreAuthorize("hasAuthority('security:read')") // SYSTEM-only resource; read-only controller
 public class SecurityEventController {
 
     private final SecurityEventService securityEventService;

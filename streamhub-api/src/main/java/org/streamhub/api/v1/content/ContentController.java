@@ -31,8 +31,7 @@ import org.streamhub.api.v1.content.dto.UploadResponse;
 @Tag(name = "Content", description = "콘텐츠(영상) 관리")
 @RestController
 @RequestMapping("/v1/content")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('content:read')") // class default = read; mutations require content:write
 public class ContentController {
 
     private final ContentService contentService;
@@ -66,6 +65,7 @@ public class ContentController {
     }
 
     @Operation(summary = "콘텐츠 등록")
+    @PreAuthorize("hasAuthority('content:write')")
     @PostMapping
     public ResultDTO<ContentDetail> create(
             @Valid @RequestBody ContentCreateRequest request,
@@ -74,6 +74,7 @@ public class ContentController {
     }
 
     @Operation(summary = "콘텐츠 수정")
+    @PreAuthorize("hasAuthority('content:write')")
     @PutMapping("/{id}")
     public ResultDTO<ContentDetail> update(
             @PathVariable Long id, @Valid @RequestBody ContentCreateRequest request,
@@ -82,6 +83,7 @@ public class ContentController {
     }
 
     @Operation(summary = "콘텐츠 삭제")
+    @PreAuthorize("hasAuthority('content:write')")
     @DeleteMapping("/{id}")
     public ResultDTO<Void> delete(
             @PathVariable Long id, @AuthenticationPrincipal AdminPrincipal principal) {
@@ -90,6 +92,7 @@ public class ContentController {
     }
 
     @Operation(summary = "파일 업로드", description = "썸네일/파일을 스토리지(MinIO·S3)에 업로드하고 key/url을 반환한다.")
+    @PreAuthorize("hasAuthority('content:write')")
     @PostMapping("/upload")
     public ResultDTO<UploadResponse> upload(@RequestParam("file") MultipartFile file) {
         String key = storageService.upload(file, "content");

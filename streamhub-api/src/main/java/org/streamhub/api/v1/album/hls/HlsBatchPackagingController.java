@@ -28,8 +28,7 @@ import org.streamhub.api.v1.album.repository.TrackRepository;
 @Tag(name = "Album HLS Admin", description = "암호화 풀트랙 일괄 패키징 (관리자)")
 @RestController
 @RequestMapping("/v1/album/hls")
-@PreAuthorize("hasAnyAuthority(T(org.streamhub.api.base.security.AuthoritiesConstants).SYSTEM, "
-        + "T(org.streamhub.api.base.security.AuthoritiesConstants).CHURCH_MANAGER)")
+@PreAuthorize("hasAuthority('album:read')") // class default = read; packaging mutations require album:write
 public class HlsBatchPackagingController {
 
     private final HlsBatchPackagingService batchService;
@@ -43,6 +42,7 @@ public class HlsBatchPackagingController {
 
     @Operation(summary = "전체 트랙 일괄 암호화",
             description = "미패키징 트랙(previewUrl 보유)을 모두 암호화 HLS로 변환하는 작업을 비동기·순차로 시작하고 즉시 반환한다.")
+    @PreAuthorize("hasAuthority('album:write')")
     @PostMapping("/package-all")
     public ResultDTO<Map<String, Integer>> packageAll() {
         List<Long> trackIds = batchService.eligibleTrackIds();
