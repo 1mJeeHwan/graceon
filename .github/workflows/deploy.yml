@@ -50,5 +50,5 @@ jobs:
             --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
             --document-name "AWS-RunShellScript" \
             --comment "deploy ${{ github.sha }}" \
-            --parameters 'commands=["/usr/local/bin/streamhub-deploy"]' \
+            --parameters 'commands=["docker image prune -af || true","/usr/local/bin/streamhub-deploy"]' \
             --region "${{ secrets.AWS_REGION }}"
