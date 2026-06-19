@@ -14,9 +14,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.storage.StorageService;
+import org.streamhub.api.v1.member.repository.MemberRepository;
 import org.streamhub.api.v1.album.entity.Track;
 import org.streamhub.api.v1.album.repository.AlbumRepository;
 import org.streamhub.api.v1.album.repository.TrackRepository;
@@ -52,13 +56,14 @@ class MemberMeServiceTest {
     @Mock private GoodsReviewRepository goodsReviewRepository;
     @Mock private GoodsInquiryRepository goodsInquiryRepository;
     @Mock private GoodsItemRepository goodsItemRepository;
+    @Mock private MemberRepository memberRepository;
     @Mock private StorageService storageService;
 
     private MemberMeService service() {
         return new MemberMeService(
                 watchHistoryRepository, contentRepository, trackFavoriteRepository, trackRepository,
                 albumRepository, goodsReviewRepository, goodsInquiryRepository, goodsItemRepository,
-                storageService);
+                memberRepository, storageService);
     }
 
     @Test
@@ -129,15 +134,16 @@ class MemberMeServiceTest {
                 .thumbnailKey("thumb/9.jpg").status(null).build();
         ReflectionTestUtils.setField(content, "id", 9L);
 
+        Page<WatchHistory> page = new PageImpl<>(List.of(event));
         when(watchHistoryRepository.findByMemberIdOrderByWatchedAtDesc(any(), any(Pageable.class)))
-                .thenReturn(List.of(event));
+                .thenReturn(page);
         when(contentRepository.findAllById(any())).thenReturn(List.of(content));
         when(storageService.publicUrl("thumb/9.jpg")).thenReturn("https://cdn/thumb/9.jpg");
 
-        List<WatchHistoryItem> items = service().history(1L);
+        ResInfinityList<WatchHistoryItem> result = service().history(1L, 0, 10);
 
-        assertThat(items).hasSize(1);
-        WatchHistoryItem item = items.get(0);
+        assertThat(result.getContents()).hasSize(1);
+        WatchHistoryItem item = result.getContents().get(0);
         assertThat(item.contentId()).isEqualTo(9L);
         assertThat(item.title()).isEqualTo("예배 실황");
         assertThat(item.type()).isEqualTo(ContentType.VIDEO);

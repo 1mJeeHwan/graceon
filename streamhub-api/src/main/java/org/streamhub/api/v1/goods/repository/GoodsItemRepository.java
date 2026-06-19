@@ -1,6 +1,9 @@
 package org.streamhub.api.v1.goods.repository;
 
 import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +17,16 @@ public interface GoodsItemRepository extends JpaRepository<GoodsItem, Long> {
     List<GoodsItem> findAllByIdIn(List<Long> ids);
 
     long countByCategoryId(Long categoryId);
+
+    /** Public storefront detail: an on-sale ({@code use_yn='Y'}) item by id. */
+    Optional<GoodsItem> findByIdAndUseYn(Long id, String useYn);
+
+    /** Public storefront listing: all on-sale items, best-selling then newest first. */
+    Page<GoodsItem> findByUseYnOrderBySaleCountDescCreatedAtDescIdDesc(String useYn, Pageable pageable);
+
+    /** Public storefront search: on-sale items whose name matches, best-selling then newest first. */
+    Page<GoodsItem> findByUseYnAndNameContainingIgnoreCaseOrderBySaleCountDescCreatedAtDescIdDesc(
+            String useYn, String name, Pageable pageable);
 
     /**
      * Atomically deducts item stock and bumps the sale count in a single guarded UPDATE,

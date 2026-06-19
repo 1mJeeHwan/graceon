@@ -1,5 +1,6 @@
 package org.streamhub.api.v1.coupon.repository;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,4 +23,8 @@ public interface CouponRedemptionRepository extends JpaRepository<CouponRedempti
     @Modifying
     @Query("DELETE FROM CouponRedemption r WHERE r.couponId = :couponId AND r.memberId = :memberId")
     int deleteByCouponIdAndMemberId(@Param("couponId") Long couponId, @Param("memberId") Long memberId);
+
+    /** Coupon ids this member has already redeemed — used to flag {@code used} in the coupon box. */
+    @Query("SELECT r.couponId FROM CouponRedemption r WHERE r.memberId = :memberId")
+    List<Long> findCouponIdsByMemberId(@Param("memberId") Long memberId);
 }

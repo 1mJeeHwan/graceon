@@ -6,16 +6,20 @@ import org.streamhub.api.v1.goods.inquiry.entity.AnswerStatus;
 /**
  * One row of the member's own goods inquiries ("내 문의"), goods name joined.
  *
+ * @param id        the inquiry id
  * @param goodsId   inquired goods item
  * @param goodsName goods name ({@code null} if the goods was deleted)
+ * @param title     the inquiry title
  * @param question  the inquiry body
  * @param answer    the admin's answer ({@code null} while unanswered)
  * @param status    WAITING or ANSWERED
  * @param createdAt when it was asked
  */
 public record MyInquiryItem(
+        Long id,
         Long goodsId,
         String goodsName,
+        String title,
         String question,
         String answer,
         AnswerStatus status,

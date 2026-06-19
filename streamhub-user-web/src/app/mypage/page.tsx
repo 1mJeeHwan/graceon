@@ -29,6 +29,10 @@ import { PurchasedAlbumsSection } from "@/components/mypage/PurchasedAlbumsSecti
 import { PlaylistSection } from "@/components/mypage/PlaylistSection";
 import { WatchHistorySection } from "@/components/mypage/WatchHistorySection";
 import { ReviewsInquiriesSection } from "@/components/mypage/ReviewsInquiriesSection";
+import { PointsSection } from "@/components/mypage/PointsSection";
+import { CouponsSection } from "@/components/mypage/CouponsSection";
+import { DonationsSection } from "@/components/mypage/DonationsSection";
+import { NotificationsSection } from "@/components/mypage/NotificationsSection";
 
 function Row({ icon: Icon, label, value }: { icon: typeof Mail; label: string; value: string | null }) {
   return (
@@ -189,10 +193,14 @@ export default function MyPage() {
       {token && (
         <>
           <OrderHistorySection token={token} />
+          <PointsSection token={token} />
+          <CouponsSection token={token} />
+          <DonationsSection token={token} />
           <PurchasedAlbumsSection token={token} />
           <PlaylistSection token={token} />
           <WatchHistorySection token={token} />
           <ReviewsInquiriesSection token={token} />
+          <NotificationsSection token={token} />
         </>
       )}
 

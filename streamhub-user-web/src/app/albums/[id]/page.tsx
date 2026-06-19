@@ -12,6 +12,7 @@ import { TrackRow } from "@/components/TrackRow";
 import { fullTrackSource, useAudioPlayer } from "@/components/player/AudioPlayerProvider";
 import { EmptyState, ErrorState } from "@/components/States";
 import { CheckoutModal } from "@/components/CheckoutModal";
+import { ProductFeedback } from "@/components/ProductFeedback";
 
 /**
  * One track row plus, for tracks with an encrypted full-track HLS stream, a "전체 듣기 (암호화)"
@@ -166,6 +167,10 @@ export default function AlbumDetailPage({ params }: { params: { id: string } }) 
               onClose={() => setCheckoutOpen(false)}
               item={{ albumId: data.id, name: data.title, price: data.price ?? 0 }}
             />
+
+            {data.goodsItemId != null && (
+              <ProductFeedback goodsItemId={data.goodsItemId} productName={data.title} />
+            )}
           </div>
 
           {/* Track list */}

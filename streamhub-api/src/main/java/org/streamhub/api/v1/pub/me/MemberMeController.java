@@ -1,11 +1,9 @@
 package org.streamhub.api.v1.pub.me;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,17 +13,17 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.streamhub.api.base.exception.ApiException;
-import org.streamhub.api.base.jwt.JwtTokenProvider;
+import org.streamhub.api.base.jwt.MemberTokenResolver;
 import org.streamhub.api.base.response.ResInfinityList;
-import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.response.ResultDTO;
 import org.streamhub.api.v1.pub.me.dto.FavoriteAddRequest;
 import org.streamhub.api.v1.pub.me.dto.FavoriteItem;
 import org.streamhub.api.v1.pub.me.dto.HistoryRecordRequest;
+import org.streamhub.api.v1.pub.me.dto.InquiryCreateRequest;
 import org.streamhub.api.v1.pub.me.dto.MyInquiryItem;
 import org.streamhub.api.v1.pub.me.dto.MyReviewItem;
 import org.streamhub.api.v1.pub.me.dto.PurchasedAlbumItem;
+import org.streamhub.api.v1.pub.me.dto.ReviewCreateRequest;
 import org.streamhub.api.v1.pub.me.dto.WatchHistoryItem;
 
 /**
@@ -39,14 +37,12 @@ import org.streamhub.api.v1.pub.me.dto.WatchHistoryItem;
 @RequestMapping("/pub/v1/me")
 public class MemberMeController {
 
-    private static final String BEARER_PREFIX = "Bearer ";
-
     private final MemberMeService memberMeService;
-    private final JwtTokenProvider tokenProvider;
+    private final MemberTokenResolver memberTokenResolver;
 
-    public MemberMeController(MemberMeService memberMeService, JwtTokenProvider tokenProvider) {
+    public MemberMeController(MemberMeService memberMeService, MemberTokenResolver memberTokenResolver) {
         this.memberMeService = memberMeService;
-        this.tokenProvider = tokenProvider;
+        this.memberTokenResolver = memberTokenResolver;
     }
 
     @Operation(summary = "시청기록 적재", description = "콘텐츠 시청 이벤트 1건을 기록한다(멱등 아님, best-effort).")
@@ -54,22 +50,25 @@ public class MemberMeController {
     public ResultDTO<Void> recordHistory(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @Valid @RequestBody HistoryRecordRequest request) {
-        memberMeService.recordHistory(resolveMemberId(authorization), request.contentId(), request.watchSeconds());
+        memberMeService.recordHistory(
+                memberTokenResolver.resolve(authorization), request.contentId(), request.watchSeconds());
         return ResultDTO.ok();
     }
 
-    @Operation(summary = "시청기록", description = "로그인 회원의 최근 시청기록을 콘텐츠 정보와 함께 최신순으로 반환한다.")
+    @Operation(summary = "시청기록", description = "로그인 회원의 시청기록을 콘텐츠 정보와 함께 최신순으로 페이징해 반환한다.")
     @GetMapping("/history")
-    public ResultDTO<List<WatchHistoryItem>> history(
-            @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return ResultDTO.ok(memberMeService.history(resolveMemberId(authorization)));
+    public ResultDTO<ResInfinityList<WatchHistoryItem>> history(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber,
+            @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
+        return ResultDTO.ok(memberMeService.history(memberTokenResolver.resolve(authorization), pageNumber, pageSize));
     }
 
     @Operation(summary = "찜 목록", description = "로그인 회원의 재생목록 찜을 트랙/앨범 정보와 함께 반환한다.")
     @GetMapping("/favorites")
     public ResultDTO<List<FavoriteItem>> favorites(
             @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return ResultDTO.ok(memberMeService.favorites(resolveMemberId(authorization)));
+        return ResultDTO.ok(memberMeService.favorites(memberTokenResolver.resolve(authorization)));
     }
 
     @Operation(summary = "찜 추가", description = "트랙을 재생목록 찜에 추가한다(이미 있으면 무시, 멱등).")
@@ -77,7 +76,7 @@ public class MemberMeController {
     public ResultDTO<Void> addFavorite(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @Valid @RequestBody FavoriteAddRequest request) {
-        memberMeService.addFavorite(resolveMemberId(authorization), request.trackId());
+        memberMeService.addFavorite(memberTokenResolver.resolve(authorization), request.trackId());
         return ResultDTO.ok();
     }
 
@@ -86,7 +85,7 @@ public class MemberMeController {
     public ResultDTO<Void> removeFavorite(
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @PathVariable Long trackId) {
-        memberMeService.removeFavorite(resolveMemberId(authorization), trackId);
+        memberMeService.removeFavorite(memberTokenResolver.resolve(authorization), trackId);
         return ResultDTO.ok();
     }
 
@@ -96,31 +95,45 @@ public class MemberMeController {
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber,
             @RequestParam(value = "pageSize", defaultValue = "8") int pageSize) {
-        return ResultDTO.ok(memberMeService.purchasedAlbums(resolveMemberId(authorization), pageNumber, pageSize));
+        return ResultDTO.ok(
+                memberMeService.purchasedAlbums(memberTokenResolver.resolve(authorization), pageNumber, pageSize));
     }
 
     @Operation(summary = "내 후기", description = "로그인 회원이 작성한 상품 후기 목록을 반환한다.")
     @GetMapping("/reviews")
     public ResultDTO<List<MyReviewItem>> reviews(
             @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return ResultDTO.ok(memberMeService.reviews(resolveMemberId(authorization)));
+        return ResultDTO.ok(memberMeService.reviews(memberTokenResolver.resolve(authorization)));
+    }
+
+    @Operation(summary = "후기 작성", description = "로그인 회원이 상품 후기를 1건 작성한다.")
+    @PostMapping("/reviews")
+    public ResultDTO<MyReviewItem> createReview(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @Valid @RequestBody ReviewCreateRequest request) {
+        return ResultDTO.ok(memberMeService.createReview(
+                memberTokenResolver.resolve(authorization),
+                request.goodsItemId(),
+                request.rating(),
+                request.content()));
     }
 
     @Operation(summary = "내 문의", description = "로그인 회원이 작성한 상품 문의 목록을 반환한다.")
     @GetMapping("/inquiries")
     public ResultDTO<List<MyInquiryItem>> inquiries(
             @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return ResultDTO.ok(memberMeService.inquiries(resolveMemberId(authorization)));
+        return ResultDTO.ok(memberMeService.inquiries(memberTokenResolver.resolve(authorization)));
     }
 
-    private Long resolveMemberId(String authorization) {
-        if (!StringUtils.hasText(authorization) || !authorization.startsWith(BEARER_PREFIX)) {
-            throw new ApiException(ResultCode.UNAUTHORIZED);
-        }
-        DecodedJWT jwt = tokenProvider.verify(authorization.substring(BEARER_PREFIX.length()));
-        if (!tokenProvider.isMemberToken(jwt)) {
-            throw new ApiException(ResultCode.INVALID_TOKEN);
-        }
-        return Long.valueOf(jwt.getSubject());
+    @Operation(summary = "문의 작성", description = "로그인 회원이 상품 문의를 1건 작성한다(답변대기 상태).")
+    @PostMapping("/inquiries")
+    public ResultDTO<MyInquiryItem> createInquiry(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @Valid @RequestBody InquiryCreateRequest request) {
+        return ResultDTO.ok(memberMeService.createInquiry(
+                memberTokenResolver.resolve(authorization),
+                request.goodsItemId(),
+                request.title(),
+                request.content()));
     }
 }

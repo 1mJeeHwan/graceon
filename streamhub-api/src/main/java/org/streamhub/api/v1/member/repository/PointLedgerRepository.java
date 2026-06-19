@@ -3,6 +3,7 @@ package org.streamhub.api.v1.member.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.streamhub.api.v1.member.entity.LedgerStatus;
 import org.streamhub.api.v1.member.entity.PointLedger;
@@ -20,4 +21,7 @@ public interface PointLedgerRepository extends JpaRepository<PointLedger, Long> 
     Optional<PointLedger> findTopByMemberIdOrderByIdDesc(Long memberId);
 
     long countByMemberId(Long memberId);
+
+    /** One member's ledger entries, newest first, paginated — the member's own "내 포인트" feed. */
+    List<PointLedger> findByMemberIdOrderByIdDesc(Long memberId, Pageable pageable);
 }

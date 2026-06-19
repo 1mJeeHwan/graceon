@@ -1,5 +1,7 @@
 package org.streamhub.api.v1.coupon.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,6 +16,15 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
     /** Looks up a coupon by its unique code (redemption path). */
     Optional<Coupon> findByCode(String code);
+
+    /**
+     * Currently usable global coupons at {@code now}: enabled and within their valid window, newest
+     * first. Backs the member coupon-box ("쿠폰함"); per-member used/exhausted state is layered on in
+     * the service.
+     */
+    @Query("SELECT c FROM Coupon c WHERE c.useYn = 'Y' AND c.startAt <= :now AND c.endAt >= :now "
+            + "ORDER BY c.id DESC")
+    List<Coupon> findActiveAt(@Param("now") LocalDateTime now);
 
     /**
      * Atomically consumes one global use: increments {@code usedCount} only while the coupon is not

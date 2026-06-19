@@ -5,10 +5,12 @@ import { MessageCircle, X, Send, Sparkles } from "lucide-react";
 import clsx from "clsx";
 import {
   sendChat,
+  answerLocally,
   greeting,
   INITIAL_QUICK_REPLIES,
   type ChatMessage,
 } from "@/lib/chat";
+import { useAuth } from "@/lib/auth";
 import { useAudioPlayer } from "./player/AudioPlayerProvider";
 
 /** localStorage key for the front-generated chat session id (UUID). */
@@ -50,6 +52,8 @@ export function ChatbotWidget() {
   const inputRef = useRef<HTMLInputElement>(null);
   // Lift the launcher above the mini player when a track is loaded, so they never overlap.
   const { current: previewTrack } = useAudioPlayer();
+  // Member token (when logged in) lets the bot check the user's own points/coupons/orders/etc.
+  const { token } = useAuth();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -71,7 +75,9 @@ export function ChatbotWidget() {
       setMessages((prev) => [...prev, { id: nextId(), role: "USER", content: text }]);
       setSending(true);
 
-      const reply = await sendChat(getSessionKey(), text);
+      // Feature guidance + (auth-aware) "check my …" answers are resolved client-side first;
+      // anything else falls through to the backend/mock (FAQ · order lookup · product).
+      const reply = (await answerLocally(text, token)) ?? (await sendChat(getSessionKey(), text));
 
       setMessages((prev) => [
         ...prev,
@@ -80,7 +86,7 @@ export function ChatbotWidget() {
       setQuickReplies(reply.quickReplies ?? []);
       setSending(false);
     },
-    [sending],
+    [sending, token],
   );
 
   // --- Draggable launcher -------------------------------------------------

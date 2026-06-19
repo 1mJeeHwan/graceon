@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Disc3, MapPin, Search } from "lucide-react";
+import { Disc3, MapPin, Megaphone, Search, ShoppingBag } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Logo } from "./Logo";
 
@@ -18,6 +18,12 @@ export function AppBar() {
         </Link>
         <Link href="/albums" aria-label="음반" className="text-active transition-colors hover:text-primary">
           <Disc3 className="h-5 w-5" />
+        </Link>
+        <Link href="/goods" aria-label="굿즈샵" className="text-active transition-colors hover:text-primary">
+          <ShoppingBag className="h-5 w-5" />
+        </Link>
+        <Link href="/campaigns" aria-label="이벤트" className="text-active transition-colors hover:text-primary">
+          <Megaphone className="h-5 w-5" />
         </Link>
         <Link href="/search" aria-label="검색" className="text-active transition-colors hover:text-primary">
           <Search className="h-5 w-5" />

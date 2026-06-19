@@ -11,7 +11,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.streamhub.api.base.exception.ApiException;
 import org.streamhub.api.base.response.ResInfinityList;
+import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.storage.StorageService;
 import org.streamhub.api.v1.album.entity.Track;
 import org.streamhub.api.v1.album.repository.AlbumRepository;
@@ -19,11 +21,14 @@ import org.streamhub.api.v1.album.repository.TrackRepository;
 import org.streamhub.api.v1.content.entity.Content;
 import org.streamhub.api.v1.content.repository.ContentRepository;
 import org.streamhub.api.v1.goods.entity.GoodsItem;
+import org.streamhub.api.v1.goods.inquiry.entity.AnswerStatus;
 import org.streamhub.api.v1.goods.inquiry.entity.GoodsInquiry;
 import org.streamhub.api.v1.goods.inquiry.repository.GoodsInquiryRepository;
 import org.streamhub.api.v1.goods.repository.GoodsItemRepository;
 import org.streamhub.api.v1.goods.review.entity.GoodsReview;
 import org.streamhub.api.v1.goods.review.repository.GoodsReviewRepository;
+import org.streamhub.api.v1.member.entity.Member;
+import org.streamhub.api.v1.member.repository.MemberRepository;
 import org.streamhub.api.v1.pub.me.dto.FavoriteItem;
 import org.streamhub.api.v1.pub.me.dto.FavoriteRow;
 import org.streamhub.api.v1.pub.me.dto.MyInquiryItem;
@@ -50,9 +55,6 @@ import org.streamhub.api.v1.statistics.repository.WatchHistoryRepository;
 @Service
 public class MemberMeService {
 
-    /** Watch-history feed cap — most recent N events. */
-    private static final int HISTORY_LIMIT = 50;
-
     private final WatchHistoryRepository watchHistoryRepository;
     private final ContentRepository contentRepository;
     private final TrackFavoriteRepository trackFavoriteRepository;
@@ -61,6 +63,7 @@ public class MemberMeService {
     private final GoodsReviewRepository goodsReviewRepository;
     private final GoodsInquiryRepository goodsInquiryRepository;
     private final GoodsItemRepository goodsItemRepository;
+    private final MemberRepository memberRepository;
     private final StorageService storageService;
 
     public MemberMeService(
@@ -72,6 +75,7 @@ public class MemberMeService {
             GoodsReviewRepository goodsReviewRepository,
             GoodsInquiryRepository goodsInquiryRepository,
             GoodsItemRepository goodsItemRepository,
+            MemberRepository memberRepository,
             StorageService storageService) {
         this.watchHistoryRepository = watchHistoryRepository;
         this.contentRepository = contentRepository;
@@ -81,6 +85,7 @@ public class MemberMeService {
         this.goodsReviewRepository = goodsReviewRepository;
         this.goodsInquiryRepository = goodsInquiryRepository;
         this.goodsItemRepository = goodsItemRepository;
+        this.memberRepository = memberRepository;
         this.storageService = storageService;
     }
 
@@ -105,18 +110,20 @@ public class MemberMeService {
         }
     }
 
-    /** The member's most recent {@value #HISTORY_LIMIT} watch events, content metadata joined in. */
+    /** The member's watch events most recent first, content metadata joined, one page at a time. */
     @Transactional(readOnly = true)
-    public List<WatchHistoryItem> history(Long memberId) {
-        List<WatchHistory> events = watchHistoryRepository
-                .findByMemberIdOrderByWatchedAtDesc(memberId, PageRequest.of(0, HISTORY_LIMIT));
+    public ResInfinityList<WatchHistoryItem> history(Long memberId, int pageNumber, int pageSize) {
+        Page<WatchHistory> page = watchHistoryRepository
+                .findByMemberIdOrderByWatchedAtDesc(memberId, PageRequest.of(Math.max(0, pageNumber), pageSize));
+        List<WatchHistory> events = page.getContent();
         Map<Long, Content> contents = contentRepository
                 .findAllById(events.stream().map(WatchHistory::getContentId).distinct().toList())
                 .stream()
                 .collect(Collectors.toMap(Content::getId, Function.identity()));
-        return events.stream()
+        List<WatchHistoryItem> items = events.stream()
                 .map(e -> toHistoryItem(e, contents.get(e.getContentId())))
                 .toList();
+        return ResInfinityList.of(items, page.getTotalElements(), pageSize);
     }
 
     private WatchHistoryItem toHistoryItem(WatchHistory event, Content content) {
@@ -207,13 +214,37 @@ public class MemberMeService {
         List<GoodsReview> reviews = goodsReviewRepository.findByMemberIdOrderByIdDesc(memberId);
         Map<Long, String> names = goodsNames(reviews.stream().map(GoodsReview::getGoodsItemId).toList());
         return reviews.stream()
-                .map(r -> new MyReviewItem(
-                        r.getGoodsItemId(),
-                        names.get(r.getGoodsItemId()),
-                        r.getRating(),
-                        r.getContent(),
-                        r.getCreatedAt()))
+                .map(r -> toReviewItem(r, names.get(r.getGoodsItemId())))
                 .toList();
+    }
+
+    /**
+     * Writes a member review of a goods item: persists it (visible by default) and returns the
+     * created row with the goods name joined.
+     */
+    @Transactional
+    public MyReviewItem createReview(Long memberId, Long goodsItemId, int rating, String content) {
+        String memberName = memberName(memberId);
+        GoodsReview review = goodsReviewRepository.save(GoodsReview.builder()
+                .goodsItemId(goodsItemId)
+                .memberId(memberId)
+                .memberName(memberName)
+                .rating(rating)
+                .content(content)
+                .displayYn("Y")
+                .createdAt(LocalDateTime.now())
+                .build());
+        return toReviewItem(review, goodsName(goodsItemId));
+    }
+
+    private MyReviewItem toReviewItem(GoodsReview review, String goodsName) {
+        return new MyReviewItem(
+                review.getId(),
+                review.getGoodsItemId(),
+                goodsName,
+                review.getRating(),
+                review.getContent(),
+                review.getCreatedAt());
     }
 
     /** The member's own goods inquiries, goods name joined. */
@@ -222,14 +253,51 @@ public class MemberMeService {
         List<GoodsInquiry> inquiries = goodsInquiryRepository.findByMemberIdOrderByIdDesc(memberId);
         Map<Long, String> names = goodsNames(inquiries.stream().map(GoodsInquiry::getGoodsItemId).toList());
         return inquiries.stream()
-                .map(i -> new MyInquiryItem(
-                        i.getGoodsItemId(),
-                        names.get(i.getGoodsItemId()),
-                        i.getContent(),
-                        i.getAnswerContent(),
-                        i.getAnswerStatus(),
-                        i.getCreatedAt()))
+                .map(i -> toInquiryItem(i, names.get(i.getGoodsItemId())))
                 .toList();
+    }
+
+    /**
+     * Writes a member inquiry about a goods item: persists it WAITING for an answer and returns the
+     * created row with the goods name joined.
+     */
+    @Transactional
+    public MyInquiryItem createInquiry(Long memberId, Long goodsItemId, String title, String content) {
+        String memberName = memberName(memberId);
+        GoodsInquiry inquiry = goodsInquiryRepository.save(GoodsInquiry.builder()
+                .goodsItemId(goodsItemId)
+                .memberId(memberId)
+                .memberName(memberName)
+                .title(title)
+                .content(content)
+                .answerStatus(AnswerStatus.WAITING)
+                .createdAt(LocalDateTime.now())
+                .build());
+        return toInquiryItem(inquiry, goodsName(goodsItemId));
+    }
+
+    private MyInquiryItem toInquiryItem(GoodsInquiry inquiry, String goodsName) {
+        return new MyInquiryItem(
+                inquiry.getId(),
+                inquiry.getGoodsItemId(),
+                goodsName,
+                inquiry.getTitle(),
+                inquiry.getContent(),
+                inquiry.getAnswerContent(),
+                inquiry.getAnswerStatus(),
+                inquiry.getCreatedAt());
+    }
+
+    /** Resolves a single member's display name, 404 if the member is missing. */
+    private String memberName(Long memberId) {
+        return memberRepository.findById(memberId)
+                .map(Member::getName)
+                .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
+    }
+
+    /** Resolves a single goods item's name ({@code null} if it was deleted). */
+    private String goodsName(Long goodsItemId) {
+        return goodsItemRepository.findById(goodsItemId).map(GoodsItem::getName).orElse(null);
     }
 
     /** Batch-resolves goods ids → names (one query), so review/inquiry rows avoid N+1 lookups. */

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 /**
  * One row of the member's own goods reviews ("내 후기"), goods name joined.
  *
+ * @param id        the review id
  * @param goodsId   reviewed goods item
  * @param goodsName goods name ({@code null} if the goods was deleted)
  * @param rating    star rating 1–5
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
  * @param createdAt when it was written
  */
 public record MyReviewItem(
+        Long id,
         Long goodsId,
         String goodsName,
         int rating,

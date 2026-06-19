@@ -1,21 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { History, Music2, Video } from "lucide-react";
 import { useMyHistory, type WatchHistoryItem } from "@/lib/me";
 import { formatDate, formatDuration } from "@/lib/format";
 import { SectionShell } from "./SectionShell";
 import { CoverThumb } from "./CoverThumb";
+import { Pagination } from "@/components/Pagination";
+
+const PAGE_SIZE = 8;
 
 /** Detail-page route for a watched item, keyed by content type (SOUND→/music, VIDEO→/video). */
 function detailHref(item: WatchHistoryItem): string {
   return item.type === "SOUND" ? `/music/${item.contentId}` : `/video/${item.contentId}`;
 }
 
-/** The member's recent watch history (newest first), linking back to each content's detail page. */
+/** The member's watch history (newest first, paged), linking back to each content's detail page. */
 export function WatchHistorySection({ token }: { token: string }) {
-  const { data, isLoading, isError } = useMyHistory(token);
-  const history = data ?? [];
+  const [page, setPage] = useState(0);
+  const { data, isLoading, isError } = useMyHistory(token, page, PAGE_SIZE);
+  const history = data?.contents ?? [];
 
   return (
     <SectionShell
@@ -49,6 +54,7 @@ export function WatchHistorySection({ token }: { token: string }) {
           </li>
         ))}
       </ul>
+      <Pagination pageNumber={page} totalPage={data?.totalPage ?? 1} onChange={setPage} />
     </SectionShell>
   );
 }
