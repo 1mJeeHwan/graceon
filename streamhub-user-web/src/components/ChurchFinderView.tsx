@@ -60,11 +60,15 @@ export function ChurchFinderView() {
     [churches],
   );
 
+  // Show the demo badge only when the result set actually contains seed data — real Kakao
+  // results (KAKAO / KAKAO_POI) drop it.
+  const hasDemoData = churches.some((c) => c.dataSource === "SEED");
+
   return (
     <div className="px-5 pb-4 pt-4">
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="text-[22px] font-bold leading-tight">내 주변 교회</h1>
-        <DemoBadge label="데모 데이터 · 실제 교회 정보 아님" />
+        {hasDemoData && <DemoBadge label="데모 데이터 · 실제 교회 정보 아님" />}
       </div>
       {usingFallback && (
         <p className="mt-1.5 flex items-center gap-1 text-[11px] text-inactive">

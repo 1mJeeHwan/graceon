@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, Navigation, Phone } from "lucide-react";
+import { ExternalLink, MapPin, Navigation, Phone } from "lucide-react";
 import clsx from "clsx";
 import type { ChurchNearbyItem } from "@/lib/churchTypes";
 import { denominationLabel } from "@/lib/churchTypes";
 import { formatDistance } from "@/lib/format";
 
 /**
- * Distance-sorted church row. Whole card links to the detail page; hovering/focusing
- * calls `onHover` so the parent can highlight the matching map marker.
+ * Distance-sorted church row. DB-backed churches link to the internal detail page; real-time
+ * Kakao discovery rows (`dataSource="KAKAO_POI"`) open the Kakao map in a new tab instead, since
+ * they have no internal detail. Hovering/focusing calls `onHover` so the parent can highlight the
+ * matching map marker.
  */
 export function ChurchCard({
   church,
@@ -21,17 +23,20 @@ export function ChurchCard({
   onHover?: (id: number | undefined) => void;
 }) {
   const dist = formatDistance(church.distanceKm);
-  return (
-    <Link
-      href={`/churches/${church.id}`}
-      onMouseEnter={() => onHover?.(church.id)}
-      onMouseLeave={() => onHover?.(undefined)}
-      onFocus={() => onHover?.(church.id)}
-      className={clsx(
-        "flex gap-3 rounded-card border bg-surface p-3 transition-colors",
-        active ? "border-primary" : "border-border/70 hover:border-border",
-      )}
-    >
+  const isPoi = church.dataSource === "KAKAO_POI";
+
+  const className = clsx(
+    "flex gap-3 rounded-card border bg-surface p-3 transition-colors",
+    active ? "border-primary" : "border-border/70 hover:border-border",
+  );
+  const hoverProps = {
+    onMouseEnter: () => onHover?.(church.id),
+    onMouseLeave: () => onHover?.(undefined),
+    onFocus: () => onHover?.(church.id),
+  };
+
+  const inner = (
+    <>
       <div className="thumb h-16 w-16 shrink-0 rounded-lg">
         {church.thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -52,7 +57,16 @@ export function ChurchCard({
             </span>
           )}
         </div>
-        <p className="mt-0.5 text-[11px] text-inactive">{denominationLabel(church.denomination)}</p>
+        <p className="mt-0.5 flex items-center gap-1 text-[11px] text-inactive">
+          {isPoi ? (
+            <>
+              <ExternalLink className="h-3 w-3 shrink-0" />
+              카카오 지도에서 보기
+            </>
+          ) : (
+            denominationLabel(church.denomination)
+          )}
+        </p>
         {church.address && (
           <p className="mt-1 flex items-start gap-1 text-[11px] text-inactive">
             <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
@@ -66,6 +80,26 @@ export function ChurchCard({
           </p>
         )}
       </div>
+    </>
+  );
+
+  if (isPoi) {
+    return (
+      <a
+        href={church.externalUrl ?? "#"}
+        target="_blank"
+        rel="noreferrer"
+        className={className}
+        {...hoverProps}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={`/churches/${church.id}`} className={className} {...hoverProps}>
+      {inner}
     </Link>
   );
 }

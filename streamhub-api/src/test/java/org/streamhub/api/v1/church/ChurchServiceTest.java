@@ -7,12 +7,14 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.streamhub.api.base.external.discovery.ChurchDiscoveryProvider;
 import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.storage.StorageService;
 import org.streamhub.api.v1.church.dto.ChurchNearbyItem;
@@ -31,6 +33,8 @@ class ChurchServiceTest {
     private ChurchMapper churchMapper;
     @Mock
     private StorageService storageService;
+    @Mock
+    private ChurchDiscoveryProvider discoveryProvider;
 
     @InjectMocks
     private ChurchService churchService;
@@ -54,6 +58,8 @@ class ChurchServiceTest {
         when(churchMapper.selectInBox(anyDouble(), anyDouble(), anyDouble(), anyDouble(),
                 any(), any(), any())).thenReturn(List.of(far, noCoord, near));
         lenient().when(storageService.publicUrl(anyString())).thenReturn(null);
+        when(discoveryProvider.search(anyDouble(), anyDouble(), anyDouble(), any()))
+                .thenReturn(Collections.emptyList());
 
         ChurchNearbyRequest request = new ChurchNearbyRequest(
                 37.4979, 127.0276, 5.0, null, null, null, 0, 10);

@@ -27,6 +27,11 @@ public class ChurchNearbyItem {
     private String thumbnailKey;
     private String thumbnailUrl;
     private String dataSource;
+    /**
+     * External map deep-link for discovery results ({@code dataSource="KAKAO_POI"}); null for
+     * DB-backed churches, which navigate to the internal detail page instead.
+     */
+    private String externalUrl;
     /** Great-circle distance from the search origin (km); null when no location was supplied. */
     private Double distanceKm;
 }

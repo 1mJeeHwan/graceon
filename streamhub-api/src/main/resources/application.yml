@@ -59,10 +59,14 @@ app:
       provider: ${WORSHIP_SMS_PROVIDER:noop}
   # Church-finder (C1) geocoding seam. seed = deterministic demo coordinates, no external call;
   # kakao = real Kakao Local key injection point (kakao-rest-key empty = not wired).
+  # discovery = nearby real-church POI source. noop = DB-only (default); kakao = merge real
+  # surrounding churches from Kakao Local (real-time, not persisted; reuses kakao-rest-key).
   church:
     geocode:
       provider: ${CHURCH_GEOCODE_PROVIDER:seed}
       kakao-rest-key: ${CHURCH_GEOCODE_KAKAO_REST_KEY:}
+    discovery:
+      provider: ${CHURCH_DISCOVERY_PROVIDER:noop}
   # Payment (C4) PG seam. mock = fake approve, no real charge. toss = REAL sandbox integration:
   # the album checkout's Toss option calls the live Toss confirm API with the keys below. The
   # Keys are NOT committed (public repo). Toss publishes public test keys (test_ck_/test_sk_) in its

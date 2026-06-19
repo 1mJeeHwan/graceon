@@ -2,10 +2,14 @@ package org.streamhub.api.v1.church;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.streamhub.api.base.exception.ApiException;
+import org.streamhub.api.base.external.discovery.ChurchDiscoveryProvider;
+import org.streamhub.api.base.external.discovery.DiscoveredChurch;
 import org.streamhub.api.base.external.geocode.GeocodeProvider;
 import org.streamhub.api.base.external.geocode.GeocodeResult;
 import org.streamhub.api.base.response.ResInfinityList;
@@ -39,6 +43,8 @@ public class ChurchService {
 
     /** {@code dataSource} marker that flags a record as demo/seed data. */
     private static final String SEED_SOURCE = "SEED";
+    /** {@code dataSource} marker for real-time Kakao POI discovery results (not in our DB). */
+    private static final String POI_SOURCE = "KAKAO_POI";
     /** Degrees of latitude per kilometre (~111 km/deg). */
     private static final double KM_PER_LAT_DEGREE = 111.0;
 
@@ -47,6 +53,7 @@ public class ChurchService {
     private final WorshipTimeRepository worshipTimeRepository;
     private final StorageService storageService;
     private final GeocodeProvider geocodeProvider;
+    private final ChurchDiscoveryProvider discoveryProvider;
     private final ActionLogPublisher actionLogPublisher;
 
     public ChurchService(
@@ -55,12 +62,14 @@ public class ChurchService {
             WorshipTimeRepository worshipTimeRepository,
             StorageService storageService,
             GeocodeProvider geocodeProvider,
+            ChurchDiscoveryProvider discoveryProvider,
             ActionLogPublisher actionLogPublisher) {
         this.churchMapper = churchMapper;
         this.churchRepository = churchRepository;
         this.worshipTimeRepository = worshipTimeRepository;
         this.storageService = storageService;
         this.geocodeProvider = geocodeProvider;
+        this.discoveryProvider = discoveryProvider;
         this.actionLogPublisher = actionLogPublisher;
     }
 
@@ -160,6 +169,9 @@ public class ChurchService {
                 hits.add(item);
             }
         }
+        // Augment DB hits with real surrounding churches from the discovery provider (Kakao POI).
+        mergeDiscovered(hits, lat, lng, radiusKm, keyword, denomination);
+
         // Nearest first; null-distance (coordinate-less) churches are ordered last.
         hits.sort(Comparator.comparing(ChurchNearbyItem::getDistanceKm,
                 Comparator.nullsLast(Comparator.naturalOrder())));
@@ -275,6 +287,73 @@ public class ChurchService {
 
     private void fillItemUrl(ChurchNearbyItem item) {
         item.setThumbnailUrl(storageService.publicUrl(item.getThumbnailKey()));
+    }
+
+    /**
+     * Merges real surrounding churches from the discovery provider (Kakao POI) into the DB hits.
+     * Best-effort: a discovery failure never breaks the DB-backed nearby search. Skipped when a
+     * denomination filter is active (POIs carry no denomination and cannot be filtered). POI rows
+     * are flagged {@code dataSource="KAKAO_POI"} with a synthetic negative id and an external map
+     * link; deduped against DB churches by normalised name.
+     */
+    private void mergeDiscovered(List<ChurchNearbyItem> hits, double lat, double lng,
+            double radiusKm, String keyword, String denomination) {
+        if (denomination != null) {
+            return;
+        }
+        List<DiscoveredChurch> discovered;
+        try {
+            discovered = discoveryProvider.search(lat, lng, radiusKm, keyword);
+        } catch (ApiException e) {
+            return;
+        }
+        if (discovered.isEmpty()) {
+            return;
+        }
+        Set<String> seenNames = new HashSet<>();
+        for (ChurchNearbyItem item : hits) {
+            seenNames.add(normalizeName(item.getName()));
+        }
+        for (DiscoveredChurch d : discovered) {
+            if (!seenNames.add(normalizeName(d.name()))) {
+                continue; // already present (DB or earlier POI)
+            }
+            double distance = HaversineDistance.km(lat, lng, d.latitude(), d.longitude());
+            if (distance > radiusKm) {
+                continue;
+            }
+            ChurchNearbyItem item = new ChurchNearbyItem();
+            item.setId(syntheticPoiId(d.externalId()));
+            item.setName(d.name());
+            item.setAddress(d.address());
+            item.setPhone(d.phone());
+            item.setLatitude(d.latitude());
+            item.setLongitude(d.longitude());
+            item.setDistanceKm(round2(distance));
+            item.setDataSource(POI_SOURCE);
+            item.setExternalUrl(d.placeUrl());
+            hits.add(item);
+        }
+    }
+
+    /** Normalised church name for dedup (whitespace-stripped, lower-cased). */
+    private String normalizeName(String name) {
+        return name == null ? "" : name.replaceAll("\\s+", "").toLowerCase();
+    }
+
+    /**
+     * Stable negative id for a POI row — never collides with positive DB ids, so the frontend can
+     * key/highlight markers consistently. Derived from the Kakao place id (or its hash).
+     */
+    private Long syntheticPoiId(String externalId) {
+        if (externalId != null) {
+            try {
+                return -Math.abs(Long.parseLong(externalId));
+            } catch (NumberFormatException ignored) {
+                return -(long) Math.abs(externalId.hashCode());
+            }
+        }
+        return null;
     }
 
     private List<ChurchNearbyItem> paginate(List<ChurchNearbyItem> all, int offset, int size) {

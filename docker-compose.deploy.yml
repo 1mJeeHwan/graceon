@@ -39,6 +39,11 @@ services:
       PAYMENT_RETURN_BASE_URL: ${PAYMENT_RETURN_BASE_URL:-http://localhost:3001}
       #   배송조회 = 스마트택배 키(무료/공개 데모키).
       DELIVERY_SWEETTRACKER_API_KEY: ${DELIVERY_SWEETTRACKER_API_KEY:-}
+      #   교회찾기(C1) = 카카오 Local 키. discovery=kakao 면 내 주변 실제 교회(POI) 병합,
+      #   geocode=kakao 면 등록 교회 주소 → 실좌표. 키는 .env 로만 주입(public repo, 커밋 금지).
+      CHURCH_DISCOVERY_PROVIDER: ${CHURCH_DISCOVERY_PROVIDER:-noop}
+      CHURCH_GEOCODE_PROVIDER: ${CHURCH_GEOCODE_PROVIDER:-seed}
+      CHURCH_GEOCODE_KAKAO_REST_KEY: ${CHURCH_GEOCODE_KAKAO_REST_KEY:-}
       TZ: Asia/Seoul
     depends_on:
       mysql:

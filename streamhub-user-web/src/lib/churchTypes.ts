@@ -12,12 +12,16 @@ export interface WorshipTimeDto {
   sort: number;
 }
 
-/** One row of the distance-sorted nearby list (`distanceKm` present when lat/lng given). */
+/**
+ * One row of the distance-sorted nearby list (`distanceKm` present when lat/lng given).
+ * `dataSource="KAKAO_POI"` rows are real-time Kakao discovery results (not in our DB): they carry a
+ * synthetic negative `id`, a null `denomination`, and an `externalUrl` to the Kakao map.
+ */
 export interface ChurchNearbyItem {
   id: number;
   name: string;
-  denomination: string;
-  regionId: number;
+  denomination: string | null;
+  regionId: number | null;
   regionName: string | null;
   address: string | null;
   phone: string | null;
@@ -28,6 +32,7 @@ export interface ChurchNearbyItem {
   thumbnailKey: string | null;
   thumbnailUrl: string | null;
   dataSource: string;
+  externalUrl: string | null;
   distanceKm: number | null;
 }
 
@@ -149,7 +154,8 @@ export const WORSHIP_KIND_LABELS: Record<string, string> = {
   OTHER: "기타예배",
 };
 
-export function denominationLabel(code: string): string {
+export function denominationLabel(code: string | null | undefined): string {
+  if (!code) return "";
   return DENOMINATION_LABELS[code] ?? code;
 }
 
