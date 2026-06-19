@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { AuthProvider } from "@/lib/auth";
-import { PreviewPlayerProvider } from "@/components/preview/PreviewPlayerProvider";
+import { AudioPlayerProvider } from "@/components/player/AudioPlayerProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [client] = useState(
@@ -21,7 +21,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <AuthProvider>
-        <PreviewPlayerProvider>{children}</PreviewPlayerProvider>
+        <AudioPlayerProvider>{children}</AudioPlayerProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -1,16 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Disc, Headphones } from "lucide-react";
 import { useMyAlbums } from "@/lib/me";
 import { formatDate } from "@/lib/format";
 import { SectionShell } from "./SectionShell";
 import { CoverThumb } from "./CoverThumb";
+import { Pagination } from "@/components/Pagination";
 
-/** Albums from the member's PAID orders, each linking to the album detail (전체듣기). */
+const PAGE_SIZE = 8;
+
+/** Albums from the member's PAID orders, paged, each linking to the album detail (전체듣기). */
 export function PurchasedAlbumsSection({ token }: { token: string }) {
-  const { data, isLoading, isError } = useMyAlbums(token);
-  const albums = data ?? [];
+  const [page, setPage] = useState(0);
+  const { data, isLoading, isError } = useMyAlbums(token, page, PAGE_SIZE);
+  const albums = data?.contents ?? [];
 
   return (
     <SectionShell
@@ -42,6 +47,7 @@ export function PurchasedAlbumsSection({ token }: { token: string }) {
           </li>
         ))}
       </ul>
+      <Pagination pageNumber={page} totalPage={data?.totalPage ?? 1} onChange={setPage} />
     </SectionShell>
   );
 }

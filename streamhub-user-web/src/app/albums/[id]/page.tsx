@@ -2,58 +2,60 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Disc3, Info, Lock, MapPin, ShoppingCart } from "lucide-react";
+import { Disc3, Info, Lock, MapPin, Pause, ShoppingCart } from "lucide-react";
 import { useAlbum, GENRE_LABELS, type TrackDto } from "@/lib/albums";
 import { ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { BackLink } from "@/components/BackLink";
 import { DemoBadge } from "@/components/DemoBadge";
 import { TrackRow } from "@/components/TrackRow";
-import { HlsTrackPlayer } from "@/components/HlsTrackPlayer";
+import { fullTrackSource, useAudioPlayer } from "@/components/player/AudioPlayerProvider";
 import { EmptyState, ErrorState } from "@/components/States";
 import { CheckoutModal } from "@/components/CheckoutModal";
 
 /**
  * One track row plus, for tracks with an encrypted full-track HLS stream, a "전체 듣기 (암호화)"
- * toggle that mounts {@link HlsTrackPlayer}. The 30-second preview (TrackRow) stays available to
- * everyone; purchase is not pre-checked — the player attempts playback and surfaces the 403 gate.
+ * button that plays the AES-128 full stream through the global player (same surface as previews
+ * and the music tab). The 30-second preview (TrackRow) stays available to everyone; purchase is
+ * not pre-checked — the player attempts playback and the mini player surfaces the 403 gate.
  */
 function TrackListItem({
   track,
   albumId,
-  albumTitle,
   artist,
   coverUrl,
 }: {
   track: TrackDto;
   albumId: number;
-  albumTitle: string;
   artist: string;
   coverUrl: string | null;
 }) {
-  const [fullOpen, setFullOpen] = useState(false);
+  const { play, toggle, isPlaying, isCurrent } = useAudioPlayer();
+  const fullActive = isCurrent(`full:${albumId}:${track.id}`);
+  const fullPlaying = fullActive && isPlaying;
+
+  const onFull = () => {
+    if (fullActive) {
+      toggle();
+      return;
+    }
+    play(
+      fullTrackSource({ albumId, trackId: track.id, title: track.title, artist, coverUrl }),
+    );
+  };
 
   return (
     <div>
-      <TrackRow
-        track={track}
-        albumId={albumId}
-        albumTitle={albumTitle}
-        artist={artist}
-        coverUrl={coverUrl}
-      />
+      <TrackRow track={track} albumId={albumId} artist={artist} coverUrl={coverUrl} />
       {track.hasFullTrack && (
         <div className="px-2 pb-1">
           <button
-            onClick={() => setFullOpen((v) => !v)}
+            onClick={onFull}
             className="flex items-center gap-1.5 text-[11px] font-bold text-primary active:opacity-70"
           >
-            <Lock className="h-3 w-3" />
-            {fullOpen ? "전체 재생 닫기" : "전체 듣기 (암호화)"}
+            {fullPlaying ? <Pause className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+            {fullPlaying ? "전체 재생 중 (일시정지)" : "전체 듣기 (암호화)"}
           </button>
-          {fullOpen && (
-            <HlsTrackPlayer albumId={albumId} trackId={track.id} title={track.title} />
-          )}
         </div>
       )}
     </div>
@@ -182,7 +184,6 @@ export default function AlbumDetailPage({ params }: { params: { id: string } }) 
                   key={track.id}
                   track={track}
                   albumId={data.id}
-                  albumTitle={data.title}
                   artist={data.artist}
                   coverUrl={data.coverUrl}
                 />

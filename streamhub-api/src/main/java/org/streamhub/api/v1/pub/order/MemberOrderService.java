@@ -5,9 +5,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.streamhub.api.base.exception.ApiException;
+import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.v1.album.entity.Album;
 import org.streamhub.api.v1.album.entity.AlbumStatus;
@@ -31,6 +35,7 @@ import org.streamhub.api.v1.payment.dto.PayRequestCommand;
 import org.streamhub.api.v1.payment.dto.PaymentResultDto;
 import org.streamhub.api.v1.pub.order.dto.MemberOrderCreateRequest;
 import org.streamhub.api.v1.pub.order.dto.MemberOrderListItem;
+import org.streamhub.api.v1.pub.order.dto.MemberOrderReceipt;
 import org.streamhub.api.v1.pub.order.dto.MemberOrderResult;
 import org.streamhub.api.v1.pub.order.dto.MemberPaymentConfirmRequest;
 import org.streamhub.api.v1.pub.order.dto.MemberPaymentPrepareRequest;
@@ -311,10 +316,12 @@ public class MemberOrderService {
                 .orElseThrow(() -> new ApiException(ResultCode.UNAUTHORIZED));
     }
 
-    /** A member's own purchase history, newest first. */
+    /** A member's own purchase history, newest first, one page at a time. */
     @Transactional(readOnly = true)
-    public List<MemberOrderListItem> myOrders(Long memberId) {
-        return orderRepository.findByMemberIdOrderByOrderedAtDescIdDesc(memberId).stream()
+    public ResInfinityList<MemberOrderListItem> myOrders(Long memberId, int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(Math.max(0, pageNumber), pageSize);
+        Page<Order> page = orderRepository.findByMemberIdOrderByOrderedAtDescIdDesc(memberId, pageable);
+        List<MemberOrderListItem> contents = page.getContent().stream()
                 .map(order -> new MemberOrderListItem(
                         order.getOrderNo(),
                         firstProductName(order.getId()),
@@ -322,6 +329,57 @@ public class MemberOrderService {
                         order.getStatus(),
                         order.getOrderedAt()))
                 .toList();
+        return ResInfinityList.of(contents, page.getTotalElements(), pageSize);
+    }
+
+    /**
+     * The member's own order as a receipt: the order header, its line items, and the payment receipt
+     * aggregated into one payload. Strictly member-scoped — an order belonging to another member is
+     * reported as {@code NOT_FOUND} (never leaking its existence) to block IDOR.
+     *
+     * @throws ApiException {@code NOT_FOUND} if the order is missing or belongs to another member
+     */
+    @Transactional(readOnly = true)
+    public MemberOrderReceipt receipt(Long memberId, String orderNo) {
+        Order order = orderRepository.findByOrderNo(orderNo)
+                .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
+        if (!order.getMemberId().equals(memberId)) {
+            throw new ApiException(ResultCode.NOT_FOUND);
+        }
+
+        List<MemberOrderReceipt.Line> lines = orderItemRepository.findByOrderId(order.getId()).stream()
+                .map(item -> new MemberOrderReceipt.Line(
+                        item.getGoodsName(),
+                        item.getOptionName(),
+                        item.getUnitPrice(),
+                        item.getQty(),
+                        item.getLineTotal()))
+                .toList();
+
+        OrderReceipt payment = latestPaymentReceipt(order.getId());
+        String txnId = payment != null ? payment.getTxnId() : order.getPayTxnId();
+
+        return new MemberOrderReceipt(
+                order.getOrderNo(),
+                order.getStatus(),
+                order.getOrderedName(),
+                order.getOrderedAt(),
+                payment != null ? payment.getCreatedAt() : null,
+                lines,
+                order.getGoodsTotal(),
+                order.getShipFee(),
+                order.getCouponDiscount(),
+                order.getPointUsed(),
+                order.getTotal(),
+                order.getPayMethod(),
+                order.getPayProvider(),
+                order.getPayStatus() != null ? order.getPayStatus().name() : null,
+                txnId,
+                order.getReceiverName(),
+                order.getReceiverPhone(),
+                order.getReceiverAddr(),
+                order.getTrackingNo(),
+                order.getShipCompany());
     }
 
     // --- helpers -----------------------------------------------------------
@@ -373,11 +431,17 @@ public class MemberOrderService {
     }
 
     private LocalDateTime paidAt(Long orderId) {
+        OrderReceipt latest = latestPaymentReceipt(orderId);
+        return latest != null ? latest.getCreatedAt() : null;
+    }
+
+    /** The order's most recent {@code PAY} receipt (the payment), or {@code null} if it was never paid. */
+    private OrderReceipt latestPaymentReceipt(Long orderId) {
         List<OrderReceipt> receipts = orderReceiptRepository.findByOrderIdOrderByCreatedAtAscIdAsc(orderId);
-        LocalDateTime latest = null;
+        OrderReceipt latest = null;
         for (OrderReceipt receipt : receipts) {
             if (receipt.getKind() == ReceiptKind.PAY) {
-                latest = receipt.getCreatedAt();
+                latest = receipt;
             }
         }
         return latest;

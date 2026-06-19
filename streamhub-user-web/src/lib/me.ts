@@ -6,8 +6,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { request } from "./api";
-import type { ContentType } from "./types";
+import { query, request } from "./api";
+import type { ContentType, InfinityList } from "./types";
 
 /** One watch-history row (GET /pub/v1/me/history), joined to the content, newest first. */
 export interface WatchHistoryItem {
@@ -81,8 +81,12 @@ export const meApi = {
   /** Un-favorite a track. */
   removeFavorite: (trackId: number, token: string) =>
     request<void>(`/pub/v1/me/favorites/${trackId}`, { method: "DELETE", token }),
-  /** Albums from the member's PAID orders. */
-  albums: (token: string) => request<PurchasedAlbumItem[]>("/pub/v1/me/albums", { token }),
+  /** A page of albums from the member's PAID orders. */
+  albums: (token: string, pageNumber: number, pageSize: number) =>
+    request<InfinityList<PurchasedAlbumItem>>(
+      `/pub/v1/me/albums${query({ pageNumber, pageSize })}`,
+      { token },
+    ),
   /** The member's product reviews. */
   reviews: (token: string) => request<MyReviewItem[]>("/pub/v1/me/reviews", { token }),
   /** The member's product inquiries. */
@@ -92,7 +96,7 @@ export const meApi = {
 export const meKeys = {
   history: ["me", "history"] as const,
   favorites: ["me", "favorites"] as const,
-  albums: ["me", "albums"] as const,
+  albums: (pageNumber: number) => ["me", "albums", pageNumber] as const,
   reviews: ["me", "reviews"] as const,
   inquiries: ["me", "inquiries"] as const,
 };
@@ -115,12 +119,13 @@ export function useMyFavorites(token: string | null) {
   });
 }
 
-/** Purchased albums — enabled only when a member token is present. */
-export function useMyAlbums(token: string | null) {
+/** A page of purchased albums — enabled only when a member token is present. */
+export function useMyAlbums(token: string | null, pageNumber: number, pageSize: number) {
   return useQuery({
-    queryKey: meKeys.albums,
-    queryFn: () => meApi.albums(token as string),
+    queryKey: meKeys.albums(pageNumber),
+    queryFn: () => meApi.albums(token as string, pageNumber, pageSize),
     enabled: token != null,
+    placeholderData: (prev) => prev, // no flicker between pages
   });
 }
 

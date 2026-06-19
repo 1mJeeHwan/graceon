@@ -7,7 +7,7 @@ import { formatDuration } from "@/lib/format";
 import type { TrackDto } from "@/lib/albums";
 import { useAuth } from "@/lib/auth";
 import { meApi } from "@/lib/me";
-import { usePreviewPlayer, type PreviewTrack } from "./preview/PreviewPlayerProvider";
+import { previewSource, useAudioPlayer } from "./player/AudioPlayerProvider";
 
 /**
  * One track row: number · title · duration + a ▶/⏸ preview button. Clicking the button hands
@@ -16,24 +16,23 @@ import { usePreviewPlayer, type PreviewTrack } from "./preview/PreviewPlayerProv
 export function TrackRow({
   track,
   albumId,
-  albumTitle,
   artist,
   coverUrl,
   favorited = false,
 }: {
   track: TrackDto;
   albumId: number;
-  albumTitle: string;
   artist: string;
   coverUrl: string | null;
   /** Initial 찜 state, if the caller already knows it (else starts un-favorited). */
   favorited?: boolean;
 }) {
-  const { play, toggle, isPlaying, isCurrent } = usePreviewPlayer();
+  const { play, toggle, isPlaying, isCurrent } = useAudioPlayer();
   const { token } = useAuth();
-  const active = isCurrent(albumId, track.id);
+  const sourceId = `preview:${albumId}:${track.id}`;
+  const active = isCurrent(sourceId);
   const playing = active && isPlaying;
-  const hasPreview = Boolean(track.previewUrl);
+  const hasPreview = Boolean(track.previewUrl) || Boolean(track.hasPreviewHls);
 
   // Optimistic 찜 toggle: flip immediately, fire the API, revert on failure. Heart is shown
   // only to signed-in members (token present); anonymous visitors don't see it.
@@ -46,8 +45,19 @@ export function TrackRow({
       toggle();
       return;
     }
-    const payload: PreviewTrack = { albumId, albumTitle, artist, coverUrl, track };
-    play(payload);
+    play(
+      previewSource({
+        albumId,
+        trackId: track.id,
+        title: track.title,
+        artist,
+        coverUrl,
+        previewUrl: track.previewUrl,
+        previewStartSec: track.previewStartSec,
+        previewLengthSec: track.previewLengthSec,
+        hasPreviewHls: Boolean(track.hasPreviewHls),
+      }),
+    );
   };
 
   const onToggleFavorite = async () => {

@@ -44,7 +44,13 @@ export default function VideoDetailPage({ params }: { params: { id: string } }) 
         </div>
       ) : data ? (
         <article className="mt-3">
-          <VideoPlayer src={data.mediaUrl} title={data.title} />
+          <VideoPlayer
+            src={data.mediaUrl}
+            title={data.title}
+            hlsPrefix={data.hlsPrefix}
+            contentId={data.id}
+            poster={data.thumbnailUrl}
+          />
           <div className="px-5 pt-4">
             <h1 className="text-xl font-bold leading-snug">{data.title}</h1>
             {data.channelName && <p className="mt-1 text-sm text-inactive">{data.channelName}</p>}

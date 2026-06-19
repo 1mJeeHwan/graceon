@@ -6,9 +6,12 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.storage.StorageService;
 import org.streamhub.api.v1.album.entity.Track;
 import org.streamhub.api.v1.album.repository.AlbumRepository;
@@ -176,12 +179,15 @@ public class MemberMeService {
 
     // --- Purchased albums ------------------------------------------------------------------------
 
-    /** Albums the member has paid for (deduplicated), cover keys resolved to URLs. */
+    /** Albums the member has paid for (deduplicated), one page at a time, cover keys resolved to URLs. */
     @Transactional(readOnly = true)
-    public List<PurchasedAlbumItem> purchasedAlbums(Long memberId) {
-        return albumRepository.findPurchasedAlbums(memberId).stream()
+    public ResInfinityList<PurchasedAlbumItem> purchasedAlbums(Long memberId, int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(Math.max(0, pageNumber), pageSize);
+        Page<PurchasedAlbumRow> page = albumRepository.findPurchasedAlbums(memberId, pageable);
+        List<PurchasedAlbumItem> contents = page.getContent().stream()
                 .map(this::toPurchasedAlbumItem)
                 .toList();
+        return ResInfinityList.of(contents, page.getTotalElements(), pageSize);
     }
 
     private PurchasedAlbumItem toPurchasedAlbumItem(PurchasedAlbumRow row) {

@@ -9,7 +9,7 @@ import {
   INITIAL_QUICK_REPLIES,
   type ChatMessage,
 } from "@/lib/chat";
-import { usePreviewPlayer } from "./preview/PreviewPlayerProvider";
+import { useAudioPlayer } from "./player/AudioPlayerProvider";
 
 /** localStorage key for the front-generated chat session id (UUID). */
 const SESSION_STORAGE_KEY = "streamhub.chat.sessionKey";
@@ -48,8 +48,8 @@ export function ChatbotWidget() {
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  // Lift the launcher above the mini preview player when a track is loaded, so they never overlap.
-  const { current: previewTrack } = usePreviewPlayer();
+  // Lift the launcher above the mini player when a track is loaded, so they never overlap.
+  const { current: previewTrack } = useAudioPlayer();
 
   useEffect(() => {
     if (scrollRef.current) {

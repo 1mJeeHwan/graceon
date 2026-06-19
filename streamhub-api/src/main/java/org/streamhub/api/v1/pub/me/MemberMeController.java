@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.streamhub.api.base.exception.ApiException;
 import org.streamhub.api.base.jwt.JwtTokenProvider;
+import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.response.ResultDTO;
 import org.streamhub.api.v1.pub.me.dto.FavoriteAddRequest;
@@ -88,11 +90,13 @@ public class MemberMeController {
         return ResultDTO.ok();
     }
 
-    @Operation(summary = "구매 음반", description = "로그인 회원의 결제완료 주문에 포함된 앨범 목록(중복 제거)을 반환한다.")
+    @Operation(summary = "구매 음반", description = "로그인 회원의 결제완료 주문에 포함된 앨범 목록(중복 제거)을 페이징해 반환한다.")
     @GetMapping("/albums")
-    public ResultDTO<List<PurchasedAlbumItem>> albums(
-            @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return ResultDTO.ok(memberMeService.purchasedAlbums(resolveMemberId(authorization)));
+    public ResultDTO<ResInfinityList<PurchasedAlbumItem>> albums(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber,
+            @RequestParam(value = "pageSize", defaultValue = "8") int pageSize) {
+        return ResultDTO.ok(memberMeService.purchasedAlbums(resolveMemberId(authorization), pageNumber, pageSize));
     }
 
     @Operation(summary = "내 후기", description = "로그인 회원이 작성한 상품 후기 목록을 반환한다.")

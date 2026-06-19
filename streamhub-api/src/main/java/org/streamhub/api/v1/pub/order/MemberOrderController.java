@@ -4,7 +4,6 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,14 +11,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.streamhub.api.v1.delivery.adapter.Tracking;
 import org.streamhub.api.base.exception.ApiException;
 import org.streamhub.api.base.jwt.JwtTokenProvider;
+import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.response.ResultDTO;
 import org.streamhub.api.v1.pub.order.dto.MemberOrderCreateRequest;
 import org.streamhub.api.v1.pub.order.dto.MemberOrderListItem;
+import org.streamhub.api.v1.pub.order.dto.MemberOrderReceipt;
 import org.streamhub.api.v1.pub.order.dto.MemberOrderResult;
 import org.streamhub.api.v1.pub.order.dto.MemberPaymentConfirmRequest;
 import org.streamhub.api.v1.pub.order.dto.MemberPaymentPrepareRequest;
@@ -72,11 +74,21 @@ public class MemberOrderController {
         return ResultDTO.ok(memberOrderService.confirm(resolveMemberId(authorization), request));
     }
 
-    @Operation(summary = "구매내역", description = "로그인 회원의 주문 목록을 최신순으로 반환한다.")
+    @Operation(summary = "구매내역", description = "로그인 회원의 주문 목록을 최신순으로 페이징해 반환한다.")
     @GetMapping
-    public ResultDTO<List<MemberOrderListItem>> myOrders(
-            @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return ResultDTO.ok(memberOrderService.myOrders(resolveMemberId(authorization)));
+    public ResultDTO<ResInfinityList<MemberOrderListItem>> myOrders(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber,
+            @RequestParam(value = "pageSize", defaultValue = "5") int pageSize) {
+        return ResultDTO.ok(memberOrderService.myOrders(resolveMemberId(authorization), pageNumber, pageSize));
+    }
+
+    @Operation(summary = "영수증 상세", description = "회원 본인 주문의 영수증(주문/항목/결제 정보)을 반환한다.")
+    @GetMapping("/{orderNo}")
+    public ResultDTO<MemberOrderReceipt> receipt(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @PathVariable String orderNo) {
+        return ResultDTO.ok(memberOrderService.receipt(resolveMemberId(authorization), orderNo));
     }
 
     @Operation(summary = "배송 조회", description = "회원 본인 주문의 운송장으로 실시간 배송 진행상황을 조회한다.")

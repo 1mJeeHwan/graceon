@@ -12,7 +12,6 @@ import { ApiError } from "@/lib/api";
 import { loadTossPayments } from "@/lib/toss";
 import {
   orderApi,
-  orderKeys,
   ORDER_STATUS_LABELS,
   type OrderResult,
   type PayProvider,
@@ -192,8 +191,8 @@ export function CheckoutModal({
       );
       setOrder(result);
       setStage("done");
-      // Refresh the My-page order history so the new order shows up immediately.
-      queryClient.invalidateQueries({ queryKey: orderKeys.list });
+      // Refresh the My-page order history (all pages) so the new order shows up immediately.
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
     } catch (err) {
       setStage("select");
       if (err instanceof ApiError && err.status === 401) {

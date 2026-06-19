@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { AppBar } from "@/components/AppBar";
 import { TabBar } from "@/components/TabBar";
-import { MiniPreviewPlayer } from "@/components/preview/MiniPreviewPlayer";
+import { MiniPlayer } from "@/components/player/MiniPlayer";
 import { ChatbotWidget } from "@/components/ChatbotWidget";
 import { AnnouncementModal } from "@/components/AnnouncementModal";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
@@ -44,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="app-frame">
             <AppBar />
             <main className="min-h-[60vh] pb-100px">{children}</main>
-            <MiniPreviewPlayer />
+            <MiniPlayer />
             <TabBar />
             <ChatbotWidget />
             <AnnouncementModal
