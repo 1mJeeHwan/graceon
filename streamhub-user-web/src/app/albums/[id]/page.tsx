@@ -2,15 +2,63 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Disc3, Info, MapPin, ShoppingCart } from "lucide-react";
-import { useAlbum, GENRE_LABELS } from "@/lib/albums";
+import { Disc3, Info, Lock, MapPin, ShoppingCart } from "lucide-react";
+import { useAlbum, GENRE_LABELS, type TrackDto } from "@/lib/albums";
 import { ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { BackLink } from "@/components/BackLink";
 import { DemoBadge } from "@/components/DemoBadge";
 import { TrackRow } from "@/components/TrackRow";
+import { HlsTrackPlayer } from "@/components/HlsTrackPlayer";
 import { EmptyState, ErrorState } from "@/components/States";
 import { CheckoutModal } from "@/components/CheckoutModal";
+
+/**
+ * One track row plus, for tracks with an encrypted full-track HLS stream, a "전체 듣기 (암호화)"
+ * toggle that mounts {@link HlsTrackPlayer}. The 30-second preview (TrackRow) stays available to
+ * everyone; purchase is not pre-checked — the player attempts playback and surfaces the 403 gate.
+ */
+function TrackListItem({
+  track,
+  albumId,
+  albumTitle,
+  artist,
+  coverUrl,
+}: {
+  track: TrackDto;
+  albumId: number;
+  albumTitle: string;
+  artist: string;
+  coverUrl: string | null;
+}) {
+  const [fullOpen, setFullOpen] = useState(false);
+
+  return (
+    <div>
+      <TrackRow
+        track={track}
+        albumId={albumId}
+        albumTitle={albumTitle}
+        artist={artist}
+        coverUrl={coverUrl}
+      />
+      {track.hasFullTrack && (
+        <div className="px-2 pb-1">
+          <button
+            onClick={() => setFullOpen((v) => !v)}
+            className="flex items-center gap-1.5 text-[11px] font-bold text-primary active:opacity-70"
+          >
+            <Lock className="h-3 w-3" />
+            {fullOpen ? "전체 재생 닫기" : "전체 듣기 (암호화)"}
+          </button>
+          {fullOpen && (
+            <HlsTrackPlayer albumId={albumId} trackId={track.id} title={track.title} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AlbumDetailPage({ params }: { params: { id: string } }) {
   const id = Number(params.id);
@@ -130,7 +178,7 @@ export default function AlbumDetailPage({ params }: { params: { id: string } }) 
             </p>
             <div className="mt-2 divide-y divide-border/40">
               {data.tracks.map((track) => (
-                <TrackRow
+                <TrackListItem
                   key={track.id}
                   track={track}
                   albumId={data.id}
