@@ -92,6 +92,31 @@ resource "aws_s3_bucket_cors_configuration" "media" {
   }
 }
 
+# Lets CloudFront (OAC) read HLS segments from the private bucket. This is a
+# service-principal policy scoped to this distribution's ARN (AWS:SourceArn) — it is
+# NOT a public policy, so block_public_policy = true above still permits it.
+data "aws_iam_policy_document" "media_cdn" {
+  statement {
+    sid       = "AllowCloudFrontReadHls"
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.media.arn}/hls/*"]
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.api.arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "media_cdn" {
+  bucket = aws_s3_bucket.media.id
+  policy = data.aws_iam_policy_document.media_cdn.json
+}
+
 # ---------------------------------------------------------------------------
 # ECR repository for the API image
 # ---------------------------------------------------------------------------

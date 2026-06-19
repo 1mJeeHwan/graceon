@@ -67,6 +67,24 @@ public class Track {
     @Column(name = "external_id", length = 80)
     private String externalId;
 
+    // --- Encrypted full-track (HLS + AES-128) ----------------------------------------------------
+
+    /**
+     * S3 key prefix where this track's HLS assets live ({@code hls/track-{id}/} — the AES-128
+     * encrypted {@code .ts} segments + {@code index.m3u8}). {@code null} until packaged. Segments
+     * are CDN-cacheable (they are encrypted); only the key is access-gated.
+     */
+    @Column(name = "hls_prefix", length = 200)
+    private String hlsPrefix;
+
+    /** FK → {@code TRACK_HLS_KEY}: the server-only AES-128 key, served only to purchasers. */
+    @Column(name = "hls_key_id")
+    private Long hlsKeyId;
+
+    /** True once the encrypted full track has been packaged and is playable by purchasers. */
+    @Column(name = "has_full_track", nullable = false)
+    private boolean hasFullTrack;
+
     @Builder
     private Track(Long albumId, Integer trackNo, String title, Integer durationSec, String previewUrl,
                   Integer previewStartSec, Integer previewLengthSec, MusicSource source,
@@ -80,5 +98,15 @@ public class Track {
         this.previewLengthSec = previewLengthSec != null ? previewLengthSec : 30;
         this.source = source != null ? source : MusicSource.SEED;
         this.externalId = externalId;
+    }
+
+    /** Marks this track as having a packaged encrypted full-track HLS asset. */
+    public void attachHls(String hlsPrefix, Long hlsKeyId, Integer durationSec) {
+        this.hlsPrefix = hlsPrefix;
+        this.hlsKeyId = hlsKeyId;
+        this.hasFullTrack = true;
+        if (durationSec != null) {
+            this.durationSec = durationSec;
+        }
     }
 }

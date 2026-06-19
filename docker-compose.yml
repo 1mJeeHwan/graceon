@@ -48,7 +48,18 @@ services:
       timeout: 5s
       retries: 10
 
-  # One-shot: create the media bucket and make objects downloadable.
+  # One-shot: create the media bucket and expose encrypted HLS for browser playback.
+  #
+  # Anonymous read is scoped to the `hls/` prefix ONLY (not the whole bucket).
+  # This is safe: the user-web player (localhost:3001) fetches the .ts segments
+  # directly, cross-origin, from MinIO — but every segment is AES-128 encrypted,
+  # so a public GET on hls/* exposes ciphertext, never the audio. The AES key is
+  # delivered separately (gated) and never lives under the public prefix.
+  #
+  # CORS: MinIO returns a permissive Access-Control-Allow-Origin for anonymous
+  # object GETs, so the cross-origin .ts fetch from localhost:3001 works without
+  # extra config. (If a future MinIO build tightens this, set explicit per-bucket
+  # CORS via `mc admin config set` / the bucket CORS API.)
   minio-init:
     image: minio/mc:latest
     container_name: streamhub-minio-init
@@ -59,7 +70,7 @@ services:
       /bin/sh -c "
       mc alias set local http://minio:9000 streamhub streamhub123 &&
       mc mb --ignore-existing local/streamhub-media &&
-      mc anonymous set download local/streamhub-media &&
+      mc anonymous set download local/streamhub-media/hls &&
       echo 'bucket ready';
       "
 

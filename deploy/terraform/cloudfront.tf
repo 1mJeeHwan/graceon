@@ -9,6 +9,16 @@ resource "aws_eip" "api" {
   tags     = { Name = "${var.project}-api" }
 }
 
+# Origin Access Control lets CloudFront sign (SigV4) its requests to the private S3
+# media bucket, so the bucket stays private (no public ACLs/policy) while the CDN reads it.
+resource "aws_cloudfront_origin_access_control" "media" {
+  name                              = "${var.project}-media"
+  description                       = "OAC for the private media S3 bucket (HLS segments)"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
 resource "aws_cloudfront_distribution" "api" {
   enabled         = true
   comment         = "${var.project} API HTTPS front"
@@ -26,6 +36,13 @@ resource "aws_cloudfront_distribution" "api" {
     }
   }
 
+  # Private S3 media bucket, reached via OAC (no custom_origin_config for S3).
+  origin {
+    domain_name              = aws_s3_bucket.media.bucket_regional_domain_name
+    origin_id                = "s3-media"
+    origin_access_control_id = aws_cloudfront_origin_access_control.media.id
+  }
+
   default_cache_behavior {
     target_origin_id       = "ec2-api"
     viewer_protocol_policy = "redirect-to-https"
@@ -35,6 +52,21 @@ resource "aws_cloudfront_distribution" "api" {
     # (forwards auth headers/cookies/query/body; passes the origin its own Host).
     cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
     origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+  }
+
+  # Encrypted HLS segments (hls/track-{id}/segNNN.ts) are served from the private S3
+  # bucket. AES-encrypted .ts means public CDN caching is safe.
+  ordered_cache_behavior {
+    path_pattern           = "/hls/*"
+    target_origin_id       = "s3-media"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    # Managed policies: CachingOptimized + CORS-S3Origin
+    # (forwards CORS/Range headers so the browser player can byte-range the segments).
+    cache_policy_id          = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    origin_request_policy_id = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
   }
 
   restrictions {
@@ -56,4 +88,9 @@ output "cloudfront_url" {
 output "api_eip" {
   description = "Stable public IP of the API instance."
   value       = aws_eip.api.public_ip
+}
+
+output "hls_segment_base_url" {
+  description = "Base URL for encrypted HLS segments (backend HLS_SEGMENT_BASE_URL). Same CloudFront domain — /hls/* routes to S3, everything else to the API."
+  value       = "https://${aws_cloudfront_distribution.api.domain_name}"
 }

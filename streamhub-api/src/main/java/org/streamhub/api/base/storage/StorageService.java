@@ -11,6 +11,7 @@ import org.streamhub.api.base.response.ResultCode;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 /**
@@ -57,6 +58,31 @@ public class StorageService {
             throw new ApiException(ResultCode.INTERNAL_ERROR, "파일 업로드 실패: " + e.getMessage());
         }
         return key;
+    }
+
+    /** Uploads raw bytes at an explicit key (used by the HLS packager for segments + playlist). */
+    public void putBytes(String key, byte[] data, String contentType) {
+        try {
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .contentType(contentType)
+                            .build(),
+                    RequestBody.fromBytes(data));
+        } catch (RuntimeException e) {
+            throw new ApiException(ResultCode.INTERNAL_ERROR, "객체 업로드 실패: " + e.getMessage());
+        }
+    }
+
+    /** Reads an object's bytes (used to serve/rewrite the stored HLS playlist). */
+    public byte[] getBytes(String key) {
+        try {
+            return s3Client.getObjectAsBytes(
+                    GetObjectRequest.builder().bucket(bucket).key(key).build()).asByteArray();
+        } catch (RuntimeException e) {
+            throw new ApiException(ResultCode.NOT_FOUND, "객체를 찾을 수 없습니다: " + key);
+        }
     }
 
     public void delete(String key) {

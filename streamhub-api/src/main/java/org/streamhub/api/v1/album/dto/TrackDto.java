@@ -24,6 +24,8 @@ public class TrackDto {
     private String previewUrl;
     private Integer previewStartSec;
     private Integer previewLengthSec;
+    /** True when an AES-128 encrypted full-track HLS stream exists (purchasers can play it). */
+    private boolean hasFullTrack;
 
     /** Builds a detail DTO from a persisted track. {@code previewUrl} is set by the service. */
     public static TrackDto from(Track track) {
@@ -35,6 +37,7 @@ public class TrackDto {
         dto.previewUrl = track.getPreviewUrl();
         dto.previewStartSec = track.getPreviewStartSec();
         dto.previewLengthSec = track.getPreviewLengthSec();
+        dto.hasFullTrack = track.isHasFullTrack();
         return dto;
     }
 }

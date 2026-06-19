@@ -24,3 +24,8 @@ spring.cloud.aws:
     access-key: test
     secret-key: test
   sqs.endpoint: http://localhost:4566
+
+# HLS encrypted segments are served to the browser straight from MinIO (path-style).
+app:
+  hls:
+    segment-base-url: http://localhost:9000/streamhub-media

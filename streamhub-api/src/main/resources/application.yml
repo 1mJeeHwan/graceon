@@ -119,3 +119,11 @@ app:
     external:
       api-key: ${MUSIC_EXTERNAL_API_KEY:}
       base-url: ${MUSIC_EXTERNAL_BASE_URL:}
+  # Encrypted full-track streaming (HLS + AES-128). ffmpeg packages the audio into AES-128
+  # encrypted .ts segments; the encrypted segments are served from the CDN, only the key is gated.
+  # segment-base-url = the CDN/storage base the player loads segments from (env-specific):
+  #   prod  → the CloudFront distribution (e.g. https://xxxx.cloudfront.net), /hls/* → S3
+  #   local → MinIO (http://localhost:9000/streamhub-media)
+  hls:
+    ffmpeg-path: ${HLS_FFMPEG_PATH:ffmpeg}
+    segment-base-url: ${HLS_SEGMENT_BASE_URL:}

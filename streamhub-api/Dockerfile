@@ -12,6 +12,9 @@ RUN mvn -B -q clean package -DskipTests
 # ---- Runtime stage: slim JRE image ----
 FROM eclipse-temurin:21-jre
 WORKDIR /app
+# ffmpeg is required at runtime to package audio into AES-128 encrypted HLS.
+# Installed as root, before dropping to the non-root user.
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
 # Run as a non-root user.
 RUN useradd -r -u 1001 appuser
 COPY --from=build /app/target/streamhub-api-*.jar app.jar

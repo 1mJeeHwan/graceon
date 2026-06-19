@@ -4,6 +4,9 @@
 # (The committed multi-stage Dockerfile remains the self-contained CI build.)
 FROM --platform=linux/amd64 eclipse-temurin:21-jre
 WORKDIR /app
+# ffmpeg is required at runtime to package audio into AES-128 encrypted HLS.
+# Installed as root, before dropping to the non-root appuser.
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
 RUN useradd -r -u 1001 appuser
 COPY target/streamhub-api-*.jar app.jar
 USER appuser
