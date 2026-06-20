@@ -35,6 +35,8 @@ jobs:
           node-version: "20"
       - name: Install
         run: npm install --legacy-peer-deps
+      - name: Feature-catalog drift guard (TS ↔ backend JSON)
+        run: npm run check:catalog
       - name: Build (type-check + lint + build)
         run: npm run build
         env:

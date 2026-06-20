@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "gen": "orval"
+    "gen": "orval",
+    "check:catalog": "node ../scripts/check-feature-catalog-sync.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
