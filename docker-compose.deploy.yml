@@ -44,6 +44,11 @@ services:
       CHURCH_DISCOVERY_PROVIDER: ${CHURCH_DISCOVERY_PROVIDER:-noop}
       CHURCH_GEOCODE_PROVIDER: ${CHURCH_GEOCODE_PROVIDER:-seed}
       CHURCH_GEOCODE_KAKAO_REST_KEY: ${CHURCH_GEOCODE_KAKAO_REST_KEY:-}
+      #   챗봇(C5) = Google Gemini. provider=llm + 키 주입 시 자연어 응답(미설정/실패 시 rule 폴백).
+      #   무료 티어 키(AIza...). 키는 .env 로만 주입(public repo, 커밋 금지).
+      CHAT_PROVIDER: ${CHAT_PROVIDER:-rule}
+      CHAT_LLM_API_KEY: ${CHAT_LLM_API_KEY:-}
+      CHAT_LLM_MODEL: ${CHAT_LLM_MODEL:-gemini-2.5-flash}
       TZ: Asia/Seoul
     depends_on:
       mysql:
