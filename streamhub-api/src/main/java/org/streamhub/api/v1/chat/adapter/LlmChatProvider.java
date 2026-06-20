@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.streamhub.api.v1.chat.entity.ChatIntent;
+import org.streamhub.api.v1.chat.entity.ChatRole;
 
 /**
  * Real LLM chatbot adapter backed by <b>Google Gemini</b> with function calling (C5). Registered
@@ -100,22 +101,26 @@ public class LlmChatProvider implements ChatProvider {
     }
 
     @Override
-    public ChatReply reply(String message) {
+    public ChatReply reply(String message, List<ChatTurn> history) {
         if (!StringUtils.hasText(apiKey)) {
             log.warn("Gemini api-key 미설정 — RuleChatProvider로 폴백");
-            return fallback.reply(message);
+            return fallback.reply(message, history);
         }
         try {
-            return geminiReply(message);
+            return geminiReply(message, history);
         } catch (Exception e) {
             log.warn("Gemini 호출 실패 — RuleChatProvider로 폴백: {}", e.toString());
-            return fallback.reply(message);
+            return fallback.reply(message, history);
         }
     }
 
     /** Runs the model↔tool loop and returns the final natural-language reply. */
-    private ChatReply geminiReply(String message) {
+    private ChatReply geminiReply(String message, List<ChatTurn> history) {
         ArrayNode contents = objectMapper.createArrayNode();
+        // Prior turns first (multi-turn context), then the current user message.
+        for (ChatTurn turn : history) {
+            contents.add(textContent(turn.role() == ChatRole.USER ? "user" : "model", turn.content()));
+        }
         contents.add(textContent("user", message));
 
         List<String> calledTools = new ArrayList<>();
@@ -157,12 +162,13 @@ public class LlmChatProvider implements ChatProvider {
         }
         // Tool loop exhausted without a final text answer — fall back.
         log.warn("Gemini 도구 루프 한도 초과 — RuleChatProvider로 폴백");
-        return fallback.reply(message);
+        return fallback.reply(message, history);
     }
 
     /** Executes one tool call by name, returning the tool's text result. */
     private String dispatchTool(String name, JsonNode args) {
         return switch (name) {
+            case "listFeatures" -> toolExecutor.featureOverview();
             case "searchFeatures" -> toolExecutor.searchFeatures(args.path("query").asText(""));
             case "getFeature" -> toolExecutor.getFeature(args.path("id").asText(""));
             case "lookupOrder" -> toolExecutor.lookupOrder(
@@ -230,6 +236,9 @@ public class LlmChatProvider implements ChatProvider {
     /** Builds the Gemini {@code tools[0].functionDeclarations} array once at startup. */
     private ArrayNode buildToolDeclarations() {
         ArrayNode decls = objectMapper.createArrayNode();
+        decls.add(declaration("listFeatures",
+                "StreamHub의 전체 기능 개요를 도메인별로 나열한다. '어떤 기능이 있어?' 같은 광범위한 질문에 사용.",
+                noParams()));
         decls.add(declaration("searchFeatures",
                 "StreamHub에 어떤 기능이 있는지, 사용법은 무엇인지 기능 카탈로그에서 검색한다.",
                 stringParams("query", "찾을 기능 키워드. 예: 쿠폰, 주문, 포인트 적립, 교회찾기")));
@@ -257,6 +266,13 @@ public class LlmChatProvider implements ChatProvider {
         decl.put("description", description);
         decl.set("parameters", parameters);
         return decl;
+    }
+
+    private ObjectNode noParams() {
+        ObjectNode params = objectMapper.createObjectNode();
+        params.put("type", "OBJECT");
+        params.set("properties", objectMapper.createObjectNode());
+        return params;
     }
 
     private ObjectNode stringParams(String field, String description) {

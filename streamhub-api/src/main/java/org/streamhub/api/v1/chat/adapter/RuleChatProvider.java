@@ -36,7 +36,15 @@ public class RuleChatProvider implements ChatProvider {
             new Faq("예배", "주일예배는 오전 11시, 수요예배는 저녁 7시 30분에 진행됩니다. (데모)"));
 
     private static final List<String> FALLBACK_QUICK_REPLIES =
-            List.of("주문 배송 조회", "상품 재고 문의", "배송비 안내");
+            List.of("어떤 기능이 있나요?", "주문 배송 조회", "상품 재고 문의");
+
+    /**
+     * Feature-recommendation shortcuts shown after a feature-guide answer. Each is phrased to route
+     * back to {@code FEATURE_GUIDE} (carries a feature marker, no FAQ/order/product keyword) so a tap
+     * reliably drills into another feature's how-to.
+     */
+    private static final List<String> FEATURE_QUICK_REPLIES =
+            List.of("교회찾기 기능", "음반 미리듣기 어떻게?", "이벤트 기능 있어?", "마이페이지 뭐가 있어?");
 
     private final IntentClassifier intentClassifier;
     private final ChatMapper chatMapper;
@@ -55,7 +63,8 @@ public class RuleChatProvider implements ChatProvider {
     }
 
     @Override
-    public ChatReply reply(String message) {
+    public ChatReply reply(String message, java.util.List<ChatTurn> history) {
+        // Rule provider is stateless — history is ignored (kept for the context-aware LLM provider).
         ChatIntent intent = intentClassifier.classify(message);
         return switch (intent) {
             case ORDER_LOOKUP -> replyOrderLookup(message);
@@ -72,8 +81,8 @@ public class RuleChatProvider implements ChatProvider {
      * bot honestly says the feature is not offered.
      */
     private ChatReply replyFeatureGuide(String message) {
-        String body = toolExecutor.searchFeatures(message);
-        return new ChatReply(body, ChatIntent.FEATURE_GUIDE, FALLBACK_QUICK_REPLIES);
+        String body = toolExecutor.featureGuide(message);
+        return new ChatReply(body, ChatIntent.FEATURE_GUIDE, FEATURE_QUICK_REPLIES);
     }
 
     private ChatReply replyOrderLookup(String message) {

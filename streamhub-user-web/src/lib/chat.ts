@@ -17,7 +17,7 @@ const BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8080";
 const SUCCESS_CODE = "0000";
 
 /** Classified user intent — mirrors backend org.streamhub.api.v1.chat.entity.ChatIntent. */
-export type ChatIntent = "PRODUCT_INQUIRY" | "ORDER_LOOKUP" | "FAQ" | "FALLBACK";
+export type ChatIntent = "PRODUCT_INQUIRY" | "ORDER_LOOKUP" | "FAQ" | "FEATURE_GUIDE" | "FALLBACK";
 
 /** Author of a chat message — mirrors backend ChatRole. */
 export type ChatRole = "USER" | "BOT";
@@ -167,33 +167,12 @@ export function mockReply(message: string): ChatReply {
   };
 }
 
-// ── Site feature awareness + my-status checks (client-side, auth-aware) ───────
-// Layered ON TOP of the backend/mock: the widget calls answerLocally() first so the bot can guide
-// the user to any site feature and, when logged in, actually CHECK their data (points, coupons,
-// orders, donations, …) by calling the member endpoints with the stored token. Returns null when
-// nothing local matches → caller falls through to sendChat (FAQ / order lookup / product).
-
-interface SiteFeature {
-  keys: string[];
-  label: string;
-  where: string;
-}
-
-/** The full catalog of user-site features, so the bot can recognise and direct to every one. */
-const FEATURES: SiteFeature[] = [
-  { keys: ["영상", "예배 영상", "설교", "라이브"], label: "예배·찬양 영상", where: "하단 '영상' 탭" },
-  { keys: ["음악", "찬양 듣기", "음원", "스트리밍"], label: "찬양 음악", where: "하단 '음악' 탭" },
-  { keys: ["음반", "앨범", "ccm", "구매"], label: "음반(앨범) 구매·전체듣기", where: "상단 음반 아이콘 또는 /albums" },
-  { keys: ["굿즈", "상품", "머그", "다이어리", "스토어 상품"], label: "굿즈샵", where: "상단 굿즈 아이콘 또는 /goods" },
-  { keys: ["이벤트", "캠페인", "행사"], label: "이벤트·캠페인", where: "상단 이벤트(확성기) 아이콘 또는 /campaigns" },
-  { keys: ["소식", "공지", "뉴스", "게시"], label: "교회 소식", where: "하단 '소식' 탭" },
-  { keys: ["교회", "교회찾기", "주변 교회"], label: "교회 찾기", where: "상단 지도 아이콘 또는 /churches" },
-  { keys: ["매장", "오프라인", "판매점"], label: "매장 찾기", where: "/stores" },
-  { keys: ["검색", "찾기"], label: "통합 검색", where: "상단 검색 아이콘" },
-  { keys: ["마이페이지", "내 정보", "마이"], label: "마이페이지", where: "하단 'MY' 탭(로그인 필요)" },
-  { keys: ["영수증", "주문내역"], label: "구매내역·영수증", where: "마이페이지 '구매 내역'(항목 클릭 시 영수증)" },
-  { keys: ["로그인", "회원가입", "가입"], label: "로그인", where: "/login" },
-];
+// ── Personalised "check my …" answers (client-side, auth-aware) ──────────────
+// The widget calls answerLocally() before the backend, but it now handles ONLY the logged-in
+// "check my data" questions (points/coupons/orders/…) that need the member token. Everything else —
+// FAQ, order lookup, product search, and all feature existence/how-to guidance — is answered
+// authoritatively by the backend chatbot (feature catalog + LLM), so the site has a single source
+// of truth. Returns null when nothing personal matches → caller falls through to sendChat.
 
 /** A summarising fetch over a member endpoint (logged-in "check my …" answers). */
 interface StatusCheck {
@@ -269,24 +248,10 @@ const STATUS_CHECKS: StatusCheck[] = [
   },
 ];
 
-const FEATURE_GUIDE_TRIGGERS = ["어떤 기능", "무슨 기능", "기능", "메뉴", "뭐 할", "뭘 할", "할 수 있", "도움말", "사용법", "안내", "뭐가 있"];
 const CHECK_TRIGGERS = ["내", "확인", "얼마", "몇", "현황", "남은", "조회", "있어", "있나"];
 
-/** Quick replies shown alongside the feature-guide overview. */
-const GUIDE_QUICK = ["내 포인트 확인", "쿠폰함 보여줘", "주문 조회", "음악은 어디서 들어요?"];
-
-/** A bullet overview of the main features — answer to "이 사이트 뭐 할 수 있어?". */
-function featureOverview(): ChatReply {
-  const lines = [
-    "StreamHub에서 이런 걸 하실 수 있어요:",
-    "• 영상·음악: 예배/찬양 영상과 음악 스트리밍 (하단 탭)",
-    "• 음반·굿즈: 앨범 구매·전체듣기, 굿즈샵 (상단 아이콘)",
-    "• 이벤트, 교회찾기, 매장찾기, 통합검색 (상단)",
-    "• 마이페이지(MY): 구매내역·영수증, 포인트, 쿠폰함, 정기후원, 알림, 찜, 시청기록, 후기/문의",
-    "로그인하면 '내 포인트/쿠폰/주문'처럼 바로 확인도 해드려요.",
-  ];
-  return { text: lines.join("\n"), intent: "FAQ", quickReplies: GUIDE_QUICK, testMode: true, mocked: true };
-}
+/** Quick replies shown alongside a personal-status answer. */
+const GUIDE_QUICK = ["내 포인트 확인", "쿠폰함 보여줘", "주문 조회", "어떤 기능이 있나요?"];
 
 function loginNeeded(what: string): ChatReply {
   return {
@@ -299,18 +264,15 @@ function loginNeeded(what: string): ChatReply {
 }
 
 /**
- * Client-side, feature-aware resolver. Returns a reply for site-feature guidance and (auth-aware)
- * "check my …" questions, or null when nothing matches so the caller falls through to the backend.
+ * Client-side resolver for logged-in "check my …" questions only (points/coupons/orders/…), which
+ * need the member token and so can't be answered by the public backend chatbot. Returns null for
+ * everything else — feature guidance, FAQ, order lookup and product search all fall through to the
+ * backend (single source of truth).
  */
 export async function answerLocally(message: string, token: string | null): Promise<ChatReply | null> {
   const text = message.toLowerCase().trim();
 
-  // 1) "이 사이트 어떤 기능 있어?" → catalog overview.
-  if (FEATURE_GUIDE_TRIGGERS.some((t) => text.includes(t)) && !STATUS_CHECKS.some((c) => c.keys.some((k) => text.includes(k)))) {
-    return featureOverview();
-  }
-
-  // 2) "내 포인트/쿠폰/주문 …" → check the member's own data (login-gated).
+  // "내 포인트/쿠폰/주문 …" → check the member's own data (login-gated).
   const check = STATUS_CHECKS.find((c) => c.keys.some((k) => text.includes(k)));
   if (check) {
     const isCheck = CHECK_TRIGGERS.some((t) => text.includes(t)) || text.length <= 8;
@@ -325,18 +287,6 @@ export async function answerLocally(message: string, token: string | null): Prom
         return { text: "정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.", intent: "FALLBACK", quickReplies: GUIDE_QUICK, testMode: true, mocked: true };
       }
     }
-  }
-
-  // 3) "○○ 어디서 해요?" / feature mention → direct them to the right place.
-  const feature = FEATURES.find((f) => f.keys.some((k) => text.includes(k)));
-  if (feature) {
-    return {
-      text: `${feature.label}은(는) ${feature.where}에서 이용하실 수 있어요. (데모 안내)`,
-      intent: "FAQ",
-      quickReplies: ["어떤 기능이 있나요?", ...QUICK_DEFAULT.slice(0, 2)],
-      testMode: true,
-      mocked: true,
-    };
   }
 
   return null;

@@ -1,14 +1,16 @@
 package org.streamhub.api.v1.chat.adapter;
 
+import java.util.List;
+
 /**
  * Chatbot reply seam (C5). The default {@link RuleChatProvider} classifies intent with keyword
- * rules and answers from a static FAQ table + order/goods queries — <b>no external LLM call</b>.
- * {@link LlmChatProvider} implements the same interface but is a config-gated <b>stub</b> (it
- * throws); swapping to it would be a config change ({@code app.chat.provider=llm}), not a code
- * branch, but no working LLM provider ships today.
+ * rules and answers from a static FAQ table + order/goods/feature-catalog queries — <b>no external
+ * LLM call</b>. {@link LlmChatProvider} (Google Gemini, function calling) implements the same
+ * interface and activates by config ({@code app.chat.provider=llm}), falling back to the rule
+ * provider when no key is set or a call fails.
  *
- * <p>The seam is intentionally <b>stateless</b>: {@link #reply(String)} receives a single message
- * and no conversation history, so implementations carry no per-session context window.
+ * <p>Providers receive the prior conversation turns so context-aware ones (the LLM) can remember
+ * earlier messages; the rule provider ignores them.
  */
 public interface ChatProvider {
 
@@ -16,11 +18,11 @@ public interface ChatProvider {
     String code();
 
     /**
-     * Produces a reply for a single user message. No prior turns are supplied — the reply is
-     * derived from this message alone (stateless; no context window).
+     * Produces a reply for the latest user message, given the prior conversation turns.
      *
      * @param message the raw user message
+     * @param history prior turns (oldest first, current message excluded); may be empty
      * @return the bot reply (text + classified intent + quick replies)
      */
-    ChatReply reply(String message);
+    ChatReply reply(String message, List<ChatTurn> history);
 }

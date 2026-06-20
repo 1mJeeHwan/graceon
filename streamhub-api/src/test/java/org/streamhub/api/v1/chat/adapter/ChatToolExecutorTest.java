@@ -43,6 +43,24 @@ class ChatToolExecutorTest {
     }
 
     @Test
+    void featureGuide_broadQuestion_returnsDomainOverview() {
+        String overview = executor.featureGuide("어떤 기능이 있어?");
+        assertThat(overview).contains("주요 기능").contains("굿즈샵");
+    }
+
+    @Test
+    void featureGuide_specificKeyword_returnsHowTo() {
+        String guide = executor.featureGuide("쿠폰");
+        assertThat(guide).contains("쿠폰").contains("사용법");
+    }
+
+    @Test
+    void featureOverview_listsDomainsAndTitles() {
+        String overview = executor.featureOverview();
+        assertThat(overview).contains("후원·구독").contains("굿즈샵").contains("주문 관리");
+    }
+
+    @Test
     void lookupOrder_withoutOrderNo_asksForIt() {
         assertThat(executor.lookupOrder("주문 알려줘", "홍길동")).contains("주문번호");
     }
