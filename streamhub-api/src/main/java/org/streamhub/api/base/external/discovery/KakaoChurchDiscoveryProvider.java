@@ -5,8 +5,11 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -31,6 +34,8 @@ import org.streamhub.api.base.response.ResultCode;
 @Component
 @ConditionalOnProperty(name = "church.discovery.provider", havingValue = "kakao")
 public class KakaoChurchDiscoveryProvider implements ChurchDiscoveryProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(KakaoChurchDiscoveryProvider.class);
 
     private static final String KEYWORD_URL = "https://dapi.kakao.com/v2/local/search/keyword.json";
     private static final String DEFAULT_KEYWORD = "교회";
@@ -62,12 +67,28 @@ public class KakaoChurchDiscoveryProvider implements ChurchDiscoveryProvider {
         this.restClient = restClientBuilder.build();
     }
 
+    /**
+     * Live Kakao Local lookup, cached short-term in Redis (60s, {@code churchDiscovery} cache).
+     * The key snaps the origin to a ~1.1km grid ({@code round(coord*100)}) so repeated searches of
+     * the same neighbourhood — page reloads, several users in one area — reuse a single upstream
+     * call instead of hammering Kakao on every request. Exact per-user distances are recomputed
+     * downstream in {@code ChurchService}, so the coarse grid does not affect result accuracy.
+     * Empty results are not cached, so a transient miss is retried rather than pinned for the TTL.
+     */
     @Override
+    @Cacheable(
+            cacheNames = "churchDiscovery",
+            key = "T(java.lang.Math).round(#lat * 100) + ':' + T(java.lang.Math).round(#lng * 100)"
+                    + " + ':' + T(java.lang.Math).round(#radiusKm)"
+                    + " + ':' + (#keyword == null ? '' : #keyword.trim())",
+            unless = "#result.isEmpty()")
     public List<DiscoveredChurch> search(double lat, double lng, double radiusKm, String keyword) {
         if (!StringUtils.hasText(kakaoRestKey)) {
             throw new ApiException(ResultCode.INTERNAL_ERROR,
                     "Kakao 키가 설정되지 않았습니다 (church.geocode.kakao-rest-key)");
         }
+        log.info("Kakao discovery LIVE call (cache miss): lat={}, lng={}, radiusKm={}, keyword={}",
+                lat, lng, radiusKm, keyword);
         String query = StringUtils.hasText(keyword) ? keyword.trim() : DEFAULT_KEYWORD;
         int radiusM = Math.min((int) Math.round(radiusKm * 1000), MAX_RADIUS_M);
 

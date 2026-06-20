@@ -18,27 +18,47 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
  * Enables {@code @Cacheable} backed by Redis. Cached values are stored as JSON with
  * type metadata so DTOs round-trip cleanly. Default TTL is 60s — enough to make the
  * cache hit/miss behaviour observable for the statistics endpoints.
+ *
+ * <p>The default serializer types only non-final types ({@code NON_FINAL}); that is fine for the
+ * DTO classes the stats/dashboard caches return. The {@code churchDiscovery} cache instead holds a
+ * {@code List<DiscoveredChurch>} whose elements are <b>final records</b> — those need their own
+ * serializer ({@code EVERYTHING}) so each element carries {@code @class} and deserializes back to a
+ * record instead of a {@code LinkedHashMap}.
  */
 @Configuration
 @EnableCaching
 public class CacheConfig {
 
+    /** Short-term nearby-church discovery (Kakao POI) cache name. */
+    static final String CHURCH_DISCOVERY_CACHE = "churchDiscovery";
+
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        mapper.activateDefaultTyping(
-                BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
-                ObjectMapper.DefaultTyping.NON_FINAL);
+        RedisCacheConfiguration defaultConfig =
+                baseConfig(typedMapper(ObjectMapper.DefaultTyping.NON_FINAL));
+        RedisCacheConfiguration discoveryConfig =
+                baseConfig(typedMapper(ObjectMapper.DefaultTyping.EVERYTHING));
 
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+        return RedisCacheManager.builder(connectionFactory)
+                .cacheDefaults(defaultConfig)
+                .withCacheConfiguration(CHURCH_DISCOVERY_CACHE, discoveryConfig)
+                .build();
+    }
+
+    private RedisCacheConfiguration baseConfig(ObjectMapper mapper) {
+        return RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofSeconds(60))
                 .disableCachingNullValues()
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
                         new GenericJackson2JsonRedisSerializer(mapper)));
+    }
 
-        return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(config)
-                .build();
+    private ObjectMapper typedMapper(ObjectMapper.DefaultTyping typing) {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+        mapper.activateDefaultTyping(
+                BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
+                typing);
+        return mapper;
     }
 }
