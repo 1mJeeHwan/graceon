@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { MapPin } from "lucide-react";
+import { MapPin, Move } from "lucide-react";
 import MapProvider, { type MapMarker } from "@/components/map/MapProvider";
 import { ChurchCard } from "@/components/ChurchCard";
 import { SearchBar } from "@/components/SearchBar";
@@ -10,14 +10,19 @@ import { CardSkeletonGrid, EmptyState, ErrorState } from "@/components/States";
 import { useNearbyChurches } from "@/lib/churches";
 import { getCurrentPosition, type Coords } from "@/lib/geolocation";
 import { useDebounce } from "@/lib/useDebounce";
+import { denominationLabel } from "@/lib/churchTypes";
+import { formatDistance } from "@/lib/format";
 
-const RADIUS_OPTIONS = [3, 5, 10, 20];
+// Fixed 500m radius — the map is the primary control: pan it and tap "search this
+// area" to look elsewhere, instead of widening a radius.
+const RADIUS_KM = 0.5;
 
-/** Client-side church finder: geolocation → distance search, with map + filters. */
+/** Client-side church finder: geolocation → 500m search, map-driven re-search. */
 export function ChurchFinderView() {
-  const [coords, setCoords] = useState<Coords | null>(null);
   const [usingFallback, setUsingFallback] = useState(false);
-  const [radiusKm, setRadiusKm] = useState(5);
+  // Where we search from: starts at the resolved location, then follows the map
+  // when the user taps "search this area".
+  const [searchCenter, setSearchCenter] = useState<Coords | null>(null);
   const [keywordDraft, setKeywordDraft] = useState("");
   const keyword = useDebounce(keywordDraft, 350);
   const [hoveredId, setHoveredId] = useState<number | undefined>();
@@ -27,7 +32,7 @@ export function ChurchFinderView() {
     let active = true;
     getCurrentPosition().then((r) => {
       if (!active) return;
-      setCoords(r.coords);
+      setSearchCenter(r.coords);
       setUsingFallback(!r.granted);
     });
     return () => {
@@ -37,23 +42,31 @@ export function ChurchFinderView() {
 
   const params = useMemo(
     () => ({
-      lat: coords?.lat,
-      lng: coords?.lng,
-      radiusKm,
+      lat: searchCenter?.lat,
+      lng: searchCenter?.lng,
+      radiusKm: RADIUS_KM,
       keyword: keyword || undefined,
       pageSize: 50,
     }),
-    [coords, radiusKm, keyword],
+    [searchCenter, keyword],
   );
 
-  const { data, isLoading, isError, error, refetch } = useNearbyChurches(params, coords != null);
+  const { data, isLoading, isError, error, refetch } = useNearbyChurches(params, searchCenter != null);
   const churches = data?.contents ?? [];
 
   const markers: MapMarker[] = useMemo(
     () =>
       churches
         .filter((c) => c.latitude != null && c.longitude != null)
-        .map((c) => ({ id: c.id, lat: c.latitude as number, lng: c.longitude as number, label: c.name })),
+        .map((c) => ({
+          id: c.id,
+          lat: c.latitude as number,
+          lng: c.longitude as number,
+          label: c.name,
+          subtitle: c.dataSource === "KAKAO_POI" ? "카카오 지도에서 보기" : denominationLabel(c.denomination) || undefined,
+          address: c.address ?? undefined,
+          distanceText: formatDistance(c.distanceKm) || undefined,
+        })),
     [churches],
   );
 
@@ -74,51 +87,46 @@ export function ChurchFinderView() {
         </p>
       )}
 
-      {/* Filters */}
-      <div className="mt-4 space-y-2.5">
+      {/* Keyword search */}
+      <div className="mt-4">
         <SearchBar value={keywordDraft} onChange={setKeywordDraft} placeholder="교회명·지역 검색" />
-        <select
-          value={radiusKm}
-          onChange={(e) => setRadiusKm(Number(e.target.value))}
-          aria-label="반경 선택"
-          className="input !pl-3 w-full"
-        >
-          {RADIUS_OPTIONS.map((r) => (
-            <option key={r} value={r}>
-              반경 {r}km
-            </option>
-          ))}
-        </select>
       </div>
 
-      {/* Map */}
-      <div className="mt-4 h-56">
-        {coords ? (
+      {/* Map — primary control: pan + "search this area" */}
+      <div className="mt-3">
+        {searchCenter ? (
           <MapProvider
-            center={coords}
+            center={searchCenter}
             markers={markers}
             selectedId={hoveredId}
             onSelect={setHoveredId}
-            heightClass="h-56"
+            onSearchHere={(c) => setSearchCenter(c)}
+            heightClass="h-72"
           />
         ) : (
-          <div className="skeleton h-56 w-full rounded-card" aria-busy="true" aria-label="지도 불러오는 중" />
+          <div className="skeleton h-72 w-full rounded-card" aria-busy="true" aria-label="지도 불러오는 중" />
         )}
+        <p className="mt-1.5 flex items-center gap-1 text-[11px] text-inactive">
+          <Move className="h-3 w-3 shrink-0" />
+          지도를 움직여 다른 지역을 검색할 수 있어요 · 마커를 누르면 상세 정보가 보여요
+        </p>
       </div>
 
       {/* List */}
       <div className="mt-5">
-        {isLoading || coords == null ? (
+        {isLoading || searchCenter == null ? (
           <div aria-busy="true" aria-label="교회 목록 불러오는 중">
             <CardSkeletonGrid count={4} square />
           </div>
         ) : isError ? (
           <ErrorState message={(error as Error)?.message} onRetry={() => refetch()} />
         ) : churches.length === 0 ? (
-          <EmptyState message="조건에 맞는 교회가 없습니다. 반경을 넓혀보세요." />
+          <EmptyState message="이 주변 500m에 표시할 교회가 없습니다. 지도를 옮겨 다시 검색해보세요." />
         ) : (
           <>
-            <p className="mb-2 text-xs text-inactive">{churches.length}곳 · 가까운 순</p>
+            <p className="mb-2 text-xs text-inactive">
+              {churches.length}곳 · 반경 500m · 가까운 순
+            </p>
             <div className="space-y-2.5">
               {churches.map((c) => (
                 <ChurchCard key={c.id} church={c} active={c.id === hoveredId} onHover={setHoveredId} />

@@ -12,6 +12,10 @@ export interface MapMarker {
   lat: number;
   lng: number;
   label: string;
+  /** Optional info-bubble fields shown on marker hover/click. */
+  subtitle?: string;
+  address?: string;
+  distanceText?: string;
 }
 
 export interface MapViewProps {
@@ -19,6 +23,8 @@ export interface MapViewProps {
   markers: MapMarker[];
   selectedId?: number;
   onSelect?: (id: number) => void;
+  /** Fired when the user pans the map and taps the "search this area" button. */
+  onSearchHere?: (center: { lat: number; lng: number }) => void;
   /** Tailwind height utility, e.g. "h-64". */
   heightClass?: string;
 }
