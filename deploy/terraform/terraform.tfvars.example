@@ -7,6 +7,10 @@ s3_bucket_name = "streamhub-media-CHANGE-ME-12345" # must be globally unique
 db_password = "change-me-strong-password"
 jwt_secret  = "change-me-to-a-long-random-string-at-least-48-chars-0123456789"
 
+# Kakao REST API key — enables live nearby-church discovery + address geocoding
+# (church.discovery.provider=kakao). Kakao Developers → My Application → REST API key.
+kakao_rest_key = "change-me-kakao-rest-api-key"
+
 # Your SSH public key (so you can ssh into the EC2 host).
 ssh_public_key = "ssh-ed25519 AAAA... your-key"
 

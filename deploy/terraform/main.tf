@@ -199,6 +199,12 @@ resource "aws_ssm_parameter" "jwt_secret" {
   value = var.jwt_secret
 }
 
+resource "aws_ssm_parameter" "kakao_rest_key" {
+  name  = "/${var.project}/kakao_rest_key"
+  type  = "SecureString"
+  value = var.kakao_rest_key
+}
+
 # ---------------------------------------------------------------------------
 # RDS MySQL (free tier: db.t3.micro, 20 GB)
 # ---------------------------------------------------------------------------
@@ -272,7 +278,7 @@ data "aws_iam_policy_document" "ec2" {
   statement {
     sid       = "ReadSecrets"
     actions   = ["ssm:GetParameter", "ssm:GetParameters"]
-    resources = [aws_ssm_parameter.db_password.arn, aws_ssm_parameter.jwt_secret.arn]
+    resources = [aws_ssm_parameter.db_password.arn, aws_ssm_parameter.jwt_secret.arn, aws_ssm_parameter.kakao_rest_key.arn]
   }
   statement {
     sid       = "S3Bucket"
@@ -351,8 +357,9 @@ resource "aws_instance" "api" {
     db_user           = var.db_username
     s3_bucket         = aws_s3_bucket.media.bucket
     sqs_queue         = aws_sqs_queue.action_log.name
-    db_password_param = aws_ssm_parameter.db_password.name
-    jwt_secret_param  = aws_ssm_parameter.jwt_secret.name
+    db_password_param    = aws_ssm_parameter.db_password.name
+    jwt_secret_param     = aws_ssm_parameter.jwt_secret.name
+    kakao_rest_key_param = aws_ssm_parameter.kakao_rest_key.name
   })
 
   tags = { Name = "${var.project}-api" }

@@ -60,6 +60,12 @@ variable "jwt_secret" {
   sensitive   = true
 }
 
+variable "kakao_rest_key" {
+  description = "Kakao REST API key for live church discovery + geocoding (church.geocode.kakao-rest-key). Provide via tfvars or TF_VAR_kakao_rest_key."
+  type        = string
+  sensitive   = true
+}
+
 variable "ssh_public_key" {
   description = "SSH public key contents for EC2 access (e.g. file(\"~/.ssh/id_ed25519.pub\"))."
   type        = string

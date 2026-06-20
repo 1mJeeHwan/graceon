@@ -15,6 +15,7 @@ systemctl enable --now docker
 # Fetch secrets from SSM (the EC2 role has read access).
 DB_PASSWORD=$(aws ssm get-parameter --name "${db_password_param}" --with-decryption --query Parameter.Value --output text --region ${region})
 JWT_SECRET=$(aws ssm get-parameter --name "${jwt_secret_param}" --with-decryption --query Parameter.Value --output text --region ${region})
+KAKAO_REST_KEY=$(aws ssm get-parameter --name "${kakao_rest_key_param}" --with-decryption --query Parameter.Value --output text --region ${region})
 
 # Persist runtime env so redeploys reuse it.
 mkdir -p /etc/streamhub
@@ -35,6 +36,10 @@ S3_BUCKET=${s3_bucket}
 AWS_REGION=${region}
 SQS_ACTION_LOG_QUEUE=${sqs_queue}
 JWT_SECRET=$JWT_SECRET
+# Church-finder (C1): live Kakao Local discovery (real surrounding-church POIs) + address geocoding.
+CHURCH_DISCOVERY_PROVIDER=kakao
+CHURCH_GEOCODE_PROVIDER=kakao
+CHURCH_GEOCODE_KAKAO_REST_KEY=$KAKAO_REST_KEY
 EOF
 chmod 600 /etc/streamhub/api.env
 
