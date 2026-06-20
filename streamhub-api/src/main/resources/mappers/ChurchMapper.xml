@@ -41,6 +41,9 @@
             <if test="useYn != null and useYn != ''">
                 AND c.use_yn = #{useYn}
             </if>
+            <if test="ownChurchId != null">
+                AND c.id = #{ownChurchId}
+            </if>
         </where>
         ORDER BY c.created_at DESC, c.id DESC
         LIMIT #{offset}, #{size}
@@ -53,6 +56,9 @@
             <include refid="keywordRegionDenom"/>
             <if test="useYn != null and useYn != ''">
                 AND c.use_yn = #{useYn}
+            </if>
+            <if test="ownChurchId != null">
+                AND c.id = #{ownChurchId}
             </if>
         </where>
     </select>

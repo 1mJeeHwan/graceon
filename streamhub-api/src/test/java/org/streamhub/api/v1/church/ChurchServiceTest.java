@@ -1,10 +1,15 @@
 package org.streamhub.api.v1.church;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -14,20 +19,31 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.streamhub.api.base.exception.ApiException;
 import org.streamhub.api.base.external.discovery.ChurchDiscoveryProvider;
 import org.streamhub.api.base.response.ResInfinityList;
+import org.streamhub.api.base.response.ResultCode;
+import org.streamhub.api.base.security.AdminPrincipal;
+import org.streamhub.api.base.security.AuthoritiesConstants;
 import org.streamhub.api.base.storage.StorageService;
 import org.streamhub.api.v1.church.dto.ChurchNearbyItem;
 import org.streamhub.api.v1.church.dto.ChurchNearbyRequest;
+import org.streamhub.api.v1.church.dto.ChurchSearchRequest;
 import org.streamhub.api.v1.church.mapper.ChurchMapper;
 
 /**
- * Unit tests for {@link ChurchService#nearby} null-coordinate robustness: a candidate church with
- * missing lat/lng must not NPE the Haversine sort, and must surface with a {@code null} distance
- * ordered after every coordinate-bearing hit (never silently dropped).
+ * Unit tests for {@link ChurchService}: {@code nearby} null-coordinate robustness and coordinate
+ * validation, plus the CHURCH_MANAGER multitenancy scope (a manager may touch only its own church;
+ * directory creation is SYSTEM-only).
  */
 @ExtendWith(MockitoExtension.class)
 class ChurchServiceTest {
+
+    private static final AdminPrincipal SYSTEM =
+            new AdminPrincipal(1L, AuthoritiesConstants.SYSTEM, null);
+    /** CHURCH_MANAGER scoped to church #1. */
+    private static final AdminPrincipal MANAGER_1 =
+            new AdminPrincipal(2L, AuthoritiesConstants.CHURCH_MANAGER, 1L);
 
     @Mock
     private ChurchMapper churchMapper;
@@ -73,5 +89,71 @@ class ChurchServiceTest {
         assertThat(rows.get(1).getDistanceKm()).isNotNull();
         assertThat(rows.get(2).getDistanceKm()).isNull();
         assertThat(rows.get(0).getDistanceKm()).isLessThanOrEqualTo(rows.get(1).getDistanceKm());
+    }
+
+    @Test
+    void nearby_outOfRangeCoordinates_rejected() {
+        ChurchNearbyRequest bad = new ChurchNearbyRequest(
+                999.0, 127.0, 5.0, null, null, null, 0, 10);
+        ApiException ex = assertThrows(ApiException.class, () -> churchService.nearby(bad));
+        assertThat(ex.getResultCode()).isEqualTo(ResultCode.INVALID_PARAMETER);
+    }
+
+    // --- multitenancy scope -------------------------------------------------
+
+    @Test
+    void getDetail_managerOtherChurch_notFound() {
+        // MANAGER_1 (church #1) must not read church #2 — rejected before any DB load.
+        ApiException ex = assertThrows(ApiException.class,
+                () -> churchService.getDetail(2L, MANAGER_1));
+        assertThat(ex.getResultCode()).isEqualTo(ResultCode.NOT_FOUND);
+    }
+
+    @Test
+    void update_managerOtherChurch_notFound() {
+        ApiException ex = assertThrows(ApiException.class,
+                () -> churchService.update(2L, null, MANAGER_1));
+        assertThat(ex.getResultCode()).isEqualTo(ResultCode.NOT_FOUND);
+    }
+
+    @Test
+    void delete_managerOtherChurch_notFound() {
+        ApiException ex = assertThrows(ApiException.class,
+                () -> churchService.delete(2L, MANAGER_1));
+        assertThat(ex.getResultCode()).isEqualTo(ResultCode.NOT_FOUND);
+    }
+
+    @Test
+    void create_manager_forbidden() {
+        // Only SYSTEM may mint a new directory entry.
+        ApiException ex = assertThrows(ApiException.class,
+                () -> churchService.create(null, MANAGER_1));
+        assertThat(ex.getResultCode()).isEqualTo(ResultCode.FORBIDDEN);
+    }
+
+    @Test
+    void list_manager_isScopedToOwnChurch() {
+        when(churchMapper.selectList(any(), any(), any(), any(), eq(1L), anyInt(), anyInt()))
+                .thenReturn(Collections.emptyList());
+        when(churchMapper.countList(any(), any(), any(), any(), eq(1L))).thenReturn(0L);
+
+        churchService.list(new ChurchSearchRequest(0, 10, null, null, null, null), MANAGER_1);
+
+        // The own-church id is threaded into both the page and the count query.
+        verify(churchMapper).selectList(any(), any(), any(), any(), eq(1L), anyInt(), anyInt());
+        verify(churchMapper).countList(any(), any(), any(), any(), eq(1L));
+    }
+
+    @Test
+    void list_system_isUnscoped() {
+        when(churchMapper.selectList(any(), any(), any(), any(), isNull(), anyInt(), anyInt()))
+                .thenReturn(Collections.emptyList());
+        when(churchMapper.countList(any(), any(), any(), any(), isNull())).thenReturn(0L);
+
+        churchService.list(new ChurchSearchRequest(0, 10, null, null, null, null), SYSTEM);
+
+        // SYSTEM lists across all churches (no own-church filter).
+        verify(churchMapper).selectList(any(), any(), any(), any(), isNull(), anyInt(), anyInt());
+        verify(churchMapper).countList(any(), any(), any(), any(), isNull());
     }
 }

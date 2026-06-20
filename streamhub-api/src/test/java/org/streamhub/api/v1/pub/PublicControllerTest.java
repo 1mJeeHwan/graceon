@@ -23,6 +23,8 @@ import org.streamhub.api.v1.church.ChurchService;
 import org.streamhub.api.v1.album.AlbumService;
 import org.streamhub.api.v1.store.StoreService;
 import org.streamhub.api.v1.banner.BannerService;
+import org.streamhub.api.v1.analytics.PublicIngestRateLimiter;
+import org.streamhub.api.base.util.ClientIpResolver;
 
 /**
  * Web-layer test for the public API using a standalone MockMvc (no Spring context) — focuses on
@@ -36,13 +38,15 @@ class PublicControllerTest {
     private final AlbumService albumService = mock(AlbumService.class);
     private final StoreService storeService = mock(StoreService.class);
     private final BannerService bannerService = mock(BannerService.class);
+    private final PublicIngestRateLimiter rateLimiter = mock(PublicIngestRateLimiter.class);
+    private final ClientIpResolver clientIpResolver = mock(ClientIpResolver.class);
     private MockMvc mvc;
 
     @BeforeEach
     void setUp() {
         mvc = MockMvcBuilders.standaloneSetup(
                 new PublicController(contentService, postService, churchService, albumService,
-                        storeService, bannerService)).build();
+                        storeService, bannerService, rateLimiter, clientIpResolver)).build();
     }
 
     private ContentListItem videoItem() {

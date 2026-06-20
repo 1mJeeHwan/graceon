@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -56,6 +57,9 @@ public class KakaoChurchDiscoveryProvider implements ChurchDiscoveryProvider {
     /** Page size (Kakao max 15) and page cap (15×3 ≈ 45 results). */
     private static final int PAGE_SIZE = 15;
     private static final int MAX_PAGES = 3;
+    /** Connect/read timeouts (ms) — a slow Kakao must not stall the nearby response (merge is best-effort). */
+    private static final int CONNECT_TIMEOUT_MS = 2_000;
+    private static final int READ_TIMEOUT_MS = 2_000;
 
     private final String kakaoRestKey;
     private final RestClient restClient;
@@ -64,7 +68,10 @@ public class KakaoChurchDiscoveryProvider implements ChurchDiscoveryProvider {
             @Value("${church.geocode.kakao-rest-key:}") String kakaoRestKey,
             RestClient.Builder restClientBuilder) {
         this.kakaoRestKey = kakaoRestKey;
-        this.restClient = restClientBuilder.build();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(CONNECT_TIMEOUT_MS);
+        factory.setReadTimeout(READ_TIMEOUT_MS);
+        this.restClient = restClientBuilder.requestFactory(factory).build();
     }
 
     /**

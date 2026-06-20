@@ -15,12 +15,16 @@ import org.streamhub.api.v1.church.dto.ChurchNearbyItem;
 @Mapper
 public interface ChurchMapper {
 
-    /** Admin list: all churches matching the filters, DB-paged. */
+    /**
+     * Admin list: churches matching the filters, DB-paged. {@code ownChurchId} confines a
+     * CHURCH_MANAGER to its own church ({@code null} = unscoped, SYSTEM/VIEWER).
+     */
     List<ChurchListItem> selectList(
             @Param("keyword") String keyword,
             @Param("regionId") Long regionId,
             @Param("denomination") String denomination,
             @Param("useYn") String useYn,
+            @Param("ownChurchId") Long ownChurchId,
             @Param("offset") int offset,
             @Param("size") int size);
 
@@ -28,7 +32,8 @@ public interface ChurchMapper {
             @Param("keyword") String keyword,
             @Param("regionId") Long regionId,
             @Param("denomination") String denomination,
-            @Param("useYn") String useYn);
+            @Param("useYn") String useYn,
+            @Param("ownChurchId") Long ownChurchId);
 
     /** Public list (no location): visible churches by region/denomination/keyword, DB-paged. */
     List<ChurchNearbyItem> selectPublicList(

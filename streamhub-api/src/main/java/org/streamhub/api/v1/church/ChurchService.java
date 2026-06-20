@@ -14,6 +14,7 @@ import org.streamhub.api.base.external.geocode.GeocodeProvider;
 import org.streamhub.api.base.external.geocode.GeocodeResult;
 import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.response.ResultCode;
+import org.streamhub.api.base.security.AdminPrincipal;
 import org.streamhub.api.base.storage.StorageService;
 import org.streamhub.api.v1.actionlog.ActionLogPublisher;
 import org.streamhub.api.v1.church.dto.ChurchDetail;
@@ -47,6 +48,8 @@ public class ChurchService {
     private static final String POI_SOURCE = "KAKAO_POI";
     /** Degrees of latitude per kilometre (~111 km/deg). */
     private static final double KM_PER_LAT_DEGREE = 111.0;
+    /** Hard cap on the public search radius (km) — also Kakao's max, keeps the bbox sane. */
+    private static final double MAX_RADIUS_KM = 20.0;
 
     private final ChurchMapper churchMapper;
     private final ChurchRepository churchRepository;
@@ -76,21 +79,31 @@ public class ChurchService {
     // --- admin list / detail ------------------------------------------------
 
     @Transactional(readOnly = true)
-    public ResInfinityList<ChurchListItem> list(ChurchSearchRequest request) {
+    public ResInfinityList<ChurchListItem> list(ChurchSearchRequest request, AdminPrincipal principal) {
         String keyword = blankToNull(request.keyword());
         String denomination = request.denomination() == null ? null : request.denomination().name();
         String useYn = blankToNull(request.useYn());
         int size = request.pageSizeOrDefault();
+        // CHURCH_MANAGER is restricted to its own church; SYSTEM/VIEWER list across all churches.
+        Long ownChurchId = scopedChurchId(principal);
 
         List<ChurchListItem> contents = churchMapper.selectList(
-                keyword, request.regionId(), denomination, useYn, request.offset(), size);
+                keyword, request.regionId(), denomination, useYn, ownChurchId, request.offset(), size);
         contents.forEach(item -> item.setThumbnailUrl(storageService.publicUrl(item.getThumbnailKey())));
-        long total = churchMapper.countList(keyword, request.regionId(), denomination, useYn);
+        long total = churchMapper.countList(keyword, request.regionId(), denomination, useYn, ownChurchId);
         return ResInfinityList.of(contents, total, size);
     }
 
+    /** Admin detail, scoped: a CHURCH_MANAGER may read only its own church (else NOT_FOUND). */
     @Transactional(readOnly = true)
-    public ChurchDetail getDetail(Long id) {
+    public ChurchDetail getDetail(Long id, AdminPrincipal principal) {
+        ensureOwnChurch(id, principal);
+        return loadDetail(id);
+    }
+
+    /** Raw detail load (no scope check) — used by public detail and create/update responses. */
+    @Transactional(readOnly = true)
+    public ChurchDetail loadDetail(Long id) {
         ChurchDetail detail = churchMapper.selectDetail(id);
         if (detail == null) {
             throw new ApiException(ResultCode.NOT_FOUND);
@@ -104,7 +117,7 @@ public class ChurchService {
     /** Public detail: 404 unless visible ({@code use_yn = "Y"}). Includes worship times. */
     @Transactional(readOnly = true)
     public ChurchDetail getPublicDetail(Long id) {
-        ChurchDetail detail = getDetail(id);
+        ChurchDetail detail = loadDetail(id);
         if (!"Y".equals(detail.getUseYn())) {
             throw new ApiException(ResultCode.NOT_FOUND);
         }
@@ -144,7 +157,13 @@ public class ChurchService {
 
         double lat = request.lat();
         double lng = request.lng();
-        double radiusKm = request.radiusKmOrDefault();
+        // Reject absurd coordinates: out-of-range lat/lng would yield a meaningless bbox (and a
+        // near-zero cos(lat) at the poles blows up the longitude delta). Cap the radius so a huge
+        // value can't force an oversized scan.
+        if (lat < -90.0 || lat > 90.0 || lng < -180.0 || lng > 180.0) {
+            throw new ApiException(ResultCode.INVALID_PARAMETER, "좌표 범위가 올바르지 않습니다.");
+        }
+        double radiusKm = Math.min(request.radiusKmOrDefault(), MAX_RADIUS_KM);
         double latDelta = radiusKm / KM_PER_LAT_DEGREE;
         double lngDelta = radiusKm / (KM_PER_LAT_DEGREE * Math.cos(Math.toRadians(lat)));
 
@@ -184,7 +203,12 @@ public class ChurchService {
     // --- admin CRUD ---------------------------------------------------------
 
     @Transactional
-    public ChurchDetail create(ChurchUpsertRequest request) {
+    public ChurchDetail create(ChurchUpsertRequest request, AdminPrincipal principal) {
+        // New directory entries are minted by SYSTEM only — a CHURCH_MANAGER cannot create a church
+        // (its own already exists) and must never be able to plant another church's record.
+        if (principal != null && !principal.isSystem()) {
+            throw new ApiException(ResultCode.FORBIDDEN);
+        }
         Double latitude = request.latitude();
         Double longitude = request.longitude();
         String dataSource = SEED_SOURCE;
@@ -217,11 +241,12 @@ public class ChurchService {
         Church saved = churchRepository.save(church);
         replaceWorshipTimes(saved.getId(), request.worshipTimes());
         actionLogPublisher.publish("CHURCH_CREATE", "CHURCH", String.valueOf(saved.getId()), request.name());
-        return getDetail(saved.getId());
+        return loadDetail(saved.getId());
     }
 
     @Transactional
-    public ChurchDetail update(Long id, ChurchUpsertRequest request) {
+    public ChurchDetail update(Long id, ChurchUpsertRequest request, AdminPrincipal principal) {
+        ensureOwnChurch(id, principal);
         Church church = churchRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
         Double latitude = request.latitude();
@@ -240,11 +265,12 @@ public class ChurchService {
         churchRepository.saveAndFlush(church);
         replaceWorshipTimes(id, request.worshipTimes());
         actionLogPublisher.publish("CHURCH_UPDATE", "CHURCH", String.valueOf(id), request.name());
-        return getDetail(id);
+        return loadDetail(id);
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void delete(Long id, AdminPrincipal principal) {
+        ensureOwnChurch(id, principal);
         Church church = churchRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
         worshipTimeRepository.deleteByChurchId(id);
@@ -254,6 +280,26 @@ public class ChurchService {
     }
 
     // --- helpers ------------------------------------------------------------
+
+    /**
+     * The church id a non-SYSTEM operator is confined to, or {@code null} for unscoped operators
+     * (SYSTEM, VIEWER). Drives both the admin-list filter and per-row access checks.
+     */
+    private Long scopedChurchId(AdminPrincipal principal) {
+        return (principal == null || principal.isUnscoped()) ? null : principal.churchId();
+    }
+
+    /**
+     * Verifies the target church is the operator's own (SYSTEM/VIEWER bypass). A church owned by
+     * another operator is rejected as {@code NOT_FOUND}, so the same response hides both a missing
+     * church and another church's record (no cross-tenant enumeration) — mirrors the content scope.
+     */
+    private void ensureOwnChurch(Long id, AdminPrincipal principal) {
+        Long ownChurchId = scopedChurchId(principal);
+        if (ownChurchId != null && !ownChurchId.equals(id)) {
+            throw new ApiException(ResultCode.NOT_FOUND);
+        }
+    }
 
     /** Replaces a church's worship times (delete-then-reinsert), like the goods options strategy. */
     private void replaceWorshipTimes(Long churchId, List<WorshipTimeDto> rows) {
