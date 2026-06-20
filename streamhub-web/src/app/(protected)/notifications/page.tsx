@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2, Mail, MessageSquare, Smartphone } from "lucide-react";
+import { Loader2, Mail, MessageSquare, Send, Smartphone } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 
 import {
   notificationList,
@@ -19,6 +20,8 @@ import {
   type NotificationSearchRequest,
   type NotificationSummaryDto,
 } from "@/apis/query/streamHubAdminAPI.schemas";
+import NotificationSendModal from "@/components/notification/NotificationSendModal";
+import { canWrite } from "@/lib/auth-utils";
 import { SUCCESS_CODE } from "@/types/api";
 
 const CHANNEL_META: Record<
@@ -88,6 +91,10 @@ export default function NotificationsPage() {
   const [channel, setChannel] = useState<"" | ChannelType>("");
   const [status, setStatus] = useState<"" | StatusType>("");
   const [keyword, setKeyword] = useState("");
+  const [sendOpen, setSendOpen] = useState(false);
+
+  const { data: session } = useSession();
+  const writable = canWrite(session?.user?.role);
 
   const searchBody: NotificationSearchRequest = useMemo(
     () => ({
@@ -118,6 +125,13 @@ export default function NotificationsPage() {
   const listOk =
     !listQuery.data || listQuery.data.resultCode === SUCCESS_CODE;
 
+  // After a send, refetch both the log list and the summary so the new row and
+  // updated counts appear immediately.
+  const handleSent = () => {
+    listQuery.refetch();
+    summaryQuery.refetch();
+  };
+
   return (
     <div>
       <div className="mb-4 flex items-start justify-between">
@@ -134,6 +148,16 @@ export default function NotificationsPage() {
             SMS / PUSH / EMAIL 발송 로그를 채널·상태·키워드로 조회합니다.
           </p>
         </div>
+        {writable && (
+          <button
+            type="button"
+            onClick={() => setSendOpen(true)}
+            className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+          >
+            <Send className="h-4 w-4" />
+            알림 발송
+          </button>
+        )}
       </div>
 
       {/* Summary cards */}
@@ -345,6 +369,13 @@ export default function NotificationsPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {sendOpen && (
+        <NotificationSendModal
+          onClose={() => setSendOpen(false)}
+          onSuccess={handleSent}
+        />
       )}
     </div>
   );

@@ -38,6 +38,11 @@ public class NotificationLog {
     @Column(name = "channel", nullable = false, length = 20)
     private NotificationChannel channel;
 
+    /** Audience: BROADCAST (all members) or TARGETED (NOTIFICATION_RECIPIENT). Null = BROADCAST. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "scope", length = 20)
+    private NotificationScope scope;
+
     /** Masked recipient, e.g. {@code 010-****-1234} or {@code u***@mail.com} (PII guard). */
     @Column(name = "target_masked", nullable = false, length = 120)
     private String targetMasked;
@@ -64,10 +69,11 @@ public class NotificationLog {
     private LocalDateTime createdAt;
 
     @Builder
-    private NotificationLog(NotificationChannel channel, String targetMasked, String title,
-                           String content, NotificationStatus status, String failReason,
+    private NotificationLog(NotificationChannel channel, NotificationScope scope, String targetMasked,
+                           String title, String content, NotificationStatus status, String failReason,
                            LocalDateTime sentAt, LocalDateTime createdAt) {
         this.channel = channel;
+        this.scope = scope != null ? scope : NotificationScope.BROADCAST;
         this.targetMasked = targetMasked;
         this.title = title;
         this.content = content;

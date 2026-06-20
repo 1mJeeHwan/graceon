@@ -2,6 +2,7 @@ package org.streamhub.api.v1.notification;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.streamhub.api.base.response.ResultDTO;
 import org.streamhub.api.v1.notification.dto.NotificationLogDto;
 import org.streamhub.api.v1.notification.dto.NotificationSearchRequest;
+import org.streamhub.api.v1.notification.dto.NotificationSendRequest;
 import org.streamhub.api.v1.notification.dto.NotificationSummaryDto;
 
 /**
@@ -30,6 +32,14 @@ public class NotificationController {
 
     public NotificationController(NotificationService notificationService) {
         this.notificationService = notificationService;
+    }
+
+    @Operation(summary = "알림 발송",
+            description = "알림을 발송한다(로그 기록만). 전체(BROADCAST) 또는 특정 회원(TARGETED, memberIds 필수). 회원은 /pub/v1/me/notifications 피드에서 확인.")
+    @PreAuthorize("hasAuthority('notification:write')")
+    @PostMapping("/send")
+    public ResultDTO<NotificationLogDto> send(@Valid @RequestBody NotificationSendRequest request) {
+        return ResultDTO.ok(notificationService.send(request));
     }
 
     @Operation(summary = "발송 로그 목록", description = "채널/상태/기간/키워드 필터 적용(최신순).")

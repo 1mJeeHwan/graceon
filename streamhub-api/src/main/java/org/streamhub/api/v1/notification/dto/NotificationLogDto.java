@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.streamhub.api.v1.notification.entity.NotificationChannel;
 import org.streamhub.api.v1.notification.entity.NotificationLog;
+import org.streamhub.api.v1.notification.entity.NotificationScope;
 import org.streamhub.api.v1.notification.entity.NotificationStatus;
 
 /**
@@ -20,6 +21,7 @@ import org.streamhub.api.v1.notification.entity.NotificationStatus;
 public class NotificationLogDto {
     private Long id;
     private NotificationChannel channel;
+    private NotificationScope scope;
     private String targetMasked;
     private String title;
     private String content;
@@ -33,6 +35,7 @@ public class NotificationLogDto {
         NotificationLogDto dto = new NotificationLogDto();
         dto.id = log.getId();
         dto.channel = log.getChannel();
+        dto.scope = log.getScope();
         dto.targetMasked = log.getTargetMasked();
         dto.title = log.getTitle();
         dto.content = log.getContent();
