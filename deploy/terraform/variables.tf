@@ -66,6 +66,13 @@ variable "kakao_rest_key" {
   sensitive   = true
 }
 
+variable "chat_llm_api_key" {
+  description = "Gemini API key for the LLM chatbot (chat.llm.api-key). Empty = rule fallback. Provide via tfvars or TF_VAR_chat_llm_api_key."
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "ssh_public_key" {
   description = "SSH public key contents for EC2 access (e.g. file(\"~/.ssh/id_ed25519.pub\"))."
   type        = string

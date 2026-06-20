@@ -205,6 +205,12 @@ resource "aws_ssm_parameter" "kakao_rest_key" {
   value = var.kakao_rest_key
 }
 
+resource "aws_ssm_parameter" "chat_llm_api_key" {
+  name  = "/${var.project}/chat_llm_api_key"
+  type  = "SecureString"
+  value = var.chat_llm_api_key != "" ? var.chat_llm_api_key : "unset"
+}
+
 # ---------------------------------------------------------------------------
 # RDS MySQL (free tier: db.t3.micro, 20 GB)
 # ---------------------------------------------------------------------------
@@ -278,7 +284,7 @@ data "aws_iam_policy_document" "ec2" {
   statement {
     sid       = "ReadSecrets"
     actions   = ["ssm:GetParameter", "ssm:GetParameters"]
-    resources = [aws_ssm_parameter.db_password.arn, aws_ssm_parameter.jwt_secret.arn, aws_ssm_parameter.kakao_rest_key.arn]
+    resources = [aws_ssm_parameter.db_password.arn, aws_ssm_parameter.jwt_secret.arn, aws_ssm_parameter.kakao_rest_key.arn, aws_ssm_parameter.chat_llm_api_key.arn]
   }
   statement {
     sid       = "S3Bucket"
@@ -349,17 +355,18 @@ resource "aws_instance" "api" {
 
   # A small swap file relieves heap pressure on the 1 GB instance.
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
-    region            = var.aws_region
-    ecr_url           = aws_ecr_repository.api.repository_url
-    ecr_registry      = split("/", aws_ecr_repository.api.repository_url)[0]
-    db_host           = aws_db_instance.mysql.address
-    db_name           = var.db_name
-    db_user           = var.db_username
-    s3_bucket         = aws_s3_bucket.media.bucket
-    sqs_queue         = aws_sqs_queue.action_log.name
+    region               = var.aws_region
+    ecr_url              = aws_ecr_repository.api.repository_url
+    ecr_registry         = split("/", aws_ecr_repository.api.repository_url)[0]
+    db_host              = aws_db_instance.mysql.address
+    db_name              = var.db_name
+    db_user              = var.db_username
+    s3_bucket            = aws_s3_bucket.media.bucket
+    sqs_queue            = aws_sqs_queue.action_log.name
     db_password_param    = aws_ssm_parameter.db_password.name
     jwt_secret_param     = aws_ssm_parameter.jwt_secret.name
     kakao_rest_key_param = aws_ssm_parameter.kakao_rest_key.name
+    chat_llm_key_param   = aws_ssm_parameter.chat_llm_api_key.name
   })
 
   tags = { Name = "${var.project}-api" }

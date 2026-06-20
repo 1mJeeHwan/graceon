@@ -16,6 +16,7 @@ systemctl enable --now docker
 DB_PASSWORD=$(aws ssm get-parameter --name "${db_password_param}" --with-decryption --query Parameter.Value --output text --region ${region})
 JWT_SECRET=$(aws ssm get-parameter --name "${jwt_secret_param}" --with-decryption --query Parameter.Value --output text --region ${region})
 KAKAO_REST_KEY=$(aws ssm get-parameter --name "${kakao_rest_key_param}" --with-decryption --query Parameter.Value --output text --region ${region})
+CHAT_LLM_API_KEY=$(aws ssm get-parameter --name "${chat_llm_key_param}" --with-decryption --query Parameter.Value --output text --region ${region})
 
 # Persist runtime env so redeploys reuse it.
 mkdir -p /etc/streamhub
@@ -42,6 +43,12 @@ CHURCH_GEOCODE_PROVIDER=kakao
 CHURCH_GEOCODE_KAKAO_REST_KEY=$KAKAO_REST_KEY
 EOF
 chmod 600 /etc/streamhub/api.env
+
+# Chatbot (C6): switch to the Gemini LLM only when a key is provided; otherwise the
+# app keeps its rule fallback. (Appending after chmod keeps the 600 perms.)
+if [ "$CHAT_LLM_API_KEY" != "unset" ] && [ -n "$CHAT_LLM_API_KEY" ]; then
+  printf 'CHAT_PROVIDER=llm\nCHAT_LLM_API_KEY=%s\n' "$CHAT_LLM_API_KEY" >> /etc/streamhub/api.env
+fi
 
 # Idempotent (re)deploy helper, reused by the CI/deploy script via SSM.
 cat > /usr/local/bin/streamhub-deploy <<EOF

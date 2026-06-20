@@ -11,6 +11,10 @@ jwt_secret  = "change-me-to-a-long-random-string-at-least-48-chars-0123456789"
 # (church.discovery.provider=kakao). Kakao Developers → My Application → REST API key.
 kakao_rest_key = "change-me-kakao-rest-api-key"
 
+# Gemini API key — switches the chatbot to LLM (chat.provider=llm). Leave empty for
+# the rule fallback. Google AI Studio → Get API key.
+chat_llm_api_key = ""
+
 # Your SSH public key (so you can ssh into the EC2 host).
 ssh_public_key = "ssh-ed25519 AAAA... your-key"
 
