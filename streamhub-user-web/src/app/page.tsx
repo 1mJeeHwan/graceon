@@ -8,7 +8,7 @@ import { ItemCarousel } from "@/components/ItemCarousel";
 import { ContentCard } from "@/components/ContentCard";
 import { AlbumCard } from "@/components/AlbumCard";
 import { PostCard } from "@/components/PostCard";
-import { NearbyChurchesSection } from "@/components/NearbyChurchesSection";
+import { NearbyChurchesCta } from "@/components/NearbyChurchesCta";
 import { EmptyState, ErrorState } from "@/components/States";
 
 function HomeSkeleton() {
@@ -110,7 +110,7 @@ export default function HomePage() {
 
       <CcmAlbumSection />
 
-      <NearbyChurchesSection />
+      <NearbyChurchesCta />
 
       <ContentContainer title="새로운 소식" moreHref="/posts">
         {data.posts.length > 0 ? (
