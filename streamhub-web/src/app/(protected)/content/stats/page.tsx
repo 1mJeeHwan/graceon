@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApexOptions } from "apexcharts";
+import Link from "next/link";
 import { Eye, FilmIcon, Loader2, UserPlus, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -52,24 +53,28 @@ export default function ContentStatsPage() {
       value: summary.totalMembers,
       icon: Users,
       accent: "bg-blue-50 text-blue-600",
+      href: "/member",
     },
     {
       label: "신규 회원 (7일)",
       value: summary.newMembers7d,
       icon: UserPlus,
       accent: "bg-emerald-50 text-emerald-600",
+      href: "/member",
     },
     {
       label: "총 조회수",
       value: summary.totalViews,
       icon: Eye,
       accent: "bg-violet-50 text-violet-600",
+      href: "/analytics",
     },
     {
       label: "총 콘텐츠",
       value: summary.totalContents,
       icon: FilmIcon,
       accent: "bg-amber-50 text-amber-600",
+      href: "/content",
     },
   ];
 
@@ -126,9 +131,10 @@ export default function ContentStatsPage() {
         {kpis.map((kpi) => {
           const Icon = kpi.icon;
           return (
-            <div
+            <Link
               key={kpi.label}
-              className="rounded-md border border-slate-200 bg-white p-4"
+              href={kpi.href}
+              className="rounded-md border border-slate-200 bg-white p-4 transition hover:border-brand hover:shadow-sm focus:outline-none focus:ring-1 focus:ring-brand"
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-500">{kpi.label}</span>
@@ -149,7 +155,7 @@ export default function ContentStatsPage() {
                   formatNumber(kpi.value)
                 )}
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

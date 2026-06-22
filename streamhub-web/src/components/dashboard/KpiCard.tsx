@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { ArrowDown, ArrowUp, Minus, type LucideIcon } from "lucide-react";
 import type { ApexOptions } from "apexcharts";
 
@@ -21,6 +22,8 @@ interface KpiCardProps {
   unitSuffix?: string;
   /** 스파크라인/▲▼ 색 (브랜드 팔레트). */
   sparkColor?: string;
+  /** Drill-down target: clicking the card opens the related list page. */
+  href?: string;
   data?: KpiDelta;
   isLoading?: boolean;
   isError?: boolean;
@@ -76,6 +79,7 @@ export default function KpiCard({
   unitPrefix,
   unitSuffix,
   sparkColor = "#2563eb",
+  href,
   data,
   isLoading = false,
   isError = false,
@@ -103,8 +107,11 @@ export default function KpiCard({
   };
   const sparkSeries = [{ name: label, data: spark }];
 
-  return (
-    <div className="flex flex-col justify-between rounded-md border border-slate-200 bg-white p-5">
+  const cardClass =
+    "flex flex-col justify-between rounded-md border border-slate-200 bg-white p-5" +
+    (href ? " transition hover:border-brand hover:shadow-sm" : "");
+  const body = (
+    <>
       <div className="flex items-start justify-between">
         <p className="text-sm text-slate-500">{label}</p>
         <span
@@ -159,6 +166,14 @@ export default function KpiCard({
           </div>
         ) : null}
       </div>
-    </div>
+    </>
+  );
+
+  return href ? (
+    <Link href={href} className={cardClass}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cardClass}>{body}</div>
   );
 }

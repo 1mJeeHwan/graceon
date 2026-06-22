@@ -131,9 +131,19 @@ export default function GoodsInquiryPage() {
         <span className="text-sm text-slate-600">
           총 {inquiries.length.toLocaleString()}건
         </span>
-        <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+        <button
+          type="button"
+          onClick={() => setStatusFilter(GoodsInquiryDtoAnswerStatus.WAITING)}
+          aria-pressed={statusFilter === GoodsInquiryDtoAnswerStatus.WAITING}
+          title="미답변만 보기"
+          className={`inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 transition hover:bg-amber-200 focus:outline-none focus:ring-1 focus:ring-amber-400 ${
+            statusFilter === GoodsInquiryDtoAnswerStatus.WAITING
+              ? "ring-1 ring-amber-400"
+              : ""
+          }`}
+        >
           미답변 {unansweredCount.toLocaleString()}건
-        </span>
+        </button>
         {message && (
           <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs text-blue-700">
             {message}

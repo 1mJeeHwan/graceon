@@ -72,18 +72,39 @@ function SummaryCard({
   label,
   value,
   accent,
+  onClick,
+  active,
 }: {
   label: string;
   value: number;
   accent: string;
+  onClick?: () => void;
+  active?: boolean;
 }) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-white p-4">
+  const body = (
+    <>
       <p className="text-xs font-medium text-slate-500">{label}</p>
       <p className={`mt-1 text-2xl font-semibold ${accent}`}>
         {value.toLocaleString()}
       </p>
-    </div>
+    </>
+  );
+  if (!onClick) {
+    return (
+      <div className="rounded-md border border-slate-200 bg-white p-4">{body}</div>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`rounded-md border bg-white p-4 text-left transition hover:border-brand hover:shadow-sm focus:outline-none focus:ring-1 focus:ring-brand ${
+        active ? "border-brand ring-1 ring-brand" : "border-slate-200"
+      }`}
+    >
+      {body}
+    </button>
   );
 }
 
@@ -166,21 +187,29 @@ export default function NotificationsPage() {
           label="총 발송"
           value={summary.total ?? 0}
           accent="text-slate-900"
+          onClick={() => setStatus("")}
+          active={status === ""}
         />
         <SummaryCard
           label="성공"
           value={summary.successCount ?? 0}
           accent="text-emerald-600"
+          onClick={() => setStatus(NotificationLogDtoStatus.SUCCESS)}
+          active={status === NotificationLogDtoStatus.SUCCESS}
         />
         <SummaryCard
           label="실패"
           value={summary.failCount ?? 0}
           accent="text-red-600"
+          onClick={() => setStatus(NotificationLogDtoStatus.FAIL)}
+          active={status === NotificationLogDtoStatus.FAIL}
         />
         <SummaryCard
           label="대기"
           value={summary.pendingCount ?? 0}
           accent="text-amber-600"
+          onClick={() => setStatus(NotificationLogDtoStatus.PENDING)}
+          active={status === NotificationLogDtoStatus.PENDING}
         />
       </div>
 
@@ -189,17 +218,23 @@ export default function NotificationsPage() {
         {(Object.keys(CHANNEL_META) as ChannelType[]).map((key) => {
           const meta = CHANNEL_META[key];
           const Icon = meta.icon;
+          const selected = channel === key;
           return (
-            <span
+            <button
               key={key}
-              className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium ${meta.className}`}
+              type="button"
+              onClick={() => setChannel(selected ? "" : key)}
+              aria-pressed={selected}
+              className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition hover:opacity-80 ${meta.className} ${
+                selected ? "ring-2 ring-brand ring-offset-1" : ""
+              }`}
             >
               <Icon className="h-3.5 w-3.5" />
               {meta.label}
               <span className="font-semibold">
                 {(byChannel[key] ?? 0).toLocaleString()}
               </span>
-            </span>
+            </button>
           );
         })}
       </div>

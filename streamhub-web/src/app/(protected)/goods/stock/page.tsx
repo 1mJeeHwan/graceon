@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Loader2, Pencil } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -186,7 +187,17 @@ export default function GoodsStockPage() {
                         {item.code ?? "-"}
                       </td>
                       <td className="px-4 py-3 font-medium text-slate-900">
-                        {item.name ?? "-"}
+                        {item.id != null ? (
+                          <Link
+                            href={`/goods/${item.id}`}
+                            className="text-brand hover:underline"
+                            title="상품 상세로 이동"
+                          >
+                            {item.name ?? "-"}
+                          </Link>
+                        ) : (
+                          (item.name ?? "-")
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right text-slate-700">
                         {item.price != null

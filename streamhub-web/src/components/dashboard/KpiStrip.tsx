@@ -26,6 +26,8 @@ interface KpiConfig {
   sparkColor: string;
   unitPrefix?: string;
   unitSuffix?: string;
+  /** Drill-down target: clicking the card opens the related list page. */
+  href: string;
 }
 
 // 설계문서 도메인 언어를 유지한 KPI 6종. D1에서는 콘텐츠·시청·회원 파생값으로 채운다.
@@ -37,6 +39,7 @@ const KPIS: KpiConfig[] = [
     iconClassName: "bg-blue-50 text-brand",
     sparkColor: "#2563eb",
     unitPrefix: "₩",
+    href: "/donation",
   },
   {
     key: "newSubscriptions",
@@ -45,6 +48,7 @@ const KPIS: KpiConfig[] = [
     iconClassName: "bg-emerald-50 text-emerald-600",
     sparkColor: "#10b981",
     unitSuffix: "명",
+    href: "/subscription",
   },
   {
     key: "activeSubscribers",
@@ -53,6 +57,7 @@ const KPIS: KpiConfig[] = [
     iconClassName: "bg-indigo-50 text-indigo-600",
     sparkColor: "#6366f1",
     unitSuffix: "명",
+    href: "/subscription",
   },
   {
     key: "openOrders",
@@ -61,6 +66,7 @@ const KPIS: KpiConfig[] = [
     iconClassName: "bg-sky-50 text-sky-600",
     sparkColor: "#0ea5e9",
     unitSuffix: "건",
+    href: "/order",
   },
   {
     key: "unansweredInquiry",
@@ -69,6 +75,7 @@ const KPIS: KpiConfig[] = [
     iconClassName: "bg-amber-50 text-amber-600",
     sparkColor: "#f59e0b",
     unitSuffix: "건",
+    href: "/inquiry",
   },
   {
     key: "lowStock",
@@ -77,6 +84,7 @@ const KPIS: KpiConfig[] = [
     iconClassName: "bg-red-50 text-red-600",
     sparkColor: "#ef4444",
     unitSuffix: "종",
+    href: "/goods/stock",
   },
 ];
 
@@ -100,6 +108,7 @@ export default function KpiStrip() {
           sparkColor={kpi.sparkColor}
           unitPrefix={kpi.unitPrefix}
           unitSuffix={kpi.unitSuffix}
+          href={kpi.href}
           data={summary?.[kpi.key] as KpiDelta | undefined}
           isLoading={isPending}
           isError={isError}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Eye,
   Film,
@@ -17,6 +18,8 @@ interface CardConfig {
   label: string;
   icon: LucideIcon;
   iconClassName: string;
+  /** Drill-down target: clicking the card opens the related list/analysis page. */
+  href: string;
 }
 
 const CARDS: CardConfig[] = [
@@ -25,24 +28,28 @@ const CARDS: CardConfig[] = [
     label: "총 회원수",
     icon: Users,
     iconClassName: "bg-blue-50 text-brand",
+    href: "/member",
   },
   {
     key: "newMembers7d",
     label: "신규 회원 (7일)",
     icon: UserPlus,
     iconClassName: "bg-emerald-50 text-emerald-600",
+    href: "/member",
   },
   {
     key: "totalViews",
     label: "총 조회수",
     icon: Eye,
     iconClassName: "bg-amber-50 text-amber-600",
+    href: "/analytics",
   },
   {
     key: "totalContents",
     label: "총 콘텐츠",
     icon: Film,
     iconClassName: "bg-indigo-50 text-indigo-600",
+    href: "/content",
   },
 ];
 
@@ -62,9 +69,10 @@ export default function SummaryCards() {
         const value = summary?.[card.key];
 
         return (
-          <div
+          <Link
             key={card.key}
-            className="flex items-center justify-between rounded-md border border-slate-200 bg-white p-5"
+            href={card.href}
+            className="flex items-center justify-between rounded-md border border-slate-200 bg-white p-5 transition hover:border-brand hover:shadow-sm focus:outline-none focus:ring-1 focus:ring-brand"
           >
             <div>
               <p className="text-sm text-slate-500">{card.label}</p>
@@ -83,7 +91,7 @@ export default function SummaryCards() {
             >
               <Icon className="h-5 w-5" />
             </span>
-          </div>
+          </Link>
         );
       })}
     </div>

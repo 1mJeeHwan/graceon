@@ -231,9 +231,17 @@ export default function InquiryPage() {
         <span className="text-sm text-slate-600">
           총 {inquiries.length.toLocaleString()}건
         </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+        <button
+          type="button"
+          onClick={() => setStatusFilter(InquiryDtoStatus.OPEN)}
+          aria-pressed={statusFilter === InquiryDtoStatus.OPEN}
+          title="미답변만 보기"
+          className={`inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 transition hover:bg-amber-200 focus:outline-none focus:ring-1 focus:ring-amber-400 ${
+            statusFilter === InquiryDtoStatus.OPEN ? "ring-1 ring-amber-400" : ""
+          }`}
+        >
           미답변 {openCount.toLocaleString()}건
-        </span>
+        </button>
         {message && (
           <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs text-blue-700">
             {message}
