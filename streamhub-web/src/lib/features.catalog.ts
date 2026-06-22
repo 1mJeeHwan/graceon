@@ -239,13 +239,13 @@ export const FEATURES: FeatureCard[] = [
     id: "chat-bot",
     domain: "community",
     title: "챗봇 상담",
-    summary: "룰베이스 FAQ + 주문/상품 DB 조회 챗봇 (실 LLM 미연동)",
-    status: "demo",
+    summary: "Gemini LLM 툴콜링 챗봇 — 기능안내·주문/상품 DB 조회·FAQ",
+    status: "live",
     href: "/chat",
     gnuboard: "(레퍼런스 서비스 고유)",
     repoPath: "streamhub-web/src/app/(protected)/chat/page.tsx",
     thumb: "/catalog/chat-bot.png",
-    highlights: ["룰베이스 FAQ", "주문/상품 DB 조회", "세션 이력 저장", "LLM 어댑터 seam(키 대기)"],
+    highlights: ["Gemini function-calling", "기능 카탈로그 안내", "주문/상품 DB 조회", "멀티턴·세션 이력"],
   },
 
   // ---- support (후원·구독) ----

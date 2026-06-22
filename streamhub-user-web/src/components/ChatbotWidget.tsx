@@ -235,15 +235,13 @@ export function ChatbotWidget() {
                     <div className="flex items-center gap-1.5">
                       <h2 className="text-sm font-bold text-active">StreamHub 도우미</h2>
                       <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">
-                        {llmActive ? "AI" : "AI 데모"}
+                        AI
                       </span>
                     </div>
                     <p className="mt-0.5 text-[11px] leading-tight text-inactive">
-                      {llmActive === null
-                        ? "AI 챗봇 · 기능 안내·주문/상품 조회"
-                        : llmActive
-                          ? "AI 챗봇 · 자연어 응답(Gemini)"
-                          : "데모 챗봇 · 룰 기반"}
+                      {llmActive === false
+                        ? "AI 챗봇 · 빠른 응답"
+                        : "AI 챗봇 · 자연어 응답(Gemini)"}
                     </p>
                   </div>
                 </div>
