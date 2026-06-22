@@ -34,6 +34,7 @@ import {
   Headset,
   Bot,
   Image as ImageIcon,
+  Images,
   Megaphone,
   Bell,
   TrendingUp,
@@ -120,6 +121,7 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "마케팅",
     items: [
       { label: "배너 관리", href: "/banners", icon: ImageIcon },
+      { label: "미디어 라이브러리", href: "/media", icon: Images },
       { label: "캠페인·이벤트", href: "/campaigns", icon: Megaphone },
       { label: "알림센터", href: "/notifications", icon: Bell },
     ],
