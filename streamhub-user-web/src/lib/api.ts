@@ -1,4 +1,5 @@
 import type {
+  AnnouncementConfig,
   BannerItem,
   BannerTarget,
   ContentDetail,
@@ -126,6 +127,7 @@ export const api = {
     request<BannerItem[]>(`/pub/v1/banners${query({ target })}`).then((items) =>
       items.map((b) => ({ ...b, imageUrl: fixImageUrl(b.imageUrl) })),
     ),
+  announcement: () => request<AnnouncementConfig>("/pub/v1/announcement"),
 
   // Member auth
   login: (email: string, password: string) =>

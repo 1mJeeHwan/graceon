@@ -6,8 +6,9 @@ import { useChannels, useContents } from "@/lib/queries";
 import { useAlbums, GENRE_LABELS, type AlbumGenre, type AlbumSortBy } from "@/lib/albums";
 import { useUrlSearch } from "@/lib/useUrlSearch";
 import type { ContentSortBy, PublicChannel } from "@/lib/api";
-import type { ContentType } from "@/lib/types";
+import type { BannerTarget, ContentType } from "@/lib/types";
 import { ContentContainer } from "./ContentContainer";
+import { TabBanner } from "./TabBanner";
 import { ItemCarousel } from "./ItemCarousel";
 import { ContentCard } from "./ContentCard";
 import { AlbumCard } from "./AlbumCard";
@@ -297,18 +298,21 @@ export function MediaBrowse({
   searchPlaceholder,
   showAlbumGenres = false,
   showChannels = false,
+  bannerTarget,
 }: {
   type: ContentType;
   title: string;
   searchPlaceholder: string;
   showAlbumGenres?: boolean;
   showChannels?: boolean;
+  bannerTarget?: BannerTarget;
 }) {
   const { keyword, setKeyword, debounced } = useUrlSearch();
   const [channel, setChannel] = useState<PublicChannel | null>(null);
 
   return (
     <section className="animate-fade-up pt-4">
+      {bannerTarget && <TabBanner target={bannerTarget} />}
       <h1 className="px-20px text-24px font-bold leading-30px tracking-tight">{title}</h1>
       <div className="px-5 pb-1 pt-4">
         <SearchBar value={keyword} onChange={setKeyword} placeholder={searchPlaceholder} />

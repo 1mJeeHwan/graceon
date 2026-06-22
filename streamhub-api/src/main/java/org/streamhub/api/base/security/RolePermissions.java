@@ -31,7 +31,8 @@ public final class RolePermissions {
     private static final List<String> OPERATIONAL = List.of(
             "order", "payment", "subscription", "member", "point", "content", "album", "goods",
             "coupon", "campaign", "banner", "board", "community", "worship", "visit", "store",
-            "church", "sms", "notification", "analytics", "chat", "dashboard", "inquiry", "media");
+            "church", "sms", "notification", "analytics", "chat", "dashboard", "inquiry", "media",
+            "announcement");
 
     /**
      * System-only resources (SYSTEM gets read+write; MANAGER/VIEWER get nothing). Mirrors the

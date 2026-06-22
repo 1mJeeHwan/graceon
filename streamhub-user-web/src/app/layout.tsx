@@ -5,7 +5,7 @@ import { AppBar } from "@/components/AppBar";
 import { TabBar } from "@/components/TabBar";
 import { MiniPlayer } from "@/components/player/MiniPlayer";
 import { ChatbotWidget } from "@/components/ChatbotWidget";
-import { AnnouncementModal } from "@/components/AnnouncementModal";
+import { AnnouncementGate } from "@/components/AnnouncementGate";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 
 export const metadata: Metadata = {
@@ -16,13 +16,6 @@ export const metadata: Metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-};
-
-/** First-visit announcement (shown once as a modal). Edit here to change; empty text hides it. */
-const ANNOUNCEMENT = {
-  enabled: true,
-  text: "성탄 특별예배 안내 — 자세히 보기",
-  link: "/churches",
 };
 
 // No-flash theme: apply the visitor's stored light/dark choice before first paint (default dark).
@@ -47,11 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <MiniPlayer />
             <TabBar />
             <ChatbotWidget />
-            <AnnouncementModal
-              enabled={ANNOUNCEMENT.enabled}
-              text={ANNOUNCEMENT.text}
-              link={ANNOUNCEMENT.link || undefined}
-            />
+            <AnnouncementGate />
             <AnalyticsTracker />
           </div>
         </Providers>

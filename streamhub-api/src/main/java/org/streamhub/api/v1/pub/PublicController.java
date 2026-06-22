@@ -36,6 +36,8 @@ import org.streamhub.api.v1.content.dto.ContentSearchRequest;
 import org.streamhub.api.v1.content.dto.PublicChannelItem;
 import org.streamhub.api.v1.content.entity.ContentType;
 import org.streamhub.api.v1.analytics.PublicIngestRateLimiter;
+import org.streamhub.api.v1.announcement.AnnouncementService;
+import org.streamhub.api.v1.announcement.dto.AnnouncementDto;
 import org.streamhub.api.v1.post.PostService;
 import org.streamhub.api.v1.post.dto.PostDetail;
 import org.streamhub.api.v1.post.dto.PostListItem;
@@ -70,12 +72,14 @@ public class PublicController {
     private final AlbumService albumService;
     private final StoreService storeService;
     private final BannerService bannerService;
+    private final AnnouncementService announcementService;
     private final PublicIngestRateLimiter rateLimiter;
     private final ClientIpResolver clientIpResolver;
 
     public PublicController(ContentService contentService, PostService postService,
                             ChurchService churchService, AlbumService albumService,
                             StoreService storeService, BannerService bannerService,
+                            AnnouncementService announcementService,
                             PublicIngestRateLimiter rateLimiter, ClientIpResolver clientIpResolver) {
         this.contentService = contentService;
         this.postService = postService;
@@ -83,6 +87,7 @@ public class PublicController {
         this.albumService = albumService;
         this.storeService = storeService;
         this.bannerService = bannerService;
+        this.announcementService = announcementService;
         this.rateLimiter = rateLimiter;
         this.clientIpResolver = clientIpResolver;
     }
@@ -104,6 +109,12 @@ public class PublicController {
     @GetMapping("/banners")
     public ResultDTO<List<BannerDto>> banners(@RequestParam(required = false) BannerTarget target) {
         return ResultDTO.ok(bannerService.listPublic(target));
+    }
+
+    @Operation(summary = "공개 안내창", description = "사이트 안내창 설정(노출 여부·문구·링크). enabled=false면 미노출.")
+    @GetMapping("/announcement")
+    public ResultDTO<AnnouncementDto> announcement() {
+        return ResultDTO.ok(announcementService.getPublic());
     }
 
     @Operation(summary = "공개 콘텐츠 목록",

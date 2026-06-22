@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, Upload, X } from "lucide-react";
 
+import { mediaUpload } from "@/apis/media";
 import {
   useBannerCreate,
   useBannerUpdate,
@@ -88,6 +89,8 @@ export default function BannerFormDialog({
   const isEdit = banner?.id != null;
   const [form, setForm] = useState<BannerFormState>(() => buildFormState(banner));
   const [message, setMessage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createMutation = useBannerCreate();
   const updateMutation = useBannerUpdate();
@@ -102,6 +105,33 @@ export default function BannerFormDialog({
     value: BannerFormState[K],
   ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleImageUpload = async (file: File | undefined) => {
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setMessage("이미지 파일만 업로드할 수 있습니다.");
+      return;
+    }
+    setMessage(null);
+    setUploading(true);
+    try {
+      const asset = await mediaUpload(file, "banner");
+      if (asset?.url) {
+        update("imageUrl", asset.url);
+      } else {
+        setMessage("업로드 응답이 올바르지 않습니다.");
+      }
+    } catch {
+      setMessage("이미지 업로드에 실패했습니다.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const handleResult = (resultCode?: string, resultMessage?: string) => {
@@ -295,16 +325,46 @@ export default function BannerFormDialog({
                 htmlFor="banner-image"
                 className="mb-1 block text-xs font-medium text-slate-500"
               >
-                이미지 URL (탭 배너는 비워두면 그라데이션)
+                이미지 (탭 배너는 비워두면 그라데이션) — 업로드 시 미디어 라이브러리에 저장됩니다
               </label>
-              <input
-                id="banner-image"
-                type="text"
-                placeholder="https://..."
-                className={FIELD_CLASS}
-                value={form.imageUrl}
-                onChange={(event) => update("imageUrl", event.target.value)}
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  id="banner-image"
+                  type="text"
+                  placeholder="https://... 또는 이미지 업로드"
+                  className={FIELD_CLASS}
+                  value={form.imageUrl}
+                  onChange={(event) => update("imageUrl", event.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  업로드
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(event) => void handleImageUpload(event.target.files?.[0])}
+                />
+              </div>
+              {form.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.imageUrl}
+                  alt=""
+                  className="mt-2 h-24 w-full max-w-xs rounded-md border border-slate-200 object-cover"
+                />
+              )}
             </div>
 
             {/* Link URL */}

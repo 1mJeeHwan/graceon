@@ -23,6 +23,7 @@ import org.streamhub.api.v1.church.ChurchService;
 import org.streamhub.api.v1.album.AlbumService;
 import org.streamhub.api.v1.store.StoreService;
 import org.streamhub.api.v1.banner.BannerService;
+import org.streamhub.api.v1.announcement.AnnouncementService;
 import org.streamhub.api.v1.analytics.PublicIngestRateLimiter;
 import org.streamhub.api.base.util.ClientIpResolver;
 
@@ -38,6 +39,7 @@ class PublicControllerTest {
     private final AlbumService albumService = mock(AlbumService.class);
     private final StoreService storeService = mock(StoreService.class);
     private final BannerService bannerService = mock(BannerService.class);
+    private final AnnouncementService announcementService = mock(AnnouncementService.class);
     private final PublicIngestRateLimiter rateLimiter = mock(PublicIngestRateLimiter.class);
     private final ClientIpResolver clientIpResolver = mock(ClientIpResolver.class);
     private MockMvc mvc;
@@ -46,7 +48,7 @@ class PublicControllerTest {
     void setUp() {
         mvc = MockMvcBuilders.standaloneSetup(
                 new PublicController(contentService, postService, churchService, albumService,
-                        storeService, bannerService, rateLimiter, clientIpResolver)).build();
+                        storeService, bannerService, announcementService, rateLimiter, clientIpResolver)).build();
     }
 
     private ContentListItem videoItem() {

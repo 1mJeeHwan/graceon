@@ -8,6 +8,7 @@ import { useGoods } from "@/lib/goods";
 import { useCampaigns } from "@/lib/campaigns";
 import { useMyPoints, useMyCoupons } from "@/lib/me";
 import { ContentContainer } from "./ContentContainer";
+import { TabBanner } from "./TabBanner";
 import { ItemCarousel } from "./ItemCarousel";
 import { AlbumCard } from "./AlbumCard";
 import { GoodsCard } from "./GoodsCard";
@@ -165,6 +166,7 @@ function GoodsStoreRow() {
 export function StoreHub() {
   return (
     <section className="animate-fade-up pb-4 pt-4">
+      <TabBanner target="ALL" />
       <h1 className="px-20px text-24px font-bold leading-30px tracking-tight">스토어</h1>
       <div className="px-5 pt-4">
         <WalletStrip />

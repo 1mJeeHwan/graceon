@@ -27,6 +27,15 @@ export function useBanners(target: BannerTarget) {
   });
 }
 
+/** Site announcement config (admin-managed). Drives the one-time 안내창 modal. */
+export function useAnnouncement() {
+  return useQuery({
+    queryKey: ["announcement"],
+    queryFn: () => api.announcement(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useContents(params: ContentListParams) {
   return useQuery({
     queryKey: queryKeys.contents(params),
