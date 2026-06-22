@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Disc3 } from "lucide-react";
 import clsx from "clsx";
 import { GENRE_LABELS, GENRE_ORDER, useAlbums, type AlbumGenre } from "@/lib/albums";
@@ -12,10 +13,20 @@ import { CardSkeletonGrid, EmptyState, ErrorState } from "./States";
 
 const PAGE_SIZE = 12;
 
+/** Reads a valid genre from the URL (?genre=), else undefined — seeds the music-page 더보기 drill-in. */
+function genreFromParam(value: string | null): AlbumGenre | undefined {
+  return value != null && (GENRE_ORDER as string[]).includes(value)
+    ? (value as AlbumGenre)
+    : undefined;
+}
+
 /** Album list page: genre filter chips + URL-synced keyword search + cover grid + pagination. */
 export function AlbumListView() {
   const { keyword, setKeyword, debounced } = useUrlSearch();
-  const [genre, setGenre] = useState<AlbumGenre | undefined>(undefined);
+  const searchParams = useSearchParams();
+  const [genre, setGenre] = useState<AlbumGenre | undefined>(
+    () => genreFromParam(searchParams.get("genre")),
+  );
   const [page, setPage] = useState(0);
 
   // A new search or genre change always restarts at the first page.

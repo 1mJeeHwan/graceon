@@ -77,9 +77,15 @@ export function query(params: Record<string, string | number | undefined>): stri
   return s ? `?${s}` : "";
 }
 
+/** Content sort keys accepted by GET /pub/v1/contents (backend ContentSearchRequest). */
+export type ContentSortBy = "viewCount" | "createdAt";
+
 export interface ContentListParams {
   type?: ContentType;
   keyword?: string;
+  /** "viewCount" = 인기(베스트), "createdAt" = 최신. Omitted = backend default (newest). */
+  sortBy?: ContentSortBy;
+  sortDir?: "asc" | "desc";
   pageNumber?: number;
   pageSize?: number;
 }
