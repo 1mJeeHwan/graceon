@@ -62,14 +62,15 @@ cd streamhub-audit-service
 2. **이벤트 자급성(self-containment).** 소비자는 admin 도메인 DB에 접근할 수 없다 → `adminName`을 컨슈머가 보강하던 로직이 깨진다. 올바른 해법: **프로듀서가 발행 시점에 `adminName`을 이벤트에 실어** 보낸다(이벤트가 필요한 데이터를 모두 담는다). 현재는 메시지에 있는 값만 저장(없으면 null)하고 이 점을 명시.
 3. **크로스서비스 직렬화 계약.** Spring Kafka JsonSerializer는 `__TypeId__` 헤더에 **프로듀서 클래스 FQCN**을 박는다. 소비자(다른 패키지)에선 그 클래스가 없다 → audit-service는 `spring.json.use.type.headers=false` + `value.default.type`으로 **헤더 무시, 자기 타입으로 역직렬화**. (서비스 간 스키마 계약의 실제 예)
 4. **at-least-once / 멱등.** 소비 후 오프셋 커밋이라 재전달 시 중복 가능 → 감사로그는 수용. 정확히-한-번이 필요하면 이벤트 UUID + unique 제약.
-5. **분산 트랜잭션 부재.** 비즈니스 트랜잭션과 발행이 원자적이지 않다(발행 실패 = 이벤트 유실 가능, best-effort). 정합이 중요하면 **Transactional Outbox 패턴**(같은 DB 트랜잭션에 outbox 행 → 릴레이가 Kafka로 발행).
+5. **분산 트랜잭션 부재 → Transactional Outbox로 해소(구현됨).** 기본 경로는 비즈니스 트랜잭션과 발행이 원자적이지 않다(발행 실패 = 이벤트 유실 가능, best-effort). `EVENTLOG_OUTBOX=true`로 켜면 **Transactional Outbox 패턴**이 활성화된다: `ActionLogPublisher` → `OutboxActionLogEmitter`가 이벤트를 **비즈 트랜잭션과 같은 DB 트랜잭션**으로 `ACTION_OUTBOX`에 기록(커밋되면 durable 큐잉, 롤백되면 이벤트도 사라짐) → `ActionOutboxRelay`(스케줄러)가 미발행 행을 **확정 발행**(broker ack 대기)으로 Kafka에 보내고 published 플래그를 일괄 갱신. 발행 실패 행은 다음 틱에 재시도(at-least-once, 감사 소비자가 중복 수용). 트레이드오프: outbox insert가 실패하면 비즈 트랜잭션도 롤백(원자성 ↔ best-effort의 의도적 교환). 코드: `v1/actionlog/outbox/`.
 
 ## 5. 향후 (전체 MSA로 가는 로드맵)
+- ✅ **Transactional Outbox** — 발행 원자성/무유실 (`EVENTLOG_OUTBOX=true`, `v1/actionlog/outbox/`). §4-5 참고
 - **DB-per-service** + audit read API → 공유 DB 제거
 - **API Gateway**(Spring Cloud Gateway) — 단일 진입점·인증·라우팅
 - **Service Discovery**(Eureka/Consul) 또는 K8s Service DNS
 - **Config Server** / 중앙 설정
-- **Transactional Outbox / Saga** — 분산 데이터 일관성
+- **Saga** — 다중 서비스에 걸친 분산 트랜잭션 보상
 - 서비스별 **독립 파이프라인·관측성**([[observability]])·K8s 배포([[kubernetes]])
 - 다음 추출 후보: 알림 서비스(이미 채널별 발송 로그로 분리 가능)
 

@@ -11,10 +11,11 @@ import org.streamhub.api.base.util.ClientIpResolver;
 import org.streamhub.api.v1.actionlog.dto.ActionLogMessage;
 
 /**
- * Builds admin-action events and hands them to the active {@link ActionLogTransport} (SQS or Kafka,
- * selected by {@code app.eventlog.transport}); the consumer ({@link ActionLogConsumer} /
- * {@link KafkaActionLogConsumer}) persists them. Publishing is best-effort — the transport swallows
- * failures, so a messaging problem never breaks the underlying business action.
+ * Builds admin-action events and hands them to the active {@link ActionLogEmitter} (direct transport
+ * or transactional outbox, selected by {@code app.eventlog.outbox}); the consumer
+ * ({@link ActionLogConsumer} / {@link KafkaActionLogConsumer}) persists them. Whether publishing is
+ * best-effort or atomic-with-the-business-change is the emitter's decision — these call sites never
+ * change.
  *
  * <p>The originating client IP is captured here (in the operator's request thread) via
  * {@link ClientIpResolver} and carried on the message, so the audit row records who acted and from
@@ -23,11 +24,11 @@ import org.streamhub.api.v1.actionlog.dto.ActionLogMessage;
 @Component
 public class ActionLogPublisher {
 
-    private final ActionLogTransport transport;
+    private final ActionLogEmitter emitter;
     private final ClientIpResolver clientIpResolver;
 
-    public ActionLogPublisher(ActionLogTransport transport, ClientIpResolver clientIpResolver) {
-        this.transport = transport;
+    public ActionLogPublisher(ActionLogEmitter emitter, ClientIpResolver clientIpResolver) {
+        this.emitter = emitter;
         this.clientIpResolver = clientIpResolver;
     }
 
@@ -41,7 +42,7 @@ public class ActionLogPublisher {
     /** Publish with an explicit operator (e.g. on login, before the security context exists). */
     public void publishAs(Long adminId, String adminName, String action,
                           String targetType, String targetId, String detail) {
-        transport.send(new ActionLogMessage(
+        emitter.emit(new ActionLogMessage(
                 adminId, adminName, action, targetType, targetId, detail, currentIp()));
     }
 

@@ -85,6 +85,12 @@ app:
   # kafka = Apache Kafka(@KafkaListener). 빈 교체 + env 플래그만으로 전환, 호출부 무변경.
   eventlog:
     transport: ${EVENTLOG_TRANSPORT:sqs}   # sqs | kafka
+    # Transactional outbox. enabled=false(기본) = 발행을 비즈 트랜잭션 밖에서 best-effort(유실 가능).
+    # true = 이벤트를 ACTION_OUTBOX에 비즈 트랜잭션과 원자적으로 기록 → 릴레이가 Kafka로 확정 발행
+    # (유실 0). kafka transport + audit-service(MSA)와 함께 쓰는 운영 경로.
+    outbox:
+      enabled: ${EVENTLOG_OUTBOX:false}    # true 시 ActionOutboxRelay가 드레인
+      relay-interval-ms: ${EVENTLOG_OUTBOX_RELAY_MS:2000}
   sqs:
     action-log-queue: ${SQS_ACTION_LOG_QUEUE:streamhub-action-log}
   kafka:
