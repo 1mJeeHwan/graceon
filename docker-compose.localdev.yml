@@ -1,0 +1,8 @@
+services:
+  # Local-dev only: publish the API on the host loopback so the browser/user-web
+  # (localhost:3001 → NEXT_PUBLIC_API_BASE=http://localhost:8080) can reach it.
+  # The deploy compose keeps 8080 internal-only (Caddy fronts 443); this override
+  # is never used in deploy.
+  api:
+    ports:
+      - "127.0.0.1:8080:8080"
