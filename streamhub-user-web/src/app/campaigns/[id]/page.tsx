@@ -7,6 +7,7 @@ import { useCampaign, campaignStatusLabel } from "@/lib/campaigns";
 import { ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { BackLink } from "@/components/BackLink";
+import { RichText } from "@/components/RichText";
 import { EmptyState, ErrorState } from "@/components/States";
 
 /** Badge tint per known status; unknown statuses get the neutral inactive style. */
@@ -88,11 +89,10 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
               <p className="mt-4 text-sm font-medium leading-relaxed text-active">{data.summary}</p>
             )}
 
-            {data.description && (
-              <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-inactive">
-                {data.description}
-              </p>
-            )}
+            <RichText
+              content={data.description}
+              className="mt-4 text-sm leading-relaxed text-inactive"
+            />
           </div>
         </article>
       ) : null}

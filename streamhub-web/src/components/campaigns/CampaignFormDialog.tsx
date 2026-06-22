@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
 
+import { RichTextEditor } from "@/components/common/RichTextEditor";
 import {
   useCampaignCreate,
   useCampaignUpdate,
@@ -310,12 +311,11 @@ export default function CampaignFormDialog({
               >
                 설명
               </label>
-              <textarea
-                id="campaign-desc"
-                rows={3}
-                className={FIELD_CLASS}
+              <RichTextEditor
                 value={form.description}
-                onChange={(e) => update("description", e.target.value)}
+                onChange={(html) => update("description", html)}
+                category="campaign"
+                placeholder="이벤트 상세 내용을 입력하세요…"
               />
             </div>
           </div>

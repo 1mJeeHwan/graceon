@@ -5,6 +5,7 @@ import { usePost } from "@/lib/queries";
 import { ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { BackLink } from "@/components/BackLink";
+import { RichText } from "@/components/RichText";
 import { EmptyState, ErrorState } from "@/components/States";
 
 export default function PostDetailPage({ params }: { params: { id: string } }) {
@@ -36,7 +37,10 @@ export default function PostDetailPage({ params }: { params: { id: string } }) {
             <CalendarDays className="h-4 w-4" />
             {formatDate(data.createdAt)}
           </p>
-          <div className="mt-5 whitespace-pre-wrap text-[15px] leading-relaxed text-active/90">{data.body}</div>
+          <RichText
+            content={data.body}
+            className="mt-5 text-[15px] leading-relaxed text-active/90"
+          />
         </article>
       ) : null}
     </div>

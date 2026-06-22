@@ -13,6 +13,10 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@tanstack/react-query": "^5.62.7",
+    "@tiptap/extension-image": "^2.27.2",
+    "@tiptap/extension-link": "^2.27.2",
+    "@tiptap/react": "^2.27.2",
+    "@tiptap/starter-kit": "^2.27.2",
     "ag-grid-community": "^33.0.3",
     "ag-grid-react": "^33.0.3",
     "apexcharts": "^4.3.0",
@@ -36,10 +40,10 @@
   },
   "devDependencies": {
     "@types/node": "^20.17.10",
-    "ajv": "^8.17.1",
-    "ajv-keywords": "^5.1.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "ajv": "^8.17.1",
+    "ajv-keywords": "^5.1.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.21",

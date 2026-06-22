@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Loader2, X } from "lucide-react";
 
+import { RichTextEditor } from "@/components/common/RichTextEditor";
 import {
   usePostCommunityPostCreate,
   usePostCommunityPostUpdate,
@@ -85,6 +86,7 @@ export default function CommunityPostFormDialog({
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -268,12 +270,17 @@ export default function CommunityPostFormDialog({
               >
                 내용
               </label>
-              <textarea
-                id="post-content"
-                rows={8}
-                maxLength={2000}
-                className={`${FIELD_CLASS} resize-y`}
-                {...register("content")}
+              <Controller
+                name="content"
+                control={control}
+                render={({ field }) => (
+                  <RichTextEditor
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    category="post"
+                    placeholder="공지 내용을 입력하세요…"
+                  />
+                )}
               />
             </div>
           </div>
