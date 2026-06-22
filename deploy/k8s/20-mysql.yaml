@@ -1,6 +1,24 @@
 # MySQL as a StatefulSet — the right primitive for stateful workloads: stable network identity
 # (mysql-0.mysql) and a per-replica PersistentVolume via volumeClaimTemplates that survives restarts.
 # The headless Service (clusterIP: None) named "mysql" gives the API a stable DNS name to dial.
+#
+# The init ConfigMap below is mounted at /docker-entrypoint-initdb.d so MySQL creates the per-service
+# schemas (streamhub_audit / streamhub_notification) on first boot — DB-per-service for the MSA split.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: streamhub-mysql-init
+  namespace: streamhub
+data:
+  01-create-service-dbs.sql: |
+    CREATE DATABASE IF NOT EXISTS streamhub_audit
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    GRANT ALL PRIVILEGES ON streamhub_audit.* TO 'streamhub'@'%';
+    CREATE DATABASE IF NOT EXISTS streamhub_notification
+        CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    GRANT ALL PRIVILEGES ON streamhub_notification.* TO 'streamhub'@'%';
+    FLUSH PRIVILEGES;
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -50,6 +68,9 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/mysql
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
           readinessProbe:
             exec:
               command: ["sh", "-c", "mysqladmin ping -h localhost -uroot -proot"]
@@ -62,6 +83,10 @@ spec:
               command: ["sh", "-c", "mysqladmin ping -h localhost -uroot -proot"]
             initialDelaySeconds: 45
             periodSeconds: 10
+      volumes:
+        - name: init
+          configMap:
+            name: streamhub-mysql-init
   volumeClaimTemplates:
     - metadata:
         name: data

@@ -1,0 +1,102 @@
+# docker-compose.msa.yml — full microservice topology (the P1–P4 story in one command).
+#
+# Brings up, on top of the base infra (docker-compose.yml: mysql/redis/kafka/...):
+#   - api          (monolith, PRODUCER-ONLY: kafka transport, outbox on, reads audit via REST,
+#                   emits notification dispatches)
+#   - audit-service        (consumes action-log → owns streamhub_audit DB → /v1/action-logs)
+#   - notification-service (consumes notification-dispatch → owns streamhub_notification DB →
+#                   /v1/notification-dispatches)
+#   - gateway      (Spring Cloud Gateway, single edge on :8000 routing to the three above)
+#
+# The base mysql mounts deploy/mysql-init, which creates the streamhub_audit / streamhub_notification
+# schemas on a fresh volume (DB-per-service). Opt-in — the default `docker compose up -d` is unchanged.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.msa.yml up -d --build
+#   curl http://localhost:8000/actuator/health        # gateway up
+#   curl 'http://localhost:8000/v1/action-logs?pageSize=5'           # → audit-service
+#   curl 'http://localhost:8000/v1/notification-dispatches?pageSize=5'  # → notification-service
+
+include:
+  - docker-compose.yml
+
+services:
+  api:
+    build:
+      context: ./streamhub-api
+    container_name: streamhub-api
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET: ${JWT_SECRET:-streamhub-admin-dev-secret-key-please-change-in-production-0123456789}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      # MSA mode: produce to Kafka, do NOT self-consume, atomic outbox, read audit + emit dispatches.
+      EVENTLOG_TRANSPORT: kafka
+      EVENTLOG_CONSUME: "false"
+      EVENTLOG_OUTBOX: "true"
+      ACTIONLOG_SOURCE: remote
+      AUDIT_SERVICE_URL: http://audit-service:8090
+      NOTIFICATION_DISPATCH: "true"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      TZ: Asia/Seoul
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    expose:
+      - "8080"
+
+  audit-service:
+    build:
+      context: ./streamhub-audit-service
+    container_name: streamhub-audit-service
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_NAME: streamhub_audit
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      TZ: Asia/Seoul
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    expose:
+      - "8090"
+
+  notification-service:
+    build:
+      context: ./streamhub-notification-service
+    container_name: streamhub-notification-service
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_NAME: streamhub_notification
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      TZ: Asia/Seoul
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    expose:
+      - "8091"
+
+  gateway:
+    build:
+      context: ./streamhub-gateway
+    container_name: streamhub-gateway
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:8080
+      AUDIT_SERVICE_URL: http://audit-service:8090
+      NOTIFICATION_SERVICE_URL: http://notification-service:8091
+      TZ: Asia/Seoul
+    ports:
+      - "8000:8000"
+    depends_on:
+      - api
+      - audit-service
+      - notification-service

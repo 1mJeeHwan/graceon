@@ -1,0 +1,37 @@
+server:
+  port: ${GATEWAY_PORT:8000}
+
+spring:
+  application:
+    name: streamhub-gateway
+  cloud:
+    gateway:
+      # Specific service routes win over the monolith catch-all via explicit order (lower = higher
+      # precedence). The audit/notification read APIs are owned by their services (DB-per-service);
+      # everything else falls through to the monolith.
+      routes:
+        - id: audit-read
+          uri: ${AUDIT_SERVICE_URL:http://localhost:8090}
+          predicates:
+            - Path=/v1/action-logs/**
+          order: 0
+        - id: notification-read
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8091}
+          predicates:
+            - Path=/v1/notification-dispatches/**
+          order: 0
+        - id: monolith
+          uri: ${API_URL:http://localhost:8080}
+          predicates:
+            - Path=/**
+          order: 100
+      # Cross-cutting concern demo: stamp every response so the edge is observable. (Auth could be
+      # centralized here too — kept at the services for now; see docs/msa-split.md.)
+      default-filters:
+        - AddResponseHeader=X-Gateway, streamhub-gateway
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,gateway

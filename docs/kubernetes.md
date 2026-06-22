@@ -18,8 +18,19 @@ namespace: streamhub
 ├─ Deployment  redis  + Service redis                                          ← 캐시(무상태)
 ├─ Deployment  minio  + Service minio + PVC minio-data + Job minio-init        ← 오브젝트 스토리지
 ├─ Deployment  localstack + Service localstack                                 ← SQS 에뮬
-└─ Deployment  streamhub-api + Service streamhub-api (+ initContainer wait-for-mysql)
+├─ Deployment  streamhub-api + Service streamhub-api (+ initContainer wait-for-mysql)
+└─ (MSA 토폴로지) Kafka + 추출 서비스 2 + 게이트웨이                            ← docs/msa-split.md
+   ├─ Deployment  kafka + Service kafka                         (55-kafka.yaml)
+   ├─ Deployment  streamhub-audit-service + Service            (70-audit-service.yaml, :8090)
+   ├─ Deployment  streamhub-notification-service + Service     (71-notification-service.yaml, :8091)
+   └─ Deployment  streamhub-gateway + Service(NodePort :30080) (72-gateway.yaml, edge :8000)
 ```
+
+> **두 가지 토폴로지.** 기본은 모놀리스 단독(api가 SQS로 자가 소비). MSA 토폴로지는 추가 매니페스트
+> (55/70/71/72)와 함께, api ConfigMap에 `EVENTLOG_TRANSPORT=kafka`·`EVENTLOG_CONSUME=false`·
+> `EVENTLOG_OUTBOX=true`·`ACTIONLOG_SOURCE=remote`·`AUDIT_SERVICE_URL=http://streamhub-audit-service:8090`·
+> `NOTIFICATION_DISPATCH=true`·`KAFKA_BOOTSTRAP_SERVERS=kafka:29092`를 주면 동작한다. mysql initdb
+> ConfigMap이 `streamhub_audit`/`streamhub_notification` 스키마를 만든다(DB-per-service).
 
 | compose | K8s | 비고 |
 |---|---|---|

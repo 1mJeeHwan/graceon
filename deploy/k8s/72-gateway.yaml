@@ -1,0 +1,66 @@
+# streamhub-gateway — Spring Cloud Gateway edge. Routes by path to the monolith and the extracted
+# services via in-cluster Service DNS. Exposed as a NodePort so the topology is reachable from the
+# host (kind/minikube): http://<node>:30080. Image built from streamhub-gateway/Dockerfile + loaded.
+apiVersion: v1
+kind: Service
+metadata:
+  name: streamhub-gateway
+  namespace: streamhub
+spec:
+  type: NodePort
+  selector:
+    app: streamhub-gateway
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streamhub-gateway
+  namespace: streamhub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: streamhub-gateway
+  template:
+    metadata:
+      labels:
+        app: streamhub-gateway
+    spec:
+      containers:
+        - name: streamhub-gateway
+          image: streamhub-gateway:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: API_URL
+              value: "http://streamhub-api:8080"
+            - name: AUDIT_SERVICE_URL
+              value: "http://streamhub-audit-service:8090"
+            - name: NOTIFICATION_SERVICE_URL
+              value: "http://streamhub-notification-service:8091"
+            - name: TZ
+              value: "Asia/Seoul"
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8000
+            initialDelaySeconds: 45
+            periodSeconds: 15

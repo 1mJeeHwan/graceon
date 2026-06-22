@@ -88,17 +88,32 @@ streamhub-api ──notification-dispatch event──▶ Kafka topic ──consu
 
 실행: 모놀리스에 `NOTIFICATION_DISPATCH=true` 추가, 신규 서비스 `DB_NAME=streamhub_notification ./mvnw spring-boot:run`(:8091). 확인: 알림 발송 → `curl 'http://localhost:8091/v1/notification-dispatches?pageSize=5'`.
 
-## 6. 향후 (전체 MSA로 가는 로드맵)
+## 6. API Gateway (단일 진입점)
+
+`streamhub-gateway`(Spring Cloud Gateway, reactive) — 모놀리스 + 추출된 두 서비스 **앞단의 단일 edge**(:8000). 경로 기반 라우팅으로 토폴로지를 클라이언트에서 감춘다.
+
+```
+client ─▶ streamhub-gateway :8000
+            ├─ /v1/action-logs/**            ─▶ streamhub-audit-service :8090
+            ├─ /v1/notification-dispatches/** ─▶ streamhub-notification-service :8091
+            └─ /**                            ─▶ streamhub-api :8080 (catch-all)
+```
+
+- **라우팅 우선순위.** 서비스별 라우트(order 0)가 모놀리스 catch-all(order 100)보다 우선 → 추출된 read API만 해당 서비스로, 나머지는 전부 모놀리스로.
+- **크로스커팅.** `AddResponseHeader=X-Gateway` 전역 필터로 edge 관측 가능(데모). 인증도 여기서 중앙화 가능하나, 현재는 각 서비스/모놀리스에 둠(점진 이행 — 명시된 다음 단계).
+- **턴키 실행.** `docker compose -f docker-compose.yml -f docker-compose.msa.yml up -d --build` → 전체 토폴로지(api 프로듀서전용 + 2 서비스 + gateway) 한 번에. 확인: `curl localhost:8000/v1/action-logs?pageSize=5`. K8s는 `deploy/k8s/`의 55-kafka·70/71/72 매니페스트(Service DNS 라우팅, gateway는 NodePort :30080).
+
+## 7. 향후 (전체 MSA로 가는 로드맵)
 - ✅ **Transactional Outbox** — 발행 원자성/무유실 (`EVENTLOG_OUTBOX=true`, `v1/actionlog/outbox/`). §4 트레이드오프 참고
 - ✅ **DB-per-service + audit read API** — audit-service가 `streamhub_audit` 소유, 모놀리스는 `GET /v1/action-logs` 호출(`ACTIONLOG_SOURCE=remote`). 공유 DB 제거
 - ✅ **2번째 서비스 추출(알림)** — `streamhub-notification-service`, 패턴 일반화 입증. §5
-- **API Gateway**(Spring Cloud Gateway) — 단일 진입점·인증·라우팅
-- **Service Discovery**(Eureka/Consul) 또는 K8s Service DNS
+- ✅ **API Gateway** — `streamhub-gateway`(Spring Cloud Gateway), 경로 기반 단일 진입점. §6
+- **Service Discovery**(Eureka/Consul) 또는 K8s Service DNS(현재 라우팅은 정적 URL/Service명)
 - **Config Server** / 중앙 설정
 - **Saga** — 다중 서비스에 걸친 분산 트랜잭션 보상
 - **이벤트 발행 일반화** — Outbox/transport seam을 다중 이벤트 타입(action-log·notification-dispatch)으로 일반화
-- 서비스별 **독립 파이프라인·관측성**([[observability]])·K8s 배포([[kubernetes]])
+- **게이트웨이 인증 중앙화** — JWT 검증을 gateway 필터로 이동
 
-## 7. 관련 문서
+## 8. 관련 문서
 - 이벤트 버스: [[eventlog-kafka]] (이 분리의 통신 기반)
 - 배포: [[kubernetes]] / 관측성: [[observability]]
