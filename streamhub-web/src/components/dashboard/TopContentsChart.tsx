@@ -10,11 +10,16 @@ import ChartCard from "./ChartCard";
 
 const TOP_LIMIT = 5;
 
+interface TopContentsChartProps {
+  /** Invoked with the content id when a bar is clicked (drill-down to detail). */
+  onSelect?: (contentId: number) => void;
+}
+
 /**
  * TopContentsChart renders a horizontal bar chart of the top viewed contents
  * using the top-contents statistics endpoint.
  */
-export default function TopContentsChart() {
+export default function TopContentsChart({ onSelect }: TopContentsChartProps) {
   const { data, isPending, isError } = useStatisticsTopContents({ limit: TOP_LIMIT });
 
   const items = data?.resultObject ?? [];
@@ -26,6 +31,18 @@ export default function TopContentsChart() {
       type: "bar",
       toolbar: { show: false },
       fontFamily: "inherit",
+      events: {
+        dataPointSelection: (
+          _event: unknown,
+          _chartContext: unknown,
+          config: { dataPointIndex: number },
+        ) => {
+          const item = items[config.dataPointIndex];
+          if (item?.id != null) {
+            onSelect?.(item.id);
+          }
+        },
+      },
     },
     colors: ["#2563eb"],
     plotOptions: {

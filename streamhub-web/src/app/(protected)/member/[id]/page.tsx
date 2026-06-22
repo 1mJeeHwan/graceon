@@ -157,9 +157,15 @@ export default function MemberDetailPage() {
             <ReadonlyField
               label="포인트 잔액"
               value={
-                detail.pointBalance != null
-                  ? `${detail.pointBalance.toLocaleString()} P`
-                  : "-"
+                <Link
+                  href={`/point?memberId=${memberId}`}
+                  className="text-brand hover:underline"
+                  title="이 회원 포인트 내역"
+                >
+                  {detail.pointBalance != null
+                    ? `${detail.pointBalance.toLocaleString()} P`
+                    : "-"}
+                </Link>
               }
             />
             <ReadonlyField

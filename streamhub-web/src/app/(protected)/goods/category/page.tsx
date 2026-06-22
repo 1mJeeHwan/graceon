@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -205,7 +206,17 @@ export default function GoodsCategoryPage() {
                               {"└".padStart(1)}
                             </span>
                           )}
-                          {node.name ?? "-"}
+                          {node.id != null ? (
+                            <Link
+                              href={`/goods?categoryId=${node.id}`}
+                              className="text-brand hover:underline"
+                              title="이 카테고리 상품 보기"
+                            >
+                              {node.name ?? "-"}
+                            </Link>
+                          ) : (
+                            (node.name ?? "-")
+                          )}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-700">

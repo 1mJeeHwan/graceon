@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Loader2, Plus, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -186,7 +187,12 @@ export default function SubscriptionPlanPage() {
                 <div className="flex justify-between">
                   <dt>구독자</dt>
                   <dd className="font-medium text-slate-900">
-                    {formatNumber(plan.activeSubscriptionCount)}명
+                    <Link
+                      href={`/subscription?planId=${plan.id}`}
+                      className="text-brand hover:underline"
+                    >
+                      {formatNumber(plan.activeSubscriptionCount)}명
+                    </Link>
                   </dd>
                 </div>
               </dl>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -8,6 +9,7 @@ import {
   Radio,
   RefreshCw,
   Server,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { axiosInstance } from "@/apis/custom-instance";
@@ -35,17 +37,114 @@ function isUp(status: string): boolean {
   return status?.toUpperCase() === "UP";
 }
 
-function StatusPill({ status }: { status: string }) {
+function StatusPill({
+  status,
+  onClick,
+}: {
+  status: string;
+  onClick?: () => void;
+}) {
   const up = isUp(status);
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
-        up ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
-      }`}
-    >
+  const className = `inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+    up ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+  }`;
+  const content = (
+    <>
       <span className={`h-1.5 w-1.5 rounded-full ${up ? "bg-emerald-500" : "bg-red-500"}`} />
       {status ?? "UNKNOWN"}
-    </span>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${className} transition hover:opacity-80`}
+        title="상세 진단 보기"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return <span className={className}>{content}</span>;
+}
+
+interface SelectedComponent {
+  key: string;
+  label: string;
+  status: string;
+  details?: Record<string, unknown>;
+}
+
+/** Diagnostic modal showing a component's actuator details as key/value rows. */
+function DiagnosticModal({
+  component,
+  onClose,
+}: {
+  component: SelectedComponent;
+  onClose: () => void;
+}) {
+  const summaryLines = detailLines(component.key, component.details);
+  const detailEntries = Object.entries(component.details ?? {});
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg rounded-md border border-slate-200 bg-white p-6 shadow-lg"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-slate-900">
+              {component.label}
+            </h2>
+            <StatusPill status={component.status} />
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            aria-label="닫기"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {summaryLines.length > 0 && (
+          <div className="mb-4 space-y-1">
+            {summaryLines.map((line) => (
+              <p key={line} className="text-sm text-slate-600">
+                {line}
+              </p>
+            ))}
+          </div>
+        )}
+
+        {detailEntries.length > 0 ? (
+          <dl className="divide-y divide-slate-100 rounded-md border border-slate-200">
+            {detailEntries.map(([key, value]) => (
+              <div key={key} className="flex justify-between gap-4 px-3 py-2">
+                <dt className="text-xs font-medium text-slate-500">{key}</dt>
+                <dd className="break-all text-right text-xs text-slate-900">
+                  {typeof value === "object"
+                    ? JSON.stringify(value)
+                    : String(value)}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p className="text-sm text-slate-400">
+            제공된 상세 정보가 없습니다.
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -70,6 +169,7 @@ function detailLines(key: string, details?: Record<string, unknown>): string[] {
 }
 
 export default function SystemStatusPage() {
+  const [selected, setSelected] = useState<SelectedComponent | null>(null);
   const { data, isLoading, isError, isFetching, dataUpdatedAt, refetch } = useQuery<HealthResponse>({
     queryKey: ["system-health"],
     queryFn: () => axiosInstance.get("/actuator/health").then((r) => r.data),
@@ -132,7 +232,17 @@ export default function SystemStatusPage() {
                   <Icon className="h-4 w-4 text-slate-400" />
                   <span className="text-sm font-semibold text-slate-800">{meta.label}</span>
                 </div>
-                <StatusPill status={comp.status} />
+                <StatusPill
+                  status={comp.status}
+                  onClick={() =>
+                    setSelected({
+                      key,
+                      label: meta.label,
+                      status: comp.status,
+                      details: comp.details,
+                    })
+                  }
+                />
               </div>
               {detailLines(key, comp.details).map((line) => (
                 <p key={line} className="mt-2 text-xs text-slate-500">
@@ -152,6 +262,13 @@ export default function SystemStatusPage() {
       <p className="text-xs text-slate-400">
         깊은 메트릭(JVM·요청 지연·처리량)은 Grafana 대시보드에서 확인하세요 (docs/observability.md).
       </p>
+
+      {selected && (
+        <DiagnosticModal
+          component={selected}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   );
 }

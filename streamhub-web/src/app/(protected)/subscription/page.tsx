@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { subscriptionList } from "@/apis/query/subscription/subscription";
@@ -40,12 +40,33 @@ export default function SubscriptionPage() {
   // Committed search criteria (applied on 검색 / page change).
   const [keyword, setKeyword] = useState("");
   const [status, setStatus] = useState<StatusFilter>("ALL");
+  // Drill-down filter seeded from the URL (?planId=...).
+  const [planId, setPlanId] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [sort, setSort] = useState<{ by: string; dir: "asc" | "desc" } | null>(null);
 
   // Draft inputs (not yet applied to the query).
   const [keywordDraft, setKeywordDraft] = useState("");
   const [statusDraft, setStatusDraft] = useState<StatusFilter>("ALL");
+
+  // Seed the planId drill-down filter from the URL once on mount. Parsing
+  // window.location.search directly avoids the useSearchParams Suspense build
+  // constraint in the App Router.
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("planId");
+    const parsed = raw ? Number(raw) : NaN;
+    if (Number.isFinite(parsed)) {
+      setPlanId(parsed);
+    }
+  }, []);
+
+  const clearPlanFilter = () => {
+    setPlanId(null);
+    setPageNumber(1);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("planId");
+    window.history.replaceState(null, "", url.toString());
+  };
 
   const searchRequest = useMemo<SubscriptionSearchRequest>(
     () => ({
@@ -54,11 +75,12 @@ export default function SubscriptionPage() {
       pageSize: PAGE_SIZE,
       keyword: keyword.trim() || undefined,
       status: status === "ALL" ? undefined : status,
+      planId: planId ?? undefined,
       // Server-side sort (cast until the Orval client is regenerated post-deploy; the backend
       // SubscriptionSearchRequest already accepts sortBy/sortDir and sends them in the POST body).
       ...(sort ? { sortBy: sort.by, sortDir: sort.dir } : {}),
     }) as SubscriptionSearchRequest,
-    [pageNumber, keyword, status, sort],
+    [pageNumber, keyword, status, planId, sort],
   );
 
   // POST search modeled as a cached query so page/filter changes refetch and
@@ -160,6 +182,21 @@ export default function SubscriptionPage() {
           검색
         </button>
       </div>
+
+      {/* Drill-down filter banner */}
+      {planId != null && (
+        <div className="mb-4 flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <span>플랜 #{planId} 필터 적용 중</span>
+          <button
+            type="button"
+            onClick={clearPlanFilter}
+            className="inline-flex items-center gap-0.5 font-medium underline hover:no-underline"
+          >
+            <X className="h-3.5 w-3.5" />
+            해제
+          </button>
+        </div>
+      )}
 
       {/* Summary */}
       <div className="mb-3 flex flex-wrap items-center gap-3">

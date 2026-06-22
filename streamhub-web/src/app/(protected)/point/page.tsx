@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, X } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { pointList } from "@/apis/query/point/point";
@@ -29,6 +29,8 @@ const PAGE_SIZE = 10;
 export default function PointPage() {
   // Committed search criteria (applied on 검색 / page change).
   const [keyword, setKeyword] = useState("");
+  // Drill-down filter seeded from the URL (?memberId=...).
+  const [memberId, setMemberId] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [sort, setSort] = useState<{ by: string; dir: "asc" | "desc" } | null>(
     null,
@@ -36,6 +38,25 @@ export default function PointPage() {
 
   // Draft input (not yet applied to the query).
   const [keywordDraft, setKeywordDraft] = useState("");
+
+  // Seed the memberId drill-down filter from the URL once on mount. Parsing
+  // window.location.search directly avoids the useSearchParams Suspense build
+  // constraint in the App Router.
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("memberId");
+    const parsed = raw ? Number(raw) : NaN;
+    if (Number.isFinite(parsed)) {
+      setMemberId(parsed);
+    }
+  }, []);
+
+  const clearMemberFilter = () => {
+    setMemberId(null);
+    setPageNumber(1);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("memberId");
+    window.history.replaceState(null, "", url.toString());
+  };
 
   // Manual-grant panel toggle + success banner.
   const [showGrant, setShowGrant] = useState(false);
@@ -48,11 +69,12 @@ export default function PointPage() {
         pageNumber: pageNumber - 1,
         pageSize: PAGE_SIZE,
         keyword: keyword.trim() || undefined,
+        memberId: memberId ?? undefined,
         // Server-side sort (cast until the Orval client is regenerated post-deploy; the backend
         // PointLedgerSearchRequest already accepts sortBy/sortDir and sends them in the POST body).
         ...(sort ? { sortBy: sort.by, sortDir: sort.dir } : {}),
       }) as PointLedgerSearchRequest,
-    [pageNumber, keyword, sort],
+    [pageNumber, keyword, memberId, sort],
   );
 
   // List is a POST search, but it's a read — model it as a cached query keyed by
@@ -163,6 +185,21 @@ export default function PointPage() {
           검색
         </button>
       </div>
+
+      {/* Drill-down filter banner */}
+      {memberId != null && (
+        <div className="mb-4 flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <span>회원 #{memberId} 필터 적용 중</span>
+          <button
+            type="button"
+            onClick={clearMemberFilter}
+            className="inline-flex items-center gap-0.5 font-medium underline hover:no-underline"
+          >
+            <X className="h-3.5 w-3.5" />
+            해제
+          </button>
+        </div>
+      )}
 
       {/* Summary */}
       <div className="mb-3 flex flex-wrap items-center gap-3">

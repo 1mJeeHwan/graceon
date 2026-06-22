@@ -39,6 +39,8 @@ interface MemberGridProps {
   rows: MemberListItem[];
   /** Server-side sort callback: the column field + direction (null when sorting is cleared). */
   onSortChange?: (sortBy: string | null, sortDir: "asc" | "desc" | null) => void;
+  /** In-page filter callback fired when a status badge in the 상태 column is clicked. */
+  onStatusFilterClick?: (status: string) => void;
 }
 
 /**
@@ -50,6 +52,7 @@ export default function MemberGrid({
   rows,
   onSelectionChanged,
   onSortChange,
+  onStatusFilterClick,
 }: MemberGridProps & {
   onSelectionChanged: (selectedIds: number[]) => void;
 }) {
@@ -85,7 +88,14 @@ export default function MemberGrid({
         headerName: "상태",
         minWidth: 100,
         cellRenderer: (params: ICellRendererParams<MemberListItem>) => (
-          <StatusBadge status={params.value} />
+          <StatusBadge
+            status={params.value}
+            onClick={
+              onStatusFilterClick && params.value
+                ? () => onStatusFilterClick(params.value as string)
+                : undefined
+            }
+          />
         ),
       },
       {
@@ -125,7 +135,7 @@ export default function MemberGrid({
         },
       },
     ],
-    [router],
+    [router, onStatusFilterClick],
   );
 
   const defaultColDef = useMemo<ColDef<MemberListItem>>(

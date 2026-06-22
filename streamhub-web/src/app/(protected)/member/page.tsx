@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 
 import { useMemberList, useMemberApprove, useMemberDeny } from "@/apis/query/member/member";
 import {
@@ -36,12 +36,25 @@ export default function MemberPage() {
   // Committed search criteria (applied on 검색 / page change).
   const [keyword, setKeyword] = useState("");
   const [status, setStatus] = useState<StatusFilter>("ALL");
+  // Drill-down filter seeded from the URL (?churchId=...).
+  const [churchId, setChurchId] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [sort, setSort] = useState<{ by: string; dir: "asc" | "desc" } | null>(null);
 
   // Draft inputs (not yet applied to the query).
   const [keywordDraft, setKeywordDraft] = useState("");
   const [statusDraft, setStatusDraft] = useState<StatusFilter>("ALL");
+
+  // Seed the churchId drill-down filter from the URL once on mount. Parsing
+  // window.location.search directly avoids the useSearchParams Suspense build
+  // constraint in the App Router.
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("churchId");
+    const parsed = raw ? Number(raw) : NaN;
+    if (Number.isFinite(parsed)) {
+      setChurchId(parsed);
+    }
+  }, []);
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [message, setMessage] = useState<string | null>(null);
@@ -59,11 +72,12 @@ export default function MemberPage() {
       pageSize: PAGE_SIZE,
       keyword: keyword.trim() || undefined,
       userStatus: status === "ALL" ? undefined : status,
+      churchId: churchId ?? undefined,
       // Server-side sort (cast until the Orval client is regenerated post-deploy; the backend
       // MemberSearchRequest already accepts sortBy/sortDir and reads them from the POST body).
       ...(sort ? { sortBy: sort.by, sortDir: sort.dir } : {}),
     }) as MemberSearchRequest,
-    [pageNumber, keyword, status, sort],
+    [pageNumber, keyword, status, churchId, sort],
   );
 
   useEffect(() => {
@@ -97,6 +111,25 @@ export default function MemberPage() {
   const handleSortChange = (by: string | null, dir: "asc" | "desc" | null) => {
     setSelectedIds([]);
     setSort(by && dir ? { by, dir } : null);
+    setPageNumber(1);
+  };
+
+  const clearChurchFilter = () => {
+    setChurchId(null);
+    setSelectedIds([]);
+    setPageNumber(1);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("churchId");
+    window.history.replaceState(null, "", url.toString());
+  };
+
+  // In-page drill-down: clicking a status badge in the grid applies it as the status filter.
+  const handleStatusFilterClick = (clickedStatus: string) => {
+    const nextStatus = clickedStatus as StatusFilter;
+    setMessage(null);
+    setSelectedIds([]);
+    setStatus(nextStatus);
+    setStatusDraft(nextStatus);
     setPageNumber(1);
   };
 
@@ -213,6 +246,21 @@ export default function MemberPage() {
         </button>
       </div>
 
+      {/* Drill-down filter banner */}
+      {churchId != null && (
+        <div className="mb-4 flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <span>교회 #{churchId} 필터 적용 중</span>
+          <button
+            type="button"
+            onClick={clearChurchFilter}
+            className="inline-flex items-center gap-0.5 font-medium underline hover:no-underline"
+          >
+            <X className="h-3.5 w-3.5" />
+            해제
+          </button>
+        </div>
+      )}
+
       {/* Bulk actions */}
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <span className="text-sm text-slate-600">
@@ -271,6 +319,7 @@ export default function MemberPage() {
           rows={rows}
           onSelectionChanged={setSelectedIds}
           onSortChange={handleSortChange}
+          onStatusFilterClick={handleStatusFilterClick}
         />
       )}
 

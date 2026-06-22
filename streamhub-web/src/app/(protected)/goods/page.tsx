@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Loader2, Plus, Save } from "lucide-react";
+import { Loader2, Plus, Save, X } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { goodsList, useGoodsBulk, useGoodsCategories } from "@/apis/query/goods/goods";
@@ -66,6 +66,33 @@ export default function GoodsPage() {
 
   const categoriesQuery = useGoodsCategories();
   const categories = categoriesQuery.data?.resultObject ?? [];
+
+  // Seed the categoryId drill-down filter from the URL once on mount. Parsing
+  // window.location.search directly avoids the useSearchParams Suspense build
+  // constraint in the App Router. Both the committed value (drives the query) and
+  // the draft (drives the select) are seeded so the UI reflects the active filter.
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("categoryId");
+    if (raw && Number.isFinite(Number(raw))) {
+      setCategoryId(raw);
+      setCategoryDraft(raw);
+    }
+  }, []);
+
+  const clearCategoryFilter = () => {
+    setCategoryId("ALL");
+    setCategoryDraft("ALL");
+    setPageNumber(1);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("categoryId");
+    window.history.replaceState(null, "", url.toString());
+  };
+
+  const categoryFilterLabel =
+    categoryId !== "ALL"
+      ? (categories.find((category) => String(category.id) === categoryId)
+          ?.name ?? `분류 #${categoryId}`)
+      : null;
 
   const searchRequest = useMemo<GoodsSearchRequest>(
     () => ({
@@ -293,6 +320,21 @@ export default function GoodsPage() {
           검색
         </button>
       </div>
+
+      {/* Drill-down filter banner */}
+      {categoryFilterLabel != null && (
+        <div className="mb-4 flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <span>{categoryFilterLabel} 분류 필터 적용 중</span>
+          <button
+            type="button"
+            onClick={clearCategoryFilter}
+            className="inline-flex items-center gap-0.5 font-medium underline hover:no-underline"
+          >
+            <X className="h-3.5 w-3.5" />
+            해제
+          </button>
+        </div>
+      )}
 
       {/* Summary + bulk action */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">

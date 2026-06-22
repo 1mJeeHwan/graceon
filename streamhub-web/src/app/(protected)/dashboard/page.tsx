@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import MemberTrendChart from "@/components/dashboard/MemberTrendChart";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import TopContentsChart from "@/components/dashboard/TopContentsChart";
@@ -10,6 +12,8 @@ import WatchByChannelChart from "@/components/dashboard/WatchByChannelChart";
  * followed by the daily sign-up trend and per-channel / top-content charts.
  */
 export default function DashboardPage() {
+  const router = useRouter();
+
   return (
     <div>
       <div className="mb-4">
@@ -24,7 +28,9 @@ export default function DashboardPage() {
       <div className="mt-4 grid grid-cols-1 gap-4">
         <MemberTrendChart />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <TopContentsChart />
+          <TopContentsChart
+            onSelect={(id) => router.push(`/content/${id}`)}
+          />
           <WatchByChannelChart />
         </div>
       </div>

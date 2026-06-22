@@ -159,8 +159,24 @@ export default function ChurchDetailPage() {
         목록으로
       </Link>
 
-      <div className="mb-4">
+      <div className="mb-4 flex items-center justify-between gap-2">
         <h1 className="text-xl font-semibold text-slate-900">교회 상세</h1>
+        {detail && (
+          <div className="flex gap-2">
+            <Link
+              href={`/member?churchId=${detail.id}`}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+            >
+              이 교회 회원 보기
+            </Link>
+            <Link
+              href={`/worship?churchId=${detail.id}`}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+            >
+              예배신청 보기
+            </Link>
+          </div>
+        )}
       </div>
 
       {detailQuery.isPending ? (

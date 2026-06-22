@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { worshipList } from "@/apis/query/worship/worship";
@@ -49,10 +49,31 @@ export default function WorshipPage() {
   const [status, setStatus] = useState<StatusFilter>("ALL");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  // Drill-down filter seeded from the URL (?churchId=...).
+  const [churchId, setChurchId] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [sort, setSort] = useState<{ by: string; dir: "asc" | "desc" } | null>(
     null,
   );
+
+  // Seed the churchId drill-down filter from the URL once on mount. Parsing
+  // window.location.search directly avoids the useSearchParams Suspense build
+  // constraint in the App Router.
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("churchId");
+    const parsed = raw ? Number(raw) : NaN;
+    if (Number.isFinite(parsed)) {
+      setChurchId(parsed);
+    }
+  }, []);
+
+  const clearChurchFilter = () => {
+    setChurchId(null);
+    setPageNumber(1);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("churchId");
+    window.history.replaceState(null, "", url.toString());
+  };
 
   // Draft inputs (not yet applied to the query).
   const [searchFieldDraft, setSearchFieldDraft] = useState<SearchField>("name");
@@ -69,13 +90,14 @@ export default function WorshipPage() {
       searchField: keyword.trim() ? searchField : undefined,
       keyword: keyword.trim() || undefined,
       status: status === "ALL" ? undefined : status,
+      churchId: churchId ?? undefined,
       fromDate: fromDate || undefined,
       toDate: toDate || undefined,
       // Server-side sort (cast until the Orval client is regenerated post-deploy; the backend
       // WorshipSearchRequest already accepts sortBy/sortDir and sends them in the POST body).
       ...(sort ? { sortBy: sort.by, sortDir: sort.dir } : {}),
     }) as WorshipSearchRequest,
-    [pageNumber, searchField, keyword, status, fromDate, toDate, sort],
+    [pageNumber, searchField, keyword, status, churchId, fromDate, toDate, sort],
   );
 
   // List is a POST search, but it's a read — model it as a cached query keyed by
@@ -236,6 +258,21 @@ export default function WorshipPage() {
           검색
         </button>
       </div>
+
+      {/* Drill-down filter banner */}
+      {churchId != null && (
+        <div className="mb-4 flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <span>교회 #{churchId} 필터 적용 중</span>
+          <button
+            type="button"
+            onClick={clearChurchFilter}
+            className="inline-flex items-center gap-0.5 font-medium underline hover:no-underline"
+          >
+            <X className="h-3.5 w-3.5" />
+            해제
+          </button>
+        </div>
+      )}
 
       {/* Summary */}
       <div className="mb-3 flex flex-wrap items-center gap-3">
