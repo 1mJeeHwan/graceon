@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: streamhub-audit-service
+  datasource:
+    # Shared DB for the demo (ACTION_LOG). DB-per-service is the principled next step — see docs.
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/streamhub?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${DB_USER:streamhub}
+    password: ${DB_PASSWORD:streamhub}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update          # table is shared/idempotent; entity matches the monolith's
+    open-in-view: false
+    properties:
+      hibernate:
+        naming:
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_GROUP_ID:streamhub-action-log}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        # Ignore the producer's __TypeId__ header (it names the monolith's class, absent here) and
+        # always deserialize into this service's own record. This is the key cross-service contract.
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: org.streamhub.audit.ActionLogMessage
+        spring.json.trusted.packages: org.streamhub.audit
+
+server:
+  port: 8090
+
+app:
+  kafka:
+    action-log-topic: ${KAFKA_ACTION_LOG_TOPIC:streamhub-action-log}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

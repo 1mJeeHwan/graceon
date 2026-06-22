@@ -1,20 +1,21 @@
 package org.streamhub.api.v1.actionlog;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.streamhub.api.v1.actionlog.dto.ActionLogMessage;
 
 /**
  * Consumes action events from Kafka and persists them via {@link ActionLogWriter}. Active when
- * {@code app.eventlog.transport=kafka}. At-least-once delivery (offset committed after a successful
- * write), so a redelivery on rebalance/retry can re-insert a row — acceptable for an audit trail and
- * matching the SQS path's semantics. The consumer group lets multiple instances share partitions.
+ * {@code app.eventlog.transport=kafka} AND {@code app.eventlog.consume} is not false. Setting
+ * {@code app.eventlog.consume=false} makes this app a <b>producer only</b> — the extracted
+ * {@code streamhub-audit-service} then owns consumption (MSA split; see docs/msa-split.md).
+ * At-least-once delivery (offset committed after a successful write), so a redelivery can re-insert.
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "app.eventlog.transport", havingValue = "kafka")
+@ConditionalOnExpression("'${app.eventlog.transport:sqs}' == 'kafka' and '${app.eventlog.consume:true}' == 'true'")
 public class KafkaActionLogConsumer {
 
     private final ActionLogWriter writer;
