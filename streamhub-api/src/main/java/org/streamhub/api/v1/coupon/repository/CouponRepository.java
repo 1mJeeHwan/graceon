@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import org.streamhub.api.v1.coupon.entity.Coupon;
 
 /** JPA repository for {@link Coupon} (discount coupons). */
@@ -49,4 +50,14 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     @Query("UPDATE Coupon c SET c.usedCount = c.usedCount - 1 "
             + "WHERE c.id = :id AND c.usedCount > 0")
     int decrementUsedCount(@Param("id") Long id);
+
+    /**
+     * Sets {@code usedCount} to an exact value. Used only by demo seeding to keep a coupon's usage
+     * counter consistent with the number of redemption-ledger rows created for it (so the admin
+     * "사용 N/M" matches the redemptions modal). Not used on the live redemption path.
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE Coupon c SET c.usedCount = :count WHERE c.id = :id")
+    int setUsedCount(@Param("id") Long id, @Param("count") int count);
 }
