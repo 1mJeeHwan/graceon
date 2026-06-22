@@ -100,6 +100,12 @@ app:
   actionlog:
     source: ${ACTIONLOG_SOURCE:local}                       # local | remote
     audit-service-url: ${AUDIT_SERVICE_URL:http://localhost:8090}
+  # 알림 발송 이벤트 추출 seam. enabled=false(기본) = 모놀리스 단독(noop, 브로커 무의존).
+  # true = 발송 시 dispatch 이벤트를 Kafka로 발행 → streamhub-notification-service가 소비/영속(MSA).
+  notification:
+    dispatch:
+      enabled: ${NOTIFICATION_DISPATCH:false}               # true 시 KafkaNotificationDispatcher
+      topic: ${NOTIFICATION_DISPATCH_TOPIC:streamhub-notification-dispatch}
   # Worship (C2) external-integration seams. Defaults are demo/test no-ops; switch to a real
   # provider by overriding these (e.g. postcode.provider=kakao, sms.provider=aligo) + adding
   # the matching @ConditionalOnProperty bean. No real external call is made in mock/noop mode.

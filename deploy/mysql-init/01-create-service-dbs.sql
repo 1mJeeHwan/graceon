@@ -6,4 +6,9 @@
 CREATE DATABASE IF NOT EXISTS streamhub_audit
     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 GRANT ALL PRIVILEGES ON streamhub_audit.* TO 'streamhub'@'%';
+
+CREATE DATABASE IF NOT EXISTS streamhub_notification
+    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL PRIVILEGES ON streamhub_notification.* TO 'streamhub'@'%';
+
 FLUSH PRIVILEGES;

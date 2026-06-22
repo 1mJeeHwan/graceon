@@ -19,6 +19,8 @@ import org.streamhub.api.v1.notification.entity.NotificationLog;
 import org.streamhub.api.v1.notification.entity.NotificationRecipient;
 import org.streamhub.api.v1.notification.entity.NotificationScope;
 import org.streamhub.api.v1.notification.entity.NotificationStatus;
+import org.streamhub.api.v1.notification.dispatch.NotificationDispatchEvent;
+import org.streamhub.api.v1.notification.dispatch.NotificationDispatcher;
 import org.streamhub.api.v1.notification.repository.NotificationLogRepository;
 import org.streamhub.api.v1.notification.repository.NotificationRecipientRepository;
 
@@ -34,15 +36,18 @@ public class NotificationService {
     private final NotificationRecipientRepository recipientRepository;
     private final MemberRepository memberRepository;
     private final ActionLogPublisher actionLogPublisher;
+    private final NotificationDispatcher notificationDispatcher;
 
     public NotificationService(NotificationLogRepository notificationLogRepository,
                                NotificationRecipientRepository recipientRepository,
                                MemberRepository memberRepository,
-                               ActionLogPublisher actionLogPublisher) {
+                               ActionLogPublisher actionLogPublisher,
+                               NotificationDispatcher notificationDispatcher) {
         this.notificationLogRepository = notificationLogRepository;
         this.recipientRepository = recipientRepository;
         this.memberRepository = memberRepository;
         this.actionLogPublisher = actionLogPublisher;
+        this.notificationDispatcher = notificationDispatcher;
     }
 
     /**
@@ -90,6 +95,14 @@ public class NotificationService {
 
         actionLogPublisher.publish("NOTIFICATION_SEND", "NOTIFICATION",
                 String.valueOf(logRow.getId()), request.title());
+        notificationDispatcher.dispatch(new NotificationDispatchEvent(
+                logRow.getChannel().name(),
+                logRow.getScope().name(),
+                logRow.getTargetMasked(),
+                logRow.getTitle(),
+                logRow.getContent(),
+                logRow.getStatus().name(),
+                logRow.getSentAt()));
         return NotificationLogDto.from(logRow);
     }
 

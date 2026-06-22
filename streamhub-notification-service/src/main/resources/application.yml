@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: streamhub-notification-service
+  datasource:
+    # DB-per-service: owns the dispatch log in its own schema (streamhub_notification), separate from
+    # the monolith's `streamhub` DB. The monolith reaches it via /v1/notification-dispatches.
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/${DB_NAME:streamhub_notification}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${DB_USER:streamhub}
+    password: ${DB_PASSWORD:streamhub}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update          # this service creates/owns NOTIFICATION_DISPATCH in its own schema
+    open-in-view: false
+    properties:
+      hibernate:
+        naming:
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_GROUP_ID:streamhub-notification}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        # Ignore the producer's __TypeId__ header (names the monolith's class, absent here) and always
+        # deserialize into this service's own record — the cross-service serialization contract.
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: org.streamhub.notification.NotificationDispatchMessage
+        spring.json.trusted.packages: org.streamhub.notification
+
+server:
+  port: 8091
+
+app:
+  kafka:
+    notification-dispatch-topic: ${NOTIFICATION_DISPATCH_TOPIC:streamhub-notification-dispatch}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
