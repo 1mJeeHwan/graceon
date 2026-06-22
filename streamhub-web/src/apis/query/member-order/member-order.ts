@@ -23,51 +23,63 @@ import type {
 
 import type {
   MemberOrderCreateRequest,
+  MemberOrderOrdersParams,
   MemberPaymentConfirmRequest,
   MemberPaymentPrepareRequest,
-  ResultDTOListMemberOrderListItem,
+  ResultDTOMemberOrderReceipt,
   ResultDTOMemberOrderResult,
   ResultDTOMemberPaymentPrepareResult,
+  ResultDTOResInfinityListMemberOrderListItem,
   ResultDTOTracking,
 } from "../streamHubAdminAPI.schemas";
 
 import { customInstance } from "../../custom-instance";
 
 /**
- * 로그인 회원의 주문 목록을 최신순으로 반환한다.
+ * 로그인 회원의 주문 목록을 최신순으로 페이징해 반환한다.
  * @summary 구매내역
  */
-export const memberOrderOrders = (signal?: AbortSignal) => {
-  return customInstance<ResultDTOListMemberOrderListItem>({
+export const memberOrderOrders = (
+  params?: MemberOrderOrdersParams,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOResInfinityListMemberOrderListItem>({
     url: `/pub/v1/orders`,
     method: "GET",
+    params,
     signal,
   });
 };
 
-export const getMemberOrderOrdersQueryKey = () => {
-  return [`/pub/v1/orders`] as const;
+export const getMemberOrderOrdersQueryKey = (
+  params?: MemberOrderOrdersParams
+) => {
+  return [`/pub/v1/orders`, ...(params ? [params] : [])] as const;
 };
 
 export const getMemberOrderOrdersQueryOptions = <
   TData = Awaited<ReturnType<typeof memberOrderOrders>>,
   TError = unknown
->(options?: {
-  query?: Partial<
-    UseQueryOptions<
-      Awaited<ReturnType<typeof memberOrderOrders>>,
-      TError,
-      TData
-    >
-  >;
-}) => {
+>(
+  params?: MemberOrderOrdersParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberOrderOrders>>,
+        TError,
+        TData
+      >
+    >;
+  }
+) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getMemberOrderOrdersQueryKey();
+  const queryKey =
+    queryOptions?.queryKey ?? getMemberOrderOrdersQueryKey(params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof memberOrderOrders>>
-  > = ({ signal }) => memberOrderOrders(signal);
+  > = ({ signal }) => memberOrderOrders(params, signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof memberOrderOrders>>,
@@ -85,6 +97,7 @@ export function useMemberOrderOrders<
   TData = Awaited<ReturnType<typeof memberOrderOrders>>,
   TError = unknown
 >(
+  params: undefined | MemberOrderOrdersParams,
   options: {
     query: Partial<
       UseQueryOptions<
@@ -110,6 +123,7 @@ export function useMemberOrderOrders<
   TData = Awaited<ReturnType<typeof memberOrderOrders>>,
   TError = unknown
 >(
+  params?: MemberOrderOrdersParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -135,6 +149,7 @@ export function useMemberOrderOrders<
   TData = Awaited<ReturnType<typeof memberOrderOrders>>,
   TError = unknown
 >(
+  params?: MemberOrderOrdersParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -156,6 +171,7 @@ export function useMemberOrderOrders<
   TData = Awaited<ReturnType<typeof memberOrderOrders>>,
   TError = unknown
 >(
+  params?: MemberOrderOrdersParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -169,7 +185,7 @@ export function useMemberOrderOrders<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getMemberOrderOrdersQueryOptions(options);
+  const queryOptions = getMemberOrderOrdersQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -443,6 +459,170 @@ export const useMemberOrderOrdersConfirmCreate = <
 
   return useMutation(mutationOptions, queryClient);
 };
+/**
+ * 회원 본인 주문의 영수증(주문/항목/결제 정보)을 반환한다.
+ * @summary 영수증 상세
+ */
+export const memberOrderOrdersDetail = (
+  orderNo: string,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOMemberOrderReceipt>({
+    url: `/pub/v1/orders/${orderNo}`,
+    method: "GET",
+    signal,
+  });
+};
+
+export const getMemberOrderOrdersDetailQueryKey = (orderNo?: string) => {
+  return [`/pub/v1/orders/${orderNo}`] as const;
+};
+
+export const getMemberOrderOrdersDetailQueryOptions = <
+  TData = Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+  TError = unknown
+>(
+  orderNo: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+        TError,
+        TData
+      >
+    >;
+  }
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getMemberOrderOrdersDetailQueryKey(orderNo);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof memberOrderOrdersDetail>>
+  > = ({ signal }) => memberOrderOrdersDetail(orderNo, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!orderNo,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type MemberOrderOrdersDetailQueryResult = NonNullable<
+  Awaited<ReturnType<typeof memberOrderOrdersDetail>>
+>;
+export type MemberOrderOrdersDetailQueryError = unknown;
+
+export function useMemberOrderOrdersDetail<
+  TData = Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+  TError = unknown
+>(
+  orderNo: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+          TError,
+          Awaited<ReturnType<typeof memberOrderOrdersDetail>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useMemberOrderOrdersDetail<
+  TData = Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+  TError = unknown
+>(
+  orderNo: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+          TError,
+          Awaited<ReturnType<typeof memberOrderOrdersDetail>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useMemberOrderOrdersDetail<
+  TData = Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+  TError = unknown
+>(
+  orderNo: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 영수증 상세
+ */
+
+export function useMemberOrderOrdersDetail<
+  TData = Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+  TError = unknown
+>(
+  orderNo: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberOrderOrdersDetail>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getMemberOrderOrdersDetailQueryOptions(orderNo, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
 /**
  * 회원 본인 주문의 운송장으로 실시간 배송 진행상황을 조회한다.
  * @summary 배송 조회

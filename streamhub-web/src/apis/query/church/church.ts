@@ -35,7 +35,7 @@ import type {
 import { customInstance } from "../../custom-instance";
 
 /**
- * 예배시간 포함.
+ * 예배시간 포함. CHURCH_MANAGER는 본인 교회만.
  * @summary 교회 상세
  */
 export const churchChurchesDetail = (id: number, signal?: AbortSignal) => {
@@ -196,6 +196,7 @@ export function useChurchChurchesDetail<
 }
 
 /**
+ * CHURCH_MANAGER는 본인 교회만 수정.
  * @summary 교회 수정
  */
 export const churchChurchesUpdate = (
@@ -277,6 +278,7 @@ export const useChurchChurchesUpdate = <TError = unknown, TContext = unknown>(
   return useMutation(mutationOptions, queryClient);
 };
 /**
+ * CHURCH_MANAGER는 본인 교회만 삭제.
  * @summary 교회 삭제
  */
 export const churchChurchesDelete = (id: number) => {
@@ -353,6 +355,7 @@ export const useChurchChurchesDelete = <TError = unknown, TContext = unknown>(
   return useMutation(mutationOptions, queryClient);
 };
 /**
+ * SYSTEM 전용 — 디렉터리에 새 교회를 추가한다.
  * @summary 교회 등록
  */
 export const churchChurchesCreate = (
@@ -518,7 +521,7 @@ export const useChurchChurchesUpload = <TError = unknown, TContext = unknown>(
   return useMutation(mutationOptions, queryClient);
 };
 /**
- * 검색/필터/페이지네이션된 교회 목록.
+ * 검색/필터/페이지네이션된 교회 목록. CHURCH_MANAGER는 본인 교회만.
  * @summary 교회 목록
  */
 export const churchChurchesList = (

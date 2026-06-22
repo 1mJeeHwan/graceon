@@ -764,6 +764,8 @@ export interface ChurchDetail {
   openYn?: string;
   useYn?: string;
   demoData?: boolean;
+  memberCount?: number;
+  worshipRegistrationCount?: number;
   worshipTimes?: WorshipTimeDto[];
   createdAt?: string;
   updatedAt?: string;
@@ -1650,6 +1652,89 @@ export interface ResultDTOResInfinityListOrderListItem {
   resultObject?: ResInfinityListOrderListItem;
 }
 
+export type NotificationSendRequestChannel =
+  (typeof NotificationSendRequestChannel)[keyof typeof NotificationSendRequestChannel];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const NotificationSendRequestChannel = {
+  SMS: "SMS",
+  PUSH: "PUSH",
+  EMAIL: "EMAIL",
+} as const;
+
+export type NotificationSendRequestScope =
+  (typeof NotificationSendRequestScope)[keyof typeof NotificationSendRequestScope];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const NotificationSendRequestScope = {
+  BROADCAST: "BROADCAST",
+  TARGETED: "TARGETED",
+} as const;
+
+export interface NotificationSendRequest {
+  channel: NotificationSendRequestChannel;
+  scope: NotificationSendRequestScope;
+  /**
+   * @minLength 0
+   * @maxLength 200
+   */
+  title: string;
+  /**
+   * @minLength 0
+   * @maxLength 500
+   */
+  content: string;
+  memberIds?: number[];
+}
+
+export type NotificationLogDtoChannel =
+  (typeof NotificationLogDtoChannel)[keyof typeof NotificationLogDtoChannel];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const NotificationLogDtoChannel = {
+  SMS: "SMS",
+  PUSH: "PUSH",
+  EMAIL: "EMAIL",
+} as const;
+
+export type NotificationLogDtoScope =
+  (typeof NotificationLogDtoScope)[keyof typeof NotificationLogDtoScope];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const NotificationLogDtoScope = {
+  BROADCAST: "BROADCAST",
+  TARGETED: "TARGETED",
+} as const;
+
+export type NotificationLogDtoStatus =
+  (typeof NotificationLogDtoStatus)[keyof typeof NotificationLogDtoStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const NotificationLogDtoStatus = {
+  SUCCESS: "SUCCESS",
+  FAIL: "FAIL",
+  PENDING: "PENDING",
+} as const;
+
+export interface NotificationLogDto {
+  id?: number;
+  channel?: NotificationLogDtoChannel;
+  scope?: NotificationLogDtoScope;
+  targetMasked?: string;
+  title?: string;
+  content?: string;
+  status?: NotificationLogDtoStatus;
+  failReason?: string;
+  sentAt?: string;
+  createdAt?: string;
+}
+
+export interface ResultDTONotificationLogDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: NotificationLogDto;
+}
+
 export type NotificationSearchRequestChannel =
   (typeof NotificationSearchRequestChannel)[keyof typeof NotificationSearchRequestChannel];
 
@@ -1676,38 +1761,6 @@ export interface NotificationSearchRequest {
   fromDate?: string;
   toDate?: string;
   keyword?: string;
-}
-
-export type NotificationLogDtoChannel =
-  (typeof NotificationLogDtoChannel)[keyof typeof NotificationLogDtoChannel];
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const NotificationLogDtoChannel = {
-  SMS: "SMS",
-  PUSH: "PUSH",
-  EMAIL: "EMAIL",
-} as const;
-
-export type NotificationLogDtoStatus =
-  (typeof NotificationLogDtoStatus)[keyof typeof NotificationLogDtoStatus];
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const NotificationLogDtoStatus = {
-  SUCCESS: "SUCCESS",
-  FAIL: "FAIL",
-  PENDING: "PENDING",
-} as const;
-
-export interface NotificationLogDto {
-  id?: number;
-  channel?: NotificationLogDtoChannel;
-  targetMasked?: string;
-  title?: string;
-  content?: string;
-  status?: NotificationLogDtoStatus;
-  failReason?: string;
-  sentAt?: string;
-  createdAt?: string;
 }
 
 export interface ResultDTOListNotificationLogDto {
@@ -2250,6 +2303,7 @@ export const ChatReplyDtoIntent = {
   PRODUCT_INQUIRY: "PRODUCT_INQUIRY",
   ORDER_LOOKUP: "ORDER_LOOKUP",
   FAQ: "FAQ",
+  FEATURE_GUIDE: "FEATURE_GUIDE",
   FALLBACK: "FALLBACK",
 } as const;
 
@@ -2274,6 +2328,7 @@ export const ChatSessionRowIntent = {
   PRODUCT_INQUIRY: "PRODUCT_INQUIRY",
   ORDER_LOOKUP: "ORDER_LOOKUP",
   FAQ: "FAQ",
+  FEATURE_GUIDE: "FEATURE_GUIDE",
   FALLBACK: "FALLBACK",
 } as const;
 
@@ -2317,6 +2372,7 @@ export const ChatMessageRowIntent = {
   PRODUCT_INQUIRY: "PRODUCT_INQUIRY",
   ORDER_LOOKUP: "ORDER_LOOKUP",
   FAQ: "FAQ",
+  FEATURE_GUIDE: "FEATURE_GUIDE",
   FALLBACK: "FALLBACK",
 } as const;
 
@@ -2713,9 +2769,33 @@ export interface MemberPaymentConfirmRequest {
   amount: number;
 }
 
-export interface HistoryRecordRequest {
-  contentId: number;
-  watchSeconds?: number;
+export interface ReviewCreateRequest {
+  goodsItemId: number;
+  /**
+   * @minimum 1
+   * @maximum 5
+   */
+  rating?: number;
+  /**
+   * @minLength 0
+   * @maxLength 1000
+   */
+  content: string;
+}
+
+export interface MyReviewItem {
+  id?: number;
+  goodsId?: number;
+  goodsName?: string;
+  rating?: number;
+  content?: string;
+  createdAt?: string;
+}
+
+export interface ResultDTOMyReviewItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: MyReviewItem;
 }
 
 export type ResultDTOVoidResultObject = { [key: string]: unknown };
@@ -2724,6 +2804,51 @@ export interface ResultDTOVoid {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: ResultDTOVoidResultObject;
+}
+
+export interface InquiryCreateRequest {
+  goodsItemId: number;
+  /**
+   * @minLength 0
+   * @maxLength 200
+   */
+  title: string;
+  /**
+   * @minLength 0
+   * @maxLength 1000
+   */
+  content: string;
+}
+
+export type MyInquiryItemStatus =
+  (typeof MyInquiryItemStatus)[keyof typeof MyInquiryItemStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const MyInquiryItemStatus = {
+  WAITING: "WAITING",
+  ANSWERED: "ANSWERED",
+} as const;
+
+export interface MyInquiryItem {
+  id?: number;
+  goodsId?: number;
+  goodsName?: string;
+  title?: string;
+  question?: string;
+  answer?: string;
+  status?: MyInquiryItemStatus;
+  createdAt?: string;
+}
+
+export interface ResultDTOMyInquiryItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: MyInquiryItem;
+}
+
+export interface HistoryRecordRequest {
+  contentId: number;
+  watchSeconds?: number;
 }
 
 export interface FavoriteAddRequest {
@@ -3167,12 +3292,6 @@ export interface ResultDTOListCarrier {
   resultObject?: Carrier[];
 }
 
-export interface ResultDTONotificationLogDto {
-  resultCode?: string;
-  resultMessage?: string;
-  resultObject?: NotificationLogDto;
-}
-
 export type NotificationSummaryDtoByChannel = { [key: string]: number };
 
 export interface NotificationSummaryDto {
@@ -3255,6 +3374,19 @@ export interface ResultDTOListFeedItem {
   resultObject?: FeedItem[];
 }
 
+export interface CouponRedemptionItem {
+  id?: number;
+  memberId?: number;
+  memberName?: string;
+  redeemedAt?: string;
+}
+
+export interface ResultDTOListCouponRedemptionItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: CouponRedemptionItem[];
+}
+
 export interface ChannelDto {
   id?: number;
   name?: string;
@@ -3294,6 +3426,7 @@ export const ChatHistoryItemIntent = {
   PRODUCT_INQUIRY: "PRODUCT_INQUIRY",
   ORDER_LOOKUP: "ORDER_LOOKUP",
   FAQ: "FAQ",
+  FEATURE_GUIDE: "FEATURE_GUIDE",
   FALLBACK: "FALLBACK",
 } as const;
 
@@ -3484,18 +3617,67 @@ export interface MemberOrderListItem {
   orderedAt?: string;
 }
 
-export interface ResultDTOListMemberOrderListItem {
-  resultCode?: string;
-  resultMessage?: string;
-  resultObject?: MemberOrderListItem[];
+export interface ResInfinityListMemberOrderListItem {
+  contents?: MemberOrderListItem[];
+  totalCount?: number;
+  totalPage?: number;
 }
 
-export interface MyReviewItem {
-  goodsId?: number;
+export interface ResultDTOResInfinityListMemberOrderListItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ResInfinityListMemberOrderListItem;
+}
+
+export interface Line {
   goodsName?: string;
-  rating?: number;
-  content?: string;
-  createdAt?: string;
+  optionName?: string;
+  unitPrice?: number;
+  qty?: number;
+  lineTotal?: number;
+}
+
+export type MemberOrderReceiptStatus =
+  (typeof MemberOrderReceiptStatus)[keyof typeof MemberOrderReceiptStatus];
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const MemberOrderReceiptStatus = {
+  PLACED: "PLACED",
+  PAID: "PAID",
+  READY: "READY",
+  SHIPPING: "SHIPPING",
+  DONE: "DONE",
+  CANCEL: "CANCEL",
+  RETURN: "RETURN",
+} as const;
+
+export interface MemberOrderReceipt {
+  orderNo?: string;
+  status?: MemberOrderReceiptStatus;
+  orderedName?: string;
+  orderedAt?: string;
+  paidAt?: string;
+  items?: Line[];
+  goodsTotal?: number;
+  shipFee?: number;
+  couponDiscount?: number;
+  pointUsed?: number;
+  total?: number;
+  payMethod?: string;
+  payProvider?: string;
+  payStatus?: string;
+  txnId?: string;
+  receiverName?: string;
+  receiverPhone?: string;
+  receiverAddr?: string;
+  trackingNo?: string;
+  shipCompany?: string;
+}
+
+export interface ResultDTOMemberOrderReceipt {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: MemberOrderReceipt;
 }
 
 export interface ResultDTOListMyReviewItem {
@@ -3504,22 +3686,55 @@ export interface ResultDTOListMyReviewItem {
   resultObject?: MyReviewItem[];
 }
 
-export type MyInquiryItemStatus =
-  (typeof MyInquiryItemStatus)[keyof typeof MyInquiryItemStatus];
+export interface MemberPointsDto {
+  balance?: number;
+  ledger?: ResInfinityListPointLedgerItem;
+}
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const MyInquiryItemStatus = {
-  WAITING: "WAITING",
-  ANSWERED: "ANSWERED",
-} as const;
-
-export interface MyInquiryItem {
-  goodsId?: number;
-  goodsName?: string;
-  question?: string;
-  answer?: string;
-  status?: MyInquiryItemStatus;
+export interface PointLedgerItem {
+  id?: number;
+  amount?: number;
+  type?: string;
+  memo?: string;
   createdAt?: string;
+}
+
+export interface ResInfinityListPointLedgerItem {
+  contents?: PointLedgerItem[];
+  totalCount?: number;
+  totalPage?: number;
+}
+
+export interface ResultDTOMemberPointsDto {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: MemberPointsDto;
+}
+
+export interface NotificationItem {
+  id?: number;
+  title?: string;
+  body?: string;
+  read?: boolean;
+  createdAt?: string;
+}
+
+export interface ResInfinityListNotificationItem {
+  contents?: NotificationItem[];
+  totalCount?: number;
+  totalPage?: number;
+}
+
+export interface ResultDTOResInfinityListNotificationItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ResInfinityListNotificationItem;
+}
+
+export interface ResultDTOLong {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: number;
 }
 
 export interface ResultDTOListMyInquiryItem {
@@ -3528,10 +3743,16 @@ export interface ResultDTOListMyInquiryItem {
   resultObject?: MyInquiryItem[];
 }
 
-export interface ResultDTOListWatchHistoryItem {
+export interface ResInfinityListWatchHistoryItem {
+  contents?: WatchHistoryItem[];
+  totalCount?: number;
+  totalPage?: number;
+}
+
+export interface ResultDTOResInfinityListWatchHistoryItem {
   resultCode?: string;
   resultMessage?: string;
-  resultObject?: WatchHistoryItem[];
+  resultObject?: ResInfinityListWatchHistoryItem;
 }
 
 export type WatchHistoryItemType =
@@ -3568,6 +3789,40 @@ export interface ResultDTOListFavoriteItem {
   resultObject?: FavoriteItem[];
 }
 
+export interface MyDonationItem {
+  id?: number;
+  name?: string;
+  amount?: number;
+  cycle?: string;
+  status?: string;
+  nextBillingAt?: string;
+  startedAt?: string;
+}
+
+export interface ResultDTOListMyDonationItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: MyDonationItem[];
+}
+
+export interface MyCouponItem {
+  id?: number;
+  code?: string;
+  name?: string;
+  discountType?: string;
+  discountValue?: number;
+  minOrderAmount?: number;
+  validFrom?: string;
+  validUntil?: string;
+  used?: boolean;
+}
+
+export interface ResultDTOListMyCouponItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: MyCouponItem[];
+}
+
 export interface PurchasedAlbumItem {
   albumId?: number;
   title?: string;
@@ -3576,10 +3831,16 @@ export interface PurchasedAlbumItem {
   purchasedAt?: string;
 }
 
-export interface ResultDTOListPurchasedAlbumItem {
+export interface ResInfinityListPurchasedAlbumItem {
+  contents?: PurchasedAlbumItem[];
+  totalCount?: number;
+  totalPage?: number;
+}
+
+export interface ResultDTOResInfinityListPurchasedAlbumItem {
   resultCode?: string;
   resultMessage?: string;
-  resultObject?: PurchasedAlbumItem[];
+  resultObject?: ResInfinityListPurchasedAlbumItem;
 }
 
 export interface PublicHomeResponse {
@@ -3639,6 +3900,45 @@ export interface ResultDTOResInfinityListChurchNearbyItem {
   resultObject?: ResInfinityListChurchNearbyItem;
 }
 
+export interface CampaignListItem {
+  id?: number;
+  title?: string;
+  summary?: string;
+  imageUrl?: string;
+  status?: string;
+  startAt?: string;
+  endAt?: string;
+}
+
+export interface ResInfinityListCampaignListItem {
+  contents?: CampaignListItem[];
+  totalCount?: number;
+  totalPage?: number;
+}
+
+export interface ResultDTOResInfinityListCampaignListItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ResInfinityListCampaignListItem;
+}
+
+export interface CampaignDetail {
+  id?: number;
+  title?: string;
+  summary?: string;
+  description?: string;
+  imageUrl?: string;
+  status?: string;
+  startAt?: string;
+  endAt?: string;
+}
+
+export interface ResultDTOCampaignDetail {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: CampaignDetail;
+}
+
 export interface ResultDTOMemberInfo {
   resultCode?: string;
   resultMessage?: string;
@@ -3678,6 +3978,16 @@ export type AlbumHLSAdminAlbumTracksAudioCreateBody = {
   file: Blob;
 };
 
+export type MemberOrderOrdersParams = {
+  pageNumber?: number;
+  pageSize?: number;
+};
+
+export type MemberMeMeHistoryParams = {
+  pageNumber?: number;
+  pageSize?: number;
+};
+
 export type StatisticsTopContentsParams = {
   limit?: number;
 };
@@ -3714,6 +4024,27 @@ export type PublicPostsParams = {
   keyword?: string;
   pageNumber?: number;
   pageSize?: number;
+};
+
+export type MemberPointsMePointsParams = {
+  pageNumber?: number;
+  pageSize?: number;
+};
+
+export type MemberNotificationsMeNotificationsParams = {
+  pageNumber?: number;
+  pageSize?: number;
+};
+
+export type MemberMeMeAlbumsParams = {
+  pageNumber?: number;
+  pageSize?: number;
+};
+
+export type PublicGoodsGoodsParams = {
+  pageNumber?: number;
+  pageSize?: number;
+  keyword?: string;
 };
 
 export type PublicContentsParams = {
@@ -3756,6 +4087,11 @@ export const PublicChurchesDenomination = {
   BAPTIST: "BAPTIST",
   ETC: "ETC",
 } as const;
+
+export type PublicCampaignCampaignsParams = {
+  pageNumber?: number;
+  pageSize?: number;
+};
 
 export type PublicBannersParams = {
   target?: PublicBannersTarget;

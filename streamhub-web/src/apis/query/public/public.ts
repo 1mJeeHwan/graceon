@@ -907,7 +907,7 @@ export function usePublicContentsDetail<
 }
 
 /**
- * 현위치(lat/lng) 기준 거리순. 좌표 미제공 시 지역/교단/키워드 필터만 적용.
+ * 현위치(lat/lng) 기준 거리순. 좌표 미제공 시 지역/교단/키워드 필터만 적용. 과도한 요청은 429.
  * @summary 교회 위치검색
  */
 export const publicChurches = (

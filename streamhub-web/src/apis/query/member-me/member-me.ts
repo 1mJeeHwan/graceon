@@ -24,39 +24,45 @@ import type {
 import type {
   FavoriteAddRequest,
   HistoryRecordRequest,
+  InquiryCreateRequest,
+  MemberMeMeAlbumsParams,
+  MemberMeMeHistoryParams,
   ResultDTOListFavoriteItem,
   ResultDTOListMyInquiryItem,
   ResultDTOListMyReviewItem,
-  ResultDTOListPurchasedAlbumItem,
-  ResultDTOListWatchHistoryItem,
+  ResultDTOMyInquiryItem,
+  ResultDTOMyReviewItem,
+  ResultDTOResInfinityListPurchasedAlbumItem,
+  ResultDTOResInfinityListWatchHistoryItem,
   ResultDTOVoid,
+  ReviewCreateRequest,
 } from "../streamHubAdminAPI.schemas";
 
 import { customInstance } from "../../custom-instance";
 
 /**
- * 로그인 회원의 최근 시청기록을 콘텐츠 정보와 함께 최신순으로 반환한다.
- * @summary 시청기록
+ * 로그인 회원이 작성한 상품 후기 목록을 반환한다.
+ * @summary 내 후기
  */
-export const memberMeMeHistory = (signal?: AbortSignal) => {
-  return customInstance<ResultDTOListWatchHistoryItem>({
-    url: `/pub/v1/me/history`,
+export const memberMeMeReviews = (signal?: AbortSignal) => {
+  return customInstance<ResultDTOListMyReviewItem>({
+    url: `/pub/v1/me/reviews`,
     method: "GET",
     signal,
   });
 };
 
-export const getMemberMeMeHistoryQueryKey = () => {
-  return [`/pub/v1/me/history`] as const;
+export const getMemberMeMeReviewsQueryKey = () => {
+  return [`/pub/v1/me/reviews`] as const;
 };
 
-export const getMemberMeMeHistoryQueryOptions = <
-  TData = Awaited<ReturnType<typeof memberMeMeHistory>>,
+export const getMemberMeMeReviewsQueryOptions = <
+  TData = Awaited<ReturnType<typeof memberMeMeReviews>>,
   TError = unknown
 >(options?: {
   query?: Partial<
     UseQueryOptions<
-      Awaited<ReturnType<typeof memberMeMeHistory>>,
+      Awaited<ReturnType<typeof memberMeMeReviews>>,
       TError,
       TData
     >
@@ -64,11 +70,489 @@ export const getMemberMeMeHistoryQueryOptions = <
 }) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getMemberMeMeHistoryQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getMemberMeMeReviewsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof memberMeMeReviews>>
+  > = ({ signal }) => memberMeMeReviews(signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof memberMeMeReviews>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type MemberMeMeReviewsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof memberMeMeReviews>>
+>;
+export type MemberMeMeReviewsQueryError = unknown;
+
+export function useMemberMeMeReviews<
+  TData = Awaited<ReturnType<typeof memberMeMeReviews>>,
+  TError = unknown
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberMeMeReviews>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberMeMeReviews>>,
+          TError,
+          Awaited<ReturnType<typeof memberMeMeReviews>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useMemberMeMeReviews<
+  TData = Awaited<ReturnType<typeof memberMeMeReviews>>,
+  TError = unknown
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberMeMeReviews>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberMeMeReviews>>,
+          TError,
+          Awaited<ReturnType<typeof memberMeMeReviews>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useMemberMeMeReviews<
+  TData = Awaited<ReturnType<typeof memberMeMeReviews>>,
+  TError = unknown
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberMeMeReviews>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 내 후기
+ */
+
+export function useMemberMeMeReviews<
+  TData = Awaited<ReturnType<typeof memberMeMeReviews>>,
+  TError = unknown
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberMeMeReviews>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getMemberMeMeReviewsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * 로그인 회원이 상품 후기를 1건 작성한다.
+ * @summary 후기 작성
+ */
+export const memberMeMeReviewsCreate = (
+  reviewCreateRequest: ReviewCreateRequest,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOMyReviewItem>({
+    url: `/pub/v1/me/reviews`,
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    data: reviewCreateRequest,
+    signal,
+  });
+};
+
+export const getMemberMeMeReviewsCreateMutationOptions = <
+  TError = unknown,
+  TContext = unknown
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof memberMeMeReviewsCreate>>,
+    TError,
+    { data: ReviewCreateRequest },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof memberMeMeReviewsCreate>>,
+  TError,
+  { data: ReviewCreateRequest },
+  TContext
+> => {
+  const mutationKey = ["memberMeMeReviewsCreate"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof memberMeMeReviewsCreate>>,
+    { data: ReviewCreateRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return memberMeMeReviewsCreate(data);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MemberMeMeReviewsCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof memberMeMeReviewsCreate>>
+>;
+export type MemberMeMeReviewsCreateMutationBody = ReviewCreateRequest;
+export type MemberMeMeReviewsCreateMutationError = unknown;
+
+/**
+ * @summary 후기 작성
+ */
+export const useMemberMeMeReviewsCreate = <
+  TError = unknown,
+  TContext = unknown
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof memberMeMeReviewsCreate>>,
+      TError,
+      { data: ReviewCreateRequest },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof memberMeMeReviewsCreate>>,
+  TError,
+  { data: ReviewCreateRequest },
+  TContext
+> => {
+  const mutationOptions = getMemberMeMeReviewsCreateMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+/**
+ * 로그인 회원이 작성한 상품 문의 목록을 반환한다.
+ * @summary 내 문의
+ */
+export const memberMeMeInquiries = (signal?: AbortSignal) => {
+  return customInstance<ResultDTOListMyInquiryItem>({
+    url: `/pub/v1/me/inquiries`,
+    method: "GET",
+    signal,
+  });
+};
+
+export const getMemberMeMeInquiriesQueryKey = () => {
+  return [`/pub/v1/me/inquiries`] as const;
+};
+
+export const getMemberMeMeInquiriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof memberMeMeInquiries>>,
+  TError = unknown
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof memberMeMeInquiries>>,
+      TError,
+      TData
+    >
+  >;
+}) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getMemberMeMeInquiriesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof memberMeMeInquiries>>
+  > = ({ signal }) => memberMeMeInquiries(signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof memberMeMeInquiries>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type MemberMeMeInquiriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof memberMeMeInquiries>>
+>;
+export type MemberMeMeInquiriesQueryError = unknown;
+
+export function useMemberMeMeInquiries<
+  TData = Awaited<ReturnType<typeof memberMeMeInquiries>>,
+  TError = unknown
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberMeMeInquiries>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberMeMeInquiries>>,
+          TError,
+          Awaited<ReturnType<typeof memberMeMeInquiries>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useMemberMeMeInquiries<
+  TData = Awaited<ReturnType<typeof memberMeMeInquiries>>,
+  TError = unknown
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberMeMeInquiries>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof memberMeMeInquiries>>,
+          TError,
+          Awaited<ReturnType<typeof memberMeMeInquiries>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useMemberMeMeInquiries<
+  TData = Awaited<ReturnType<typeof memberMeMeInquiries>>,
+  TError = unknown
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberMeMeInquiries>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 내 문의
+ */
+
+export function useMemberMeMeInquiries<
+  TData = Awaited<ReturnType<typeof memberMeMeInquiries>>,
+  TError = unknown
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberMeMeInquiries>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getMemberMeMeInquiriesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * 로그인 회원이 상품 문의를 1건 작성한다(답변대기 상태).
+ * @summary 문의 작성
+ */
+export const memberMeMeInquiriesCreate = (
+  inquiryCreateRequest: InquiryCreateRequest,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOMyInquiryItem>({
+    url: `/pub/v1/me/inquiries`,
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    data: inquiryCreateRequest,
+    signal,
+  });
+};
+
+export const getMemberMeMeInquiriesCreateMutationOptions = <
+  TError = unknown,
+  TContext = unknown
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof memberMeMeInquiriesCreate>>,
+    TError,
+    { data: InquiryCreateRequest },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof memberMeMeInquiriesCreate>>,
+  TError,
+  { data: InquiryCreateRequest },
+  TContext
+> => {
+  const mutationKey = ["memberMeMeInquiriesCreate"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof memberMeMeInquiriesCreate>>,
+    { data: InquiryCreateRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return memberMeMeInquiriesCreate(data);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MemberMeMeInquiriesCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof memberMeMeInquiriesCreate>>
+>;
+export type MemberMeMeInquiriesCreateMutationBody = InquiryCreateRequest;
+export type MemberMeMeInquiriesCreateMutationError = unknown;
+
+/**
+ * @summary 문의 작성
+ */
+export const useMemberMeMeInquiriesCreate = <
+  TError = unknown,
+  TContext = unknown
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof memberMeMeInquiriesCreate>>,
+      TError,
+      { data: InquiryCreateRequest },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof memberMeMeInquiriesCreate>>,
+  TError,
+  { data: InquiryCreateRequest },
+  TContext
+> => {
+  const mutationOptions = getMemberMeMeInquiriesCreateMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+/**
+ * 로그인 회원의 시청기록을 콘텐츠 정보와 함께 최신순으로 페이징해 반환한다.
+ * @summary 시청기록
+ */
+export const memberMeMeHistory = (
+  params?: MemberMeMeHistoryParams,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOResInfinityListWatchHistoryItem>({
+    url: `/pub/v1/me/history`,
+    method: "GET",
+    params,
+    signal,
+  });
+};
+
+export const getMemberMeMeHistoryQueryKey = (
+  params?: MemberMeMeHistoryParams
+) => {
+  return [`/pub/v1/me/history`, ...(params ? [params] : [])] as const;
+};
+
+export const getMemberMeMeHistoryQueryOptions = <
+  TData = Awaited<ReturnType<typeof memberMeMeHistory>>,
+  TError = unknown
+>(
+  params?: MemberMeMeHistoryParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberMeMeHistory>>,
+        TError,
+        TData
+      >
+    >;
+  }
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getMemberMeMeHistoryQueryKey(params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof memberMeMeHistory>>
-  > = ({ signal }) => memberMeMeHistory(signal);
+  > = ({ signal }) => memberMeMeHistory(params, signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof memberMeMeHistory>>,
@@ -86,6 +570,7 @@ export function useMemberMeMeHistory<
   TData = Awaited<ReturnType<typeof memberMeMeHistory>>,
   TError = unknown
 >(
+  params: undefined | MemberMeMeHistoryParams,
   options: {
     query: Partial<
       UseQueryOptions<
@@ -111,6 +596,7 @@ export function useMemberMeMeHistory<
   TData = Awaited<ReturnType<typeof memberMeMeHistory>>,
   TError = unknown
 >(
+  params?: MemberMeMeHistoryParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -136,6 +622,7 @@ export function useMemberMeMeHistory<
   TData = Awaited<ReturnType<typeof memberMeMeHistory>>,
   TError = unknown
 >(
+  params?: MemberMeMeHistoryParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -157,6 +644,7 @@ export function useMemberMeMeHistory<
   TData = Awaited<ReturnType<typeof memberMeMeHistory>>,
   TError = unknown
 >(
+  params?: MemberMeMeHistoryParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -170,7 +658,7 @@ export function useMemberMeMeHistory<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getMemberMeMeHistoryQueryOptions(options);
+  const queryOptions = getMemberMeMeHistoryQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -503,332 +991,50 @@ export const useMemberMeMeFavoritesCreate = <
   return useMutation(mutationOptions, queryClient);
 };
 /**
- * 로그인 회원이 작성한 상품 후기 목록을 반환한다.
- * @summary 내 후기
- */
-export const memberMeMeReviews = (signal?: AbortSignal) => {
-  return customInstance<ResultDTOListMyReviewItem>({
-    url: `/pub/v1/me/reviews`,
-    method: "GET",
-    signal,
-  });
-};
-
-export const getMemberMeMeReviewsQueryKey = () => {
-  return [`/pub/v1/me/reviews`] as const;
-};
-
-export const getMemberMeMeReviewsQueryOptions = <
-  TData = Awaited<ReturnType<typeof memberMeMeReviews>>,
-  TError = unknown
->(options?: {
-  query?: Partial<
-    UseQueryOptions<
-      Awaited<ReturnType<typeof memberMeMeReviews>>,
-      TError,
-      TData
-    >
-  >;
-}) => {
-  const { query: queryOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getMemberMeMeReviewsQueryKey();
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof memberMeMeReviews>>
-  > = ({ signal }) => memberMeMeReviews(signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof memberMeMeReviews>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type MemberMeMeReviewsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof memberMeMeReviews>>
->;
-export type MemberMeMeReviewsQueryError = unknown;
-
-export function useMemberMeMeReviews<
-  TData = Awaited<ReturnType<typeof memberMeMeReviews>>,
-  TError = unknown
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof memberMeMeReviews>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof memberMeMeReviews>>,
-          TError,
-          Awaited<ReturnType<typeof memberMeMeReviews>>
-        >,
-        "initialData"
-      >;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useMemberMeMeReviews<
-  TData = Awaited<ReturnType<typeof memberMeMeReviews>>,
-  TError = unknown
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof memberMeMeReviews>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof memberMeMeReviews>>,
-          TError,
-          Awaited<ReturnType<typeof memberMeMeReviews>>
-        >,
-        "initialData"
-      >;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useMemberMeMeReviews<
-  TData = Awaited<ReturnType<typeof memberMeMeReviews>>,
-  TError = unknown
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof memberMeMeReviews>>,
-        TError,
-        TData
-      >
-    >;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary 내 후기
- */
-
-export function useMemberMeMeReviews<
-  TData = Awaited<ReturnType<typeof memberMeMeReviews>>,
-  TError = unknown
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof memberMeMeReviews>>,
-        TError,
-        TData
-      >
-    >;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getMemberMeMeReviewsQueryOptions(options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey;
-
-  return query;
-}
-
-/**
- * 로그인 회원이 작성한 상품 문의 목록을 반환한다.
- * @summary 내 문의
- */
-export const memberMeMeInquiries = (signal?: AbortSignal) => {
-  return customInstance<ResultDTOListMyInquiryItem>({
-    url: `/pub/v1/me/inquiries`,
-    method: "GET",
-    signal,
-  });
-};
-
-export const getMemberMeMeInquiriesQueryKey = () => {
-  return [`/pub/v1/me/inquiries`] as const;
-};
-
-export const getMemberMeMeInquiriesQueryOptions = <
-  TData = Awaited<ReturnType<typeof memberMeMeInquiries>>,
-  TError = unknown
->(options?: {
-  query?: Partial<
-    UseQueryOptions<
-      Awaited<ReturnType<typeof memberMeMeInquiries>>,
-      TError,
-      TData
-    >
-  >;
-}) => {
-  const { query: queryOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getMemberMeMeInquiriesQueryKey();
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof memberMeMeInquiries>>
-  > = ({ signal }) => memberMeMeInquiries(signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof memberMeMeInquiries>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type MemberMeMeInquiriesQueryResult = NonNullable<
-  Awaited<ReturnType<typeof memberMeMeInquiries>>
->;
-export type MemberMeMeInquiriesQueryError = unknown;
-
-export function useMemberMeMeInquiries<
-  TData = Awaited<ReturnType<typeof memberMeMeInquiries>>,
-  TError = unknown
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof memberMeMeInquiries>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof memberMeMeInquiries>>,
-          TError,
-          Awaited<ReturnType<typeof memberMeMeInquiries>>
-        >,
-        "initialData"
-      >;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useMemberMeMeInquiries<
-  TData = Awaited<ReturnType<typeof memberMeMeInquiries>>,
-  TError = unknown
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof memberMeMeInquiries>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof memberMeMeInquiries>>,
-          TError,
-          Awaited<ReturnType<typeof memberMeMeInquiries>>
-        >,
-        "initialData"
-      >;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useMemberMeMeInquiries<
-  TData = Awaited<ReturnType<typeof memberMeMeInquiries>>,
-  TError = unknown
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof memberMeMeInquiries>>,
-        TError,
-        TData
-      >
-    >;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary 내 문의
- */
-
-export function useMemberMeMeInquiries<
-  TData = Awaited<ReturnType<typeof memberMeMeInquiries>>,
-  TError = unknown
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof memberMeMeInquiries>>,
-        TError,
-        TData
-      >
-    >;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getMemberMeMeInquiriesQueryOptions(options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey;
-
-  return query;
-}
-
-/**
- * 로그인 회원의 결제완료 주문에 포함된 앨범 목록(중복 제거)을 반환한다.
+ * 로그인 회원의 결제완료 주문에 포함된 앨범 목록(중복 제거)을 페이징해 반환한다.
  * @summary 구매 음반
  */
-export const memberMeMeAlbums = (signal?: AbortSignal) => {
-  return customInstance<ResultDTOListPurchasedAlbumItem>({
+export const memberMeMeAlbums = (
+  params?: MemberMeMeAlbumsParams,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOResInfinityListPurchasedAlbumItem>({
     url: `/pub/v1/me/albums`,
     method: "GET",
+    params,
     signal,
   });
 };
 
-export const getMemberMeMeAlbumsQueryKey = () => {
-  return [`/pub/v1/me/albums`] as const;
+export const getMemberMeMeAlbumsQueryKey = (
+  params?: MemberMeMeAlbumsParams
+) => {
+  return [`/pub/v1/me/albums`, ...(params ? [params] : [])] as const;
 };
 
 export const getMemberMeMeAlbumsQueryOptions = <
   TData = Awaited<ReturnType<typeof memberMeMeAlbums>>,
   TError = unknown
->(options?: {
-  query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof memberMeMeAlbums>>, TError, TData>
-  >;
-}) => {
+>(
+  params?: MemberMeMeAlbumsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof memberMeMeAlbums>>,
+        TError,
+        TData
+      >
+    >;
+  }
+) => {
   const { query: queryOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getMemberMeMeAlbumsQueryKey();
+  const queryKey =
+    queryOptions?.queryKey ?? getMemberMeMeAlbumsQueryKey(params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof memberMeMeAlbums>>
-  > = ({ signal }) => memberMeMeAlbums(signal);
+  > = ({ signal }) => memberMeMeAlbums(params, signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof memberMeMeAlbums>>,
@@ -846,6 +1052,7 @@ export function useMemberMeMeAlbums<
   TData = Awaited<ReturnType<typeof memberMeMeAlbums>>,
   TError = unknown
 >(
+  params: undefined | MemberMeMeAlbumsParams,
   options: {
     query: Partial<
       UseQueryOptions<
@@ -871,6 +1078,7 @@ export function useMemberMeMeAlbums<
   TData = Awaited<ReturnType<typeof memberMeMeAlbums>>,
   TError = unknown
 >(
+  params?: MemberMeMeAlbumsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -896,6 +1104,7 @@ export function useMemberMeMeAlbums<
   TData = Awaited<ReturnType<typeof memberMeMeAlbums>>,
   TError = unknown
 >(
+  params?: MemberMeMeAlbumsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -917,6 +1126,7 @@ export function useMemberMeMeAlbums<
   TData = Awaited<ReturnType<typeof memberMeMeAlbums>>,
   TError = unknown
 >(
+  params?: MemberMeMeAlbumsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -930,7 +1140,7 @@ export function useMemberMeMeAlbums<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getMemberMeMeAlbumsQueryOptions(options);
+  const queryOptions = getMemberMeMeAlbumsQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

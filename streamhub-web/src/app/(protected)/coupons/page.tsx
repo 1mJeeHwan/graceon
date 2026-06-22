@@ -10,6 +10,7 @@ import {
   type CouponSearchRequest,
 } from "@/apis/query/streamHubAdminAPI.schemas";
 import CouponFormDialog from "@/components/coupons/CouponFormDialog";
+import CouponRedemptionsDialog from "@/components/coupons/CouponRedemptionsDialog";
 import { SUCCESS_CODE } from "@/types/api";
 
 /** Formats a number as a Korean-style thousands-separated currency string. */
@@ -58,6 +59,7 @@ export default function CouponsPage() {
   const [search, setSearch] = useState<CouponSearchRequest>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CouponDto | null>(null);
+  const [usageCoupon, setUsageCoupon] = useState<CouponDto | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   const listQuery = useQuery({
@@ -253,7 +255,14 @@ export default function CouponsPage() {
                         {formatWon(coupon.minOrderAmount)}
                       </td>
                       <td className="px-4 py-3 font-mono text-xs text-slate-700">
-                        {formatUsage(coupon)}
+                        <button
+                          type="button"
+                          onClick={() => setUsageCoupon(coupon)}
+                          className="text-brand hover:underline"
+                          title="사용 내역 보기"
+                        >
+                          {formatUsage(coupon)}
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-slate-700">
                         <span className={expired ? "text-red-600" : ""}>
@@ -312,6 +321,13 @@ export default function CouponsPage() {
           coupon={editing}
           onClose={() => setDialogOpen(false)}
           onSaved={handleSaved}
+        />
+      )}
+
+      {usageCoupon && (
+        <CouponRedemptionsDialog
+          coupon={usageCoupon}
+          onClose={() => setUsageCoupon(null)}
         />
       )}
     </div>

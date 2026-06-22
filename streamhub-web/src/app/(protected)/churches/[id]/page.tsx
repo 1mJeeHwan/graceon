@@ -166,14 +166,16 @@ export default function ChurchDetailPage() {
             <Link
               href={`/member?churchId=${detail.id}`}
               className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              title="이 교회 소속 회원 목록"
             >
-              이 교회 회원 보기
+              소속 회원 {detail.memberCount?.toLocaleString() ?? 0}명
             </Link>
             <Link
               href={`/worship?churchId=${detail.id}`}
               className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              title="이 교회 예배신청 목록"
             >
-              예배신청 보기
+              예배신청 {detail.worshipRegistrationCount?.toLocaleString() ?? 0}건
             </Link>
           </div>
         )}

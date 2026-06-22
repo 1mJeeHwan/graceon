@@ -23,6 +23,7 @@ import type {
 
 import type {
   NotificationSearchRequest,
+  NotificationSendRequest,
   ResultDTOListNotificationLogDto,
   ResultDTONotificationLogDto,
   ResultDTONotificationSummaryDto,
@@ -31,6 +32,89 @@ import type {
 
 import { customInstance } from "../../custom-instance";
 
+/**
+ * 알림을 발송한다(로그 기록만). 전체(BROADCAST) 또는 특정 회원(TARGETED, memberIds 필수). 회원은 /pub/v1/me/notifications 피드에서 확인.
+ * @summary 알림 발송
+ */
+export const notificationSendCreate = (
+  notificationSendRequest: NotificationSendRequest,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTONotificationLogDto>({
+    url: `/v1/notification/send`,
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    data: notificationSendRequest,
+    signal,
+  });
+};
+
+export const getNotificationSendCreateMutationOptions = <
+  TError = unknown,
+  TContext = unknown
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof notificationSendCreate>>,
+    TError,
+    { data: NotificationSendRequest },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof notificationSendCreate>>,
+  TError,
+  { data: NotificationSendRequest },
+  TContext
+> => {
+  const mutationKey = ["notificationSendCreate"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof notificationSendCreate>>,
+    { data: NotificationSendRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return notificationSendCreate(data);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type NotificationSendCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof notificationSendCreate>>
+>;
+export type NotificationSendCreateMutationBody = NotificationSendRequest;
+export type NotificationSendCreateMutationError = unknown;
+
+/**
+ * @summary 알림 발송
+ */
+export const useNotificationSendCreate = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof notificationSendCreate>>,
+      TError,
+      { data: NotificationSendRequest },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof notificationSendCreate>>,
+  TError,
+  { data: NotificationSendRequest },
+  TContext
+> => {
+  const mutationOptions = getNotificationSendCreateMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
 /**
  * 채널/상태/기간/키워드 필터 적용(최신순).
  * @summary 발송 로그 목록

@@ -26,6 +26,7 @@ import type {
   CouponSearchRequest,
   ResultDTOCouponDto,
   ResultDTOListCouponDto,
+  ResultDTOListCouponRedemptionItem,
   ResultDTOVoid,
 } from "../streamHubAdminAPI.schemas";
 
@@ -486,3 +487,162 @@ export const useCouponList = <TError = unknown, TContext = unknown>(
 
   return useMutation(mutationOptions, queryClient);
 };
+/**
+ * 해당 쿠폰을 사용한 회원/시각 목록(최신순).
+ * @summary 쿠폰 사용 내역
+ */
+export const couponRedemptions = (id: number, signal?: AbortSignal) => {
+  return customInstance<ResultDTOListCouponRedemptionItem>({
+    url: `/v1/coupon/${id}/redemptions`,
+    method: "GET",
+    signal,
+  });
+};
+
+export const getCouponRedemptionsQueryKey = (id?: number) => {
+  return [`/v1/coupon/${id}/redemptions`] as const;
+};
+
+export const getCouponRedemptionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof couponRedemptions>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof couponRedemptions>>,
+        TError,
+        TData
+      >
+    >;
+  }
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getCouponRedemptionsQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof couponRedemptions>>
+  > = ({ signal }) => couponRedemptions(id, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof couponRedemptions>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CouponRedemptionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof couponRedemptions>>
+>;
+export type CouponRedemptionsQueryError = unknown;
+
+export function useCouponRedemptions<
+  TData = Awaited<ReturnType<typeof couponRedemptions>>,
+  TError = unknown
+>(
+  id: number,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof couponRedemptions>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof couponRedemptions>>,
+          TError,
+          Awaited<ReturnType<typeof couponRedemptions>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCouponRedemptions<
+  TData = Awaited<ReturnType<typeof couponRedemptions>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof couponRedemptions>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof couponRedemptions>>,
+          TError,
+          Awaited<ReturnType<typeof couponRedemptions>>
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCouponRedemptions<
+  TData = Awaited<ReturnType<typeof couponRedemptions>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof couponRedemptions>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary 쿠폰 사용 내역
+ */
+
+export function useCouponRedemptions<
+  TData = Awaited<ReturnType<typeof couponRedemptions>>,
+  TError = unknown
+>(
+  id: number,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof couponRedemptions>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getCouponRedemptionsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
