@@ -1,0 +1,18 @@
+# Prometheus scrape config — pulls the API's Micrometer metrics from /actuator/prometheus.
+# The API runs on the HOST during local dev (./mvnw), so we scrape host.docker.internal.
+# If you run the API inside the compose network instead, change the target to streamhub-api:8080.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: streamhub-api
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["host.docker.internal:8080"]
+        labels:
+          application: streamhub-api
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

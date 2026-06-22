@@ -52,6 +52,24 @@ springdoc:
 server:
   port: 8080
 
+# Observability — Actuator endpoints. /actuator/prometheus is the Micrometer scrape target;
+# health/liveness + readiness back the K8s probes. (Permitted in SecurityConfig.PUBLIC_PATHS.)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true            # /actuator/health/{liveness,readiness}
+      # K8s probe(무인증)는 status만; JWT를 단 관리자 콘솔(시스템 상태 페이지)은 컴포넌트 상세까지.
+      show-details: when_authorized
+      show-components: when_authorized
+  metrics:
+    tags:
+      application: streamhub-api
+
 jwt:
   # Dev default; override with JWT_SECRET in any real environment. Must be long for HMAC512.
   secret: ${JWT_SECRET:streamhub-admin-dev-secret-key-please-change-in-production-0123456789}

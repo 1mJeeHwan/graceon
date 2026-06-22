@@ -103,6 +103,16 @@
             <version>${springdoc.version}</version>
         </dependency>
 
+        <!-- Observability: Actuator(health/metrics) + Micrometer → Prometheus scrape endpoint -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
         <!-- DB driver -->
         <dependency>
             <groupId>com.mysql</groupId>

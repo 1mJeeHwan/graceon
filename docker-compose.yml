@@ -118,6 +118,31 @@ services:
       timeout: 5s
       retries: 15
 
+  # Observability — Prometheus scrapes the API's /actuator/prometheus; Grafana visualizes it.
+  # The API runs on the host (./mvnw), so Prometheus targets host.docker.internal:8080
+  # (see deploy/observability/prometheus.yml). Grafana UI on http://localhost:3030 (anon enabled).
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: streamhub-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: streamhub-grafana
+    ports:
+      - "3030:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - ./deploy/observability/grafana-datasource.yml:/etc/grafana/provisioning/datasources/ds.yml:ro
+    depends_on:
+      - prometheus
+
 volumes:
   mysql-data:
   minio-data:

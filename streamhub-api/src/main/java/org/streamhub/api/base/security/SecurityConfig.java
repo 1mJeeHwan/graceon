@@ -40,7 +40,11 @@ public class SecurityConfig {
             "/v1/chat/*/history",
             "/swagger-ui/**",
             "/v3/api-docs/**",
-            "/actuator/health"
+            // Observability: health (K8s probes) + the Prometheus scrape endpoint. Metrics carry no
+            // sensitive data; in a hardened deploy these would sit on a separate management port.
+            "/actuator/health",
+            "/actuator/health/**",
+            "/actuator/prometheus"
     };
 
     /**

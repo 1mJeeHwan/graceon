@@ -1,0 +1,11 @@
+# Grafana auto-provisioned datasource → the Prometheus container (same compose network).
+# With this, Grafana opens with Prometheus already wired; import a JVM/Spring dashboard
+# (e.g. grafana.com dashboard ID 4701 "JVM (Micrometer)") and point it at this datasource.
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
