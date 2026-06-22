@@ -6,6 +6,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { query, request } from "./api";
+import { fixImageUrl } from "./image";
 import type { InfinityList } from "./types";
 
 /** Album genre enum — mirrors org.streamhub.api.v1.album.entity.AlbumGenre. */
@@ -140,8 +141,12 @@ export interface StoreListParams {
 
 export const albumApi = {
   list: (p: AlbumListParams = {}) =>
-    request<InfinityList<AlbumListItem>>(`/pub/v1/albums${query({ ...p })}`),
-  detail: (id: number) => request<AlbumDetail>(`/pub/v1/albums/${id}`),
+    request<InfinityList<AlbumListItem>>(`/pub/v1/albums${query({ ...p })}`).then((r) => ({
+      ...r,
+      contents: r.contents.map((a) => ({ ...a, coverUrl: fixImageUrl(a.coverUrl) })),
+    })),
+  detail: (id: number) =>
+    request<AlbumDetail>(`/pub/v1/albums/${id}`).then((d) => ({ ...d, coverUrl: fixImageUrl(d.coverUrl) })),
   preview: (albumId: number, trackId: number) =>
     request<PreviewResponse>(`/pub/v1/albums/${albumId}/tracks/${trackId}/preview`),
   stores: (p: StoreListParams = {}) => request<StoreDto[]>(`/pub/v1/stores${query({ ...p })}`),

@@ -6,6 +6,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { query, request } from "./api";
+import { fixImageUrl } from "./image";
 import type { InfinityList } from "./types";
 
 /** One row of the goods list (GET /pub/v1/goods). */
@@ -37,8 +38,15 @@ export interface GoodsListParams {
 
 export const goodsApi = {
   list: (p: GoodsListParams = {}) =>
-    request<InfinityList<GoodsListItem>>(`/pub/v1/goods${query({ ...p })}`),
-  detail: (id: number) => request<GoodsDetail>(`/pub/v1/goods/${id}`),
+    request<InfinityList<GoodsListItem>>(`/pub/v1/goods${query({ ...p })}`).then((r) => ({
+      ...r,
+      contents: r.contents.map((g) => ({ ...g, thumbnailUrl: fixImageUrl(g.thumbnailUrl) })),
+    })),
+  detail: (id: number) =>
+    request<GoodsDetail>(`/pub/v1/goods/${id}`).then((d) => ({
+      ...d,
+      imageUrls: d.imageUrls.map((url) => fixImageUrl(url) ?? url),
+    })),
 };
 
 export const goodsKeys = {

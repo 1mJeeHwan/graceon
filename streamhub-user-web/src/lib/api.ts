@@ -12,6 +12,7 @@ import type {
   PostListItem,
   ResultDTO,
 } from "./types";
+import { fixImageUrl } from "./image";
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8080";
 
@@ -122,7 +123,9 @@ export const api = {
     request<InfinityList<PostListItem>>(`/pub/v1/posts${query({ ...p })}`),
   post: (id: number) => request<PostDetail>(`/pub/v1/posts/${id}`),
   banners: (target: BannerTarget) =>
-    request<BannerItem[]>(`/pub/v1/banners${query({ target })}`),
+    request<BannerItem[]>(`/pub/v1/banners${query({ target })}`).then((items) =>
+      items.map((b) => ({ ...b, imageUrl: fixImageUrl(b.imageUrl) })),
+    ),
 
   // Member auth
   login: (email: string, password: string) =>

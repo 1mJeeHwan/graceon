@@ -7,6 +7,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { query, request } from "./api";
+import { fixImageUrl } from "./image";
 import type { ContentType, InfinityList } from "./types";
 
 /** One watch-history row (GET /pub/v1/me/history), joined to the content, newest first. */
@@ -143,7 +144,10 @@ export const meApi = {
   recordWatch: (input: RecordWatchInput, token: string) =>
     request<void>("/pub/v1/me/history", { method: "POST", body: input, token }),
   /** The member's favorited tracks. */
-  favorites: (token: string) => request<FavoriteItem[]>("/pub/v1/me/favorites", { token }),
+  favorites: (token: string) =>
+    request<FavoriteItem[]>("/pub/v1/me/favorites", { token }).then((items) =>
+      items.map((f) => ({ ...f, coverUrl: fixImageUrl(f.coverUrl) })),
+    ),
   /** Favorite a track (idempotent — already-favorited is a no-op server-side). */
   addFavorite: (trackId: number, token: string) =>
     request<void>("/pub/v1/me/favorites", { method: "POST", body: { trackId }, token }),
@@ -155,7 +159,10 @@ export const meApi = {
     request<InfinityList<PurchasedAlbumItem>>(
       `/pub/v1/me/albums${query({ pageNumber, pageSize })}`,
       { token },
-    ),
+    ).then((r) => ({
+      ...r,
+      contents: r.contents.map((a) => ({ ...a, coverUrl: fixImageUrl(a.coverUrl) })),
+    })),
   /** The member's product reviews. */
   reviews: (token: string) => request<MyReviewItem[]>("/pub/v1/me/reviews", { token }),
   /** Post a product review. */

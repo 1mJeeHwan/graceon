@@ -6,6 +6,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { query, request } from "./api";
+import { fixImageUrl } from "./image";
 import type { InfinityList } from "./types";
 
 /** Known campaign lifecycle states. Unknown values fall back to the raw string. */
@@ -54,8 +55,12 @@ export interface CampaignListParams {
 
 export const campaignApi = {
   list: (p: CampaignListParams = {}) =>
-    request<InfinityList<CampaignListItem>>(`/pub/v1/campaigns${query({ ...p })}`),
-  detail: (id: number) => request<CampaignDetail>(`/pub/v1/campaigns/${id}`),
+    request<InfinityList<CampaignListItem>>(`/pub/v1/campaigns${query({ ...p })}`).then((r) => ({
+      ...r,
+      contents: r.contents.map((c) => ({ ...c, imageUrl: fixImageUrl(c.imageUrl) })),
+    })),
+  detail: (id: number) =>
+    request<CampaignDetail>(`/pub/v1/campaigns/${id}`).then((d) => ({ ...d, imageUrl: fixImageUrl(d.imageUrl) })),
 };
 
 export const campaignKeys = {
