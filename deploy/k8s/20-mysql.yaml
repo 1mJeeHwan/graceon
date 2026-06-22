@@ -1,0 +1,72 @@
+# MySQL as a StatefulSet — the right primitive for stateful workloads: stable network identity
+# (mysql-0.mysql) and a per-replica PersistentVolume via volumeClaimTemplates that survives restarts.
+# The headless Service (clusterIP: None) named "mysql" gives the API a stable DNS name to dial.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: streamhub
+spec:
+  clusterIP: None          # headless — DNS resolves to the pod(s)
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: streamhub
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          args: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "root"
+            - name: MYSQL_DATABASE
+              value: "streamhub"
+            - name: MYSQL_USER
+              value: "streamhub"
+            - name: MYSQL_PASSWORD
+              value: "streamhub"
+            - name: TZ
+              value: "Asia/Seoul"
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h localhost -uroot -proot"]
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 20
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h localhost -uroot -proot"]
+            initialDelaySeconds: 45
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

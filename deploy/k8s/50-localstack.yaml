@@ -1,0 +1,46 @@
+# LocalStack — SQS emulation (default EVENTLOG_TRANSPORT=sqs). The API's SqsConfig creates the
+# action-log queue at startup, so no init Job is needed. (Switch to Kafka by setting
+# EVENTLOG_TRANSPORT=kafka in the ConfigMap and adding a Kafka StatefulSet/Service.)
+apiVersion: v1
+kind: Service
+metadata:
+  name: localstack
+  namespace: streamhub
+spec:
+  selector:
+    app: localstack
+  ports:
+    - port: 4566
+      targetPort: 4566
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: localstack
+  namespace: streamhub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: localstack
+  template:
+    metadata:
+      labels:
+        app: localstack
+    spec:
+      containers:
+        - name: localstack
+          image: localstack/localstack:3
+          env:
+            - name: SERVICES
+              value: "sqs"
+            - name: DEBUG
+              value: "0"
+          ports:
+            - containerPort: 4566
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "awslocal sqs list-queues || exit 1"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 15

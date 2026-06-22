@@ -1,0 +1,70 @@
+# StreamHub API — Deployment + Service. Image is built from streamhub-api/Dockerfile and loaded into
+# the local cluster (kind load / minikube image load); imagePullPolicy=IfNotPresent uses that local
+# image instead of pulling. envFrom injects the ConfigMap (non-secret) + Secret (JWT/keys). The
+# initContainer blocks startup until MySQL accepts connections, so the pod doesn't crash-loop while
+# the database boots (K8s has no docker-compose depends_on).
+apiVersion: v1
+kind: Service
+metadata:
+  name: streamhub-api
+  namespace: streamhub
+spec:
+  selector:
+    app: streamhub-api
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streamhub-api
+  namespace: streamhub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: streamhub-api
+  template:
+    metadata:
+      labels:
+        app: streamhub-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8080"
+    spec:
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z mysql 3306; do echo waiting for mysql; sleep 2; done"]
+      containers:
+        - name: streamhub-api
+          image: streamhub-api:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: streamhub-config
+            - secretRef:
+                name: streamhub-secret
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "768Mi"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 25
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 90
+            periodSeconds: 15

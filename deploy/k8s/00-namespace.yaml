@@ -1,0 +1,8 @@
+# StreamHub on Kubernetes — namespace.
+# Apply order: 00 → 10 → 20..50 (infra) → 60 (api). See docs/kubernetes.md.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: streamhub
+  labels:
+    app.kubernetes.io/part-of: streamhub
