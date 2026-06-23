@@ -9,7 +9,7 @@ import { query, request } from "./api";
 import type { InfinityList } from "./types";
 
 /** Payment providers accepted by the order endpoint. Matches the checkout method buttons. */
-export type PayProvider = "PORTONE" | "TOSS" | "KAKAO" | "PAYPAL" | "CARD";
+export type PayProvider = "TOSS" | "KAKAO" | "PAYPAL" | "CARD";
 
 /** Lifecycle status of an order — mirrors org.streamhub.api.v1.order.entity.OrderStatus. */
 export type OrderStatus =

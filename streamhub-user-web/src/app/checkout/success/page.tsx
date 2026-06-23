@@ -14,9 +14,9 @@ function formatKRW(n: number): string {
 }
 
 /**
- * PortOne redirect landing for a successful authorization. The window appends
+ * Toss redirect landing for a successful authorization. The window appends
  * `paymentKey`/`orderId`/`amount`; we forward them to POST /pub/v1/orders/confirm, which calls the
- * live PortOne confirm API and transitions the order to PAID. The member token is read straight
+ * live Toss confirm API and transitions the order to PAID. The member token is read straight
  * from storage because this is a fresh navigation (AuthProvider may not have revalidated yet).
  */
 function CheckoutSuccessInner() {
@@ -64,7 +64,7 @@ function CheckoutSuccessInner() {
     if (autoConfirmed.current) return;
     autoConfirmed.current = true;
 
-    // Param names differ per PG: PortOne → orderId/paymentKey; Kakao → orderNo/pg_token;
+    // Param names differ per PG: Toss → orderId/paymentKey; Kakao → orderNo/pg_token;
     // PayPal → orderNo/token. Read whichever is present.
     const orderNo = params.get("orderId") ?? params.get("orderNo");
     const paymentKey =
@@ -94,7 +94,7 @@ function CheckoutSuccessInner() {
       <section className="flex flex-col items-center px-5 pt-16 text-center">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <h1 className="mt-4 text-lg font-bold text-active">결제를 승인하는 중…</h1>
-        <p className="mt-1 text-sm text-inactive">포트원 결제 결과를 확인하고 있습니다.</p>
+        <p className="mt-1 text-sm text-inactive">토스 결제 결과를 확인하고 있습니다.</p>
       </section>
     );
   }
@@ -179,7 +179,7 @@ function CheckoutSuccessInner() {
 
       <div className="mx-auto mt-3 flex max-w-sm items-center gap-1.5 rounded-lg bg-primary/5 px-3 py-2 text-[11px] text-inactive">
         <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
-        포트원 샌드박스(테스트 키)로 승인되었습니다. 실제 출금은 없습니다.
+        토스 샌드박스(테스트 키)로 승인되었습니다. 실제 출금은 없습니다.
       </div>
 
       <div className="mx-auto mt-6 flex max-w-sm gap-2">
