@@ -1,10 +1,12 @@
-# StreamHub
+# GraceOn (은혜온)
 
 [한국어](README.md) · **English**
 
-A full-stack portfolio that recreates a church / streaming platform on the same production stack a
-real service would use. A single Spring Boot backend serves an admin console and a public user site,
-with an AWS deployment pipeline on top.
+A full-stack portfolio that recreates a church worship/media platform (worship videos, praise music,
+CCM album commerce, church finder, donations, membership) on the same production stack a real service
+would use. A single Spring Boot backend serves an admin console and a public user site, with an AWS
+deployment pipeline on top.
+> Music streams over HLS (AES-128); video uses YouTube embeds (replay) — no live broadcast yet.
 
 > **The full showcase (features, screens, stats) lives on the roadmap page → https://streamhub-user.vercel.app/roadmap**
 > This README deliberately avoids that overlap and covers **developer-facing info only** (architecture, how to run).
@@ -80,15 +82,16 @@ interface). Defaults are key-free deterministic mocks/seeds; inject a key to go 
 
 | seam (interface) | flag | default → live |
 |---|---|---|
-| `PaymentProvider` | `app.payment.provider`, `app.payment.toss.*` | `mock` → `toss` (always registered, key only) / `kakao`·`paypal` (key-gated) |
+| `PaymentProvider` | `app.payment.provider`, `iamport.*` | `mock` → `portone` (Iamport, `IAMPORT_*`) / `toss`·`kakao`·`paypal` (key-gated) |
 | `DeliveryProvider` | `app.delivery.provider` | `sweettracker` (default, demo key) ↔ `mock` |
 | `SmsSender` | `app.sms.sender` | `mock` → `aligo`/`solapi` (API key + sender no.) |
 | `ChatProvider` | `app.chat.provider`, `app.chat.llm.api-key` | `rule` → `llm` |
 | `MusicPreviewProvider` | `app.music.provider` | `seed` → `external` (music API) |
 | `GeocodeProvider` | `church.geocode.provider`, `church.geocode.kakao-rest-key` | `seed` → `kakao` (Kakao Local) |
 
-> e.g. Toss payments go live by injecting just `PAYMENT_TOSS_CLIENT_KEY` / `PAYMENT_TOSS_SECRET_KEY` — the
-> real sandbox PG (approve + refund) works with no code change.
+> e.g. PortOne (Iamport) payments go live by injecting `IAMPORT_IMP`/`IAMPORT_APIKEY`/`IAMPORT_SECRET`
+> + `PAYMENT_PROVIDER=PORTONE` — the real PG (imp_uid verification + refund) works with no code change.
+> Toss sandbox switches on the same way via `PAYMENT_TOSS_*`.
 
 ---
 
@@ -138,7 +141,7 @@ idempotency & failure handling.
 ## Project structure
 
 ```
-streamhub-admin/
+graceon/                  # repo root (formerly streamhub-admin) — monorepo
 ├── streamhub-api/        # Spring Boot (org.streamhub.api: base/ · auth/ · v1/{admin,member,content,statistics,actionlog,post,pub,goods,order,donation,dashboard,coupon,...})
 ├── streamhub-web/        # Admin Next.js (src/app/(protected)/** · src/apis/query[Orval-generated])
 ├── streamhub-user-web/   # User Next.js (src/app · src/components · src/lib[manual fetch + React Query])
