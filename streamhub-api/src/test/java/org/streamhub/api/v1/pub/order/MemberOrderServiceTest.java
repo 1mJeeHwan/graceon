@@ -65,10 +65,13 @@ class MemberOrderServiceTest {
     }
 
     private MemberOrderService service(boolean paymentTestMode) {
+        org.streamhub.api.base.iamport.IamportProperty iamportProperty =
+                new org.streamhub.api.base.iamport.IamportProperty();
+        iamportProperty.setImp("imp-demo");
         return new MemberOrderService(
                 albumRepository, goodsItemRepository, memberRepository, orderRepository,
                 orderItemRepository, orderReceiptRepository, paymentService, deliveryService,
-                couponService, "demo-client-key", paymentTestMode);
+                couponService, iamportProperty, "demo-client-key", paymentTestMode);
     }
 
     private Order order(long memberId, long total) {

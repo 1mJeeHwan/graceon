@@ -192,10 +192,11 @@ app:
     ffmpeg-path: ${HLS_FFMPEG_PATH:ffmpeg}
     segment-base-url: ${HLS_SEGMENT_BASE_URL:}
 
-# Iamport(포트원) 휴대폰 본인인증 — ng-api와 동일한 통합. imp는 브라우저 SDK(IMP.init)에 노출되는
-# 가맹점 코드, apikey/secret은 서버측 REST 자격증명. 가맹점 식별코드·키·시크릿은 포트원 계정별 발급
-# 값이라 공개 레포에 커밋하지 않는다(Toss/Kakao와 동일 원칙). 본인인증 테스트는 포트원 콘솔에서 발급한
-# 테스트 가맹점 키를 IAMPORT_* 로 주입(local=env, live=SSM api.env). 비어 있으면 본인인증 비활성.
+# Iamport(포트원) 결제 — ng-api와 동일한 통합(certificationByImpUid 대신 paymentByImpUid). imp는
+# 브라우저 SDK(IMP.init/IMP.request_pay)에 노출되는 가맹점 코드, apikey/secret은 서버측 REST 자격증명.
+# 가맹점 식별코드·키·시크릿은 포트원 계정별 발급 값이라 공개 레포에 커밋하지 않는다(Toss/Kakao와 동일
+# 원칙). 결제 테스트는 포트원 콘솔에서 발급한 테스트 가맹점 키를 IAMPORT_* 로 주입(local=env,
+# live=SSM api.env) + app.payment.provider=PORTONE. 비어 있으면 PORTONE provider는 휴면(mock 기본).
 iamport:
   imp: ${IAMPORT_IMP:}
   apikey: ${IAMPORT_APIKEY:}

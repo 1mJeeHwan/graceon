@@ -9,7 +9,7 @@ import { X, CheckCircle2, CreditCard, ShieldAlert, Loader2, LogIn } from "lucide
 import clsx from "clsx";
 import { useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
-import { loadTossPayments } from "@/lib/toss";
+import { runPayment } from "@/lib/iamport";
 import {
   orderApi,
   ORDER_STATUS_LABELS,
@@ -18,10 +18,11 @@ import {
 } from "@/lib/orders";
 
 /**
- * Payment methods shown in the checkout modal. TOSS is a REAL PG integration (Toss v2 sandbox):
- * selecting it runs prepare → Toss payment window → /checkout/success → confirm, which calls the
- * live Toss confirm API (test keys, no real charge). The other methods are mock one-shot orders
- * (POST /pub/v1/orders) — a genuine order row is created, but no PG window opens and no money moves.
+ * Payment methods shown in the checkout modal. PORTONE is the REAL PG integration (포트원/아임포트):
+ * selecting it runs prepare → 포트원 결제창(IMP.request_pay) → /checkout/success → confirm, which
+ * resolves the imp_uid against the Iamport API and verifies the amount (test keys, no real charge).
+ * The other methods are mock one-shot orders (POST /pub/v1/orders) — a genuine order row is created,
+ * but no PG window opens and no money moves.
  */
 interface MethodMeta {
   id: PayProvider;
@@ -31,18 +32,19 @@ interface MethodMeta {
 }
 
 const METHODS: MethodMeta[] = [
-  { id: "KAKAO", label: "kakao pay", className: "text-[#FFE812]" },
-  { id: "TOSS", label: "toss", className: "text-[#3182F6]" },
-  { id: "PAYPAL", label: "PayPal", className: "text-[#00457C]" },
-  { id: "CARD", label: "신용·체크카드", className: "text-active" },
+  { id: "PORTONE", label: "포트원 결제", className: "text-primary" },
+  { id: "KAKAO", label: "kakao pay (목업)", className: "text-[#FFE812]" },
+  { id: "PAYPAL", label: "PayPal (목업)", className: "text-[#00457C]" },
+  { id: "CARD", label: "신용·체크카드 (목업)", className: "text-active" },
 ];
 
 /**
- * Providers routed through the real PG flow (prepare → window/redirect → confirm). Only Toss has a
- * public sandbox key, so it's the only real one in the demo; KAKAO/PAYPAL adapters exist on the
- * backend and join here once their sandbox keys are configured. Everything else is mock one-shot.
+ * Providers routed through the real PG flow (prepare → 포트원 결제창 → confirm). PortOne unifies card/
+ * 간편결제 in one window; it's the single real PG. It activates only when the IAMPORT_* keys and
+ * app.payment.provider=PORTONE are set on the backend — otherwise the backend rejects the approve and
+ * the user should use a mock method. Everything else is mock one-shot.
  */
-const REAL_PG_PROVIDERS = new Set<PayProvider>(["TOSS"]);
+const REAL_PG_PROVIDERS = new Set<PayProvider>(["PORTONE"]);
 
 /** Official Toss test card number — placeholder only, never sent anywhere. */
 const TEST_CARD = "4242 4242 4242 4242";
@@ -86,7 +88,7 @@ export function CheckoutModal({
   const { member, token } = useAuth();
   const pathname = usePathname();
   const queryClient = useQueryClient();
-  const [method, setMethod] = useState<PayProvider>("KAKAO");
+  const [method, setMethod] = useState<PayProvider>("PORTONE");
   const [cardNo, setCardNo] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [stage, setStage] = useState<Stage>("select");
@@ -104,7 +106,7 @@ export function CheckoutModal({
   useEffect(() => {
     if (open) {
       setStage("select");
-      setMethod("KAKAO");
+      setMethod("PORTONE");
       setCardNo("");
       setCouponCode("");
       setOrder(null);
@@ -135,11 +137,9 @@ export function CheckoutModal({
       return;
     }
 
-    // Real-PG flow: prepare an order, then hand off to the PG. Toss uses its client SDK window;
-    // redirect PGs (Kakao/PayPal) return a redirectUrl we navigate to. Both come back to
-    // /checkout/success, which confirms against the live PG API. KAKAO/PAYPAL are mock by default
-    // (no public sandbox key) and only become real PG here once their keys are configured — add
-    // them to REAL_PG_PROVIDERS at that point.
+    // Real-PG flow (PortOne): prepare an order, open the 포트원 결제창(IMP.request_pay), then on
+    // success hand the imp_uid to /checkout/success, which confirms against the Iamport API. prep.
+    // clientKey carries the 가맹점 식별코드(imp) for IMP.init.
     if (REAL_PG_PROVIDERS.has(method)) {
       setStage("processing");
       try {
@@ -147,32 +147,41 @@ export function CheckoutModal({
           { albumId: item.albumId, provider: method, couponCode: couponCode.trim() || undefined },
           token,
         );
-        if (prep.redirectUrl) {
-          // Server-initiated redirect PG (Kakao/PayPal).
-          window.location.href = prep.redirectUrl;
+        // clientKey = 포트원 가맹점 식별코드(imp). Empty until IAMPORT_* is injected on the backend —
+        // fail gracefully (don't open a broken IMP window) and point the user at the mock methods.
+        if (!prep.clientKey) {
+          setStage("select");
+          setError("포트원 결제 키가 아직 설정되지 않았습니다. 데모에서는 다른(목업) 결제 수단을 이용해 주세요.");
           return;
         }
-        // Client-SDK PG (Toss): open the payment window.
-        const TossPayments = await loadTossPayments();
-        const tossPayments = TossPayments(prep.clientKey);
-        const payment = tossPayments.payment({ customerKey: prep.customerKey });
-        await payment.requestPayment({
-          method: "CARD",
-          amount: { currency: "KRW", value: prep.amount },
-          orderId: prep.orderNo,
-          orderName: prep.orderName,
-          successUrl: `${window.location.origin}/checkout/success`,
-          failUrl: `${window.location.origin}/checkout/fail`,
-          customerName: member?.name,
+        const successUrl = `${window.location.origin}/checkout/success`;
+        const res = await runPayment(prep.clientKey, {
+          pay_method: "card",
+          merchant_uid: prep.orderNo,
+          name: prep.orderName,
+          amount: prep.amount,
+          buyer_name: member?.name,
+          // Mobile flows redirect here; the imp_uid/merchant_uid are appended by PortOne.
+          m_redirect_url: successUrl,
         });
-        // requestPayment redirects on success; reaching here without redirect is unexpected.
+        if (!res.success) {
+          setStage("select");
+          setError(res.error_msg || "결제가 취소되었습니다.");
+          return;
+        }
+        // Desktop callback flow: go to the success page with the imp_uid as the confirm token.
+        const q = new URLSearchParams({
+          orderNo: prep.orderNo,
+          paymentKey: res.imp_uid,
+          amount: String(prep.amount),
+        });
+        window.location.assign(`${successUrl}?${q.toString()}`);
       } catch (err) {
         setStage("select");
         if (err instanceof ApiError && err.status === 401) {
           setAuthRequired(true);
           return;
         }
-        // PG SDK throws on user-cancel/validation with a {code,message}-shaped error.
         const message =
           err && typeof err === "object" && "message" in err
             ? String((err as { message: unknown }).message)
@@ -203,7 +212,7 @@ export function CheckoutModal({
     }
   };
 
-  const isToss = method === "TOSS";
+  const isPortone = method === "PORTONE";
 
   return createPortal(
     <div
@@ -235,14 +244,14 @@ export function CheckoutModal({
           <div className="flex items-center gap-2">
             <ShieldAlert className="h-4 w-4 shrink-0 text-point" />
             <p className="text-[12px] font-semibold leading-tight text-point">
-              {isToss
-                ? "토스 테스트 결제 · 실제 PG 연동(샌드박스) — 실제 출금 없음"
+              {isPortone
+                ? "포트원 테스트 결제 · 실제 PG 연동 — 실제 출금 없음"
                 : "목업 결제 · 실결제 아님 — PG 미연동(즉시 주문 생성)"}
             </p>
           </div>
           <p className="mt-1 pl-6 text-[11px] leading-tight text-point/80">
-            {isToss
-              ? "실제 토스 결제창이 열리고 토스 승인 API를 호출합니다. 테스트 키라 돈은 빠져나가지 않습니다."
+            {isPortone
+              ? "실제 포트원 결제창이 열리고 결제 결과를 포트원 API로 검증합니다. 테스트 키라 돈은 빠져나가지 않습니다."
               : "데모 주문은 회원 계정에 실제로 생성됩니다(마이페이지 구매 내역에서 확인)."}
           </p>
         </div>
@@ -304,16 +313,16 @@ export function CheckoutModal({
                 </div>
               </div>
 
-              {/* Card input — only for mock methods. Toss collects card data in its own window. */}
-              {isToss ? (
+              {/* Card input — only for mock methods. PortOne collects card data in its own window. */}
+              {isPortone ? (
                 <div className="rounded-card border border-primary/30 bg-primary/5 px-4 py-3">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
                     <CreditCard className="h-3.5 w-3.5" />
-                    토스 결제창에서 카드 정보를 입력합니다
+                    포트원 결제창에서 카드 정보를 입력합니다
                   </div>
                   <p className="mt-1 text-[11px] leading-relaxed text-inactive">
-                    “결제하기”를 누르면 토스 결제창이 열립니다. 테스트 환경이라 실제 카드로 결제해도
-                    출금되지 않습니다(토스 공식 정책 — 별도 테스트 카드번호 없음).
+                    “결제하기”를 누르면 포트원 결제창이 열립니다. 테스트 환경이라 실제 카드로 결제해도
+                    출금되지 않습니다.
                   </p>
                 </div>
               ) : (
@@ -360,7 +369,7 @@ export function CheckoutModal({
               {stage === "processing" ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {isToss ? "토스 결제창 여는 중…" : "주문 생성 중…"}
+                  {isPortone ? "포트원 결제창 여는 중…" : "주문 생성 중…"}
                 </>
               ) : member ? (
                 <>{formatKRW(total)} 결제하기</>

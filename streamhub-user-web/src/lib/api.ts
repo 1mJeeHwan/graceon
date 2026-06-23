@@ -7,8 +7,6 @@ import type {
   ContentType,
   HomeBundle,
   InfinityList,
-  CertificationResult,
-  IamportConfig,
   MemberAuthResponse,
   MemberInfo,
   PostDetail,
@@ -137,13 +135,7 @@ export const api = {
     request<MemberAuthResponse>("/pub/v1/auth/login", { method: "POST", body: { email, password } }),
   me: (token: string) => request<MemberInfo>("/pub/v1/auth/me", { token }),
 
-  // Sign-up + Iamport(포트원) identity verification
-  iamportConfig: () => request<IamportConfig>("/pub/v1/auth/iamport-config"),
-  certify: (impUid: string) =>
-    request<CertificationResult>("/pub/v1/auth/verify/certification", {
-      method: "POST",
-      body: { impUid },
-    }),
+  // Sign-up
   signup: (payload: SignupPayload) =>
     request<MemberAuthResponse>("/pub/v1/auth/signup", { method: "POST", body: payload }),
 };

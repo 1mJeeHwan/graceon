@@ -46,12 +46,6 @@ class MemberAuthServiceTest {
     @Mock
     private org.streamhub.api.v1.security.SecurityMonitor securityMonitor;
 
-    @Mock
-    private PhoneVerificationService phoneVerificationService;
-
-    @Mock
-    private org.streamhub.api.base.iamport.IamportCertService iamportCertService;
-
     @InjectMocks
     private MemberAuthService memberAuthService;
 
@@ -127,7 +121,7 @@ class MemberAuthServiceTest {
     }
 
     @Test
-    void signup_verifiedNewMember_createsConfirmedAndIssuesToken() {
+    void signup_newMember_createsConfirmedAndIssuesToken() {
         MemberSignupRequest req = new MemberSignupRequest(
                 "New@Streamhub.test", "password1", "신규회원", "010-9999-8888",
                 true, true, true);
@@ -143,7 +137,6 @@ class MemberAuthServiceTest {
 
         assertThat(res.token()).isEqualTo("member.jwt");
         assertThat(res.member().email()).isEqualTo("new@streamhub.test");
-        verify(phoneVerificationService).consumeVerified("010-9999-8888");
         verify(memberRepository).save(org.mockito.ArgumentMatchers.any(Member.class));
     }
 

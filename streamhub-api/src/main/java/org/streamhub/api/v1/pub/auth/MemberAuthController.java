@@ -15,10 +15,6 @@ import org.streamhub.api.base.exception.ApiException;
 import org.streamhub.api.base.jwt.JwtTokenProvider;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.response.ResultDTO;
-import org.streamhub.api.base.iamport.IamportProperty;
-import org.streamhub.api.v1.pub.auth.dto.CertificationRequest;
-import org.streamhub.api.v1.pub.auth.dto.CertificationResult;
-import org.streamhub.api.v1.pub.auth.dto.IamportConfig;
 import org.streamhub.api.v1.pub.auth.dto.MemberAuthResponse;
 import org.streamhub.api.v1.pub.auth.dto.MemberInfo;
 import org.streamhub.api.v1.pub.auth.dto.MemberLoginRequest;
@@ -37,14 +33,11 @@ public class MemberAuthController {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final MemberAuthService memberAuthService;
-    private final IamportProperty iamportProperty;
     private final JwtTokenProvider tokenProvider;
 
     public MemberAuthController(MemberAuthService memberAuthService,
-                               IamportProperty iamportProperty,
                                JwtTokenProvider tokenProvider) {
         this.memberAuthService = memberAuthService;
-        this.iamportProperty = iamportProperty;
         this.tokenProvider = tokenProvider;
     }
 
@@ -54,21 +47,8 @@ public class MemberAuthController {
         return ResultDTO.ok(memberAuthService.login(request));
     }
 
-    @Operation(summary = "Iamport 설정", description = "브라우저 본인인증 SDK(IMP.init)에 쓸 가맹점 코드를 반환한다.")
-    @GetMapping("/iamport-config")
-    public ResultDTO<IamportConfig> iamportConfig() {
-        return ResultDTO.ok(new IamportConfig(iamportProperty.getImp()));
-    }
-
-    @Operation(summary = "휴대폰 본인인증 확인",
-            description = "Iamport 본인인증 팝업이 발급한 imp_uid로 인증 결과(이름·휴대폰)를 조회·검증한다.")
-    @PostMapping("/verify/certification")
-    public ResultDTO<CertificationResult> certification(@Valid @RequestBody CertificationRequest request) {
-        return ResultDTO.ok(memberAuthService.certify(request.impUid()));
-    }
-
     @Operation(summary = "회원가입",
-            description = "본인인증을 마친 휴대폰으로 회원을 생성하고 회원 토큰을 발급한다(가입 즉시 로그인).")
+            description = "약관 동의 후 회원을 생성하고 회원 토큰을 발급한다(가입 즉시 로그인).")
     @PostMapping("/signup")
     public ResultDTO<MemberAuthResponse> signup(@Valid @RequestBody MemberSignupRequest request) {
         return ResultDTO.ok(memberAuthService.signup(request));

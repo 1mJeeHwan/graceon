@@ -116,17 +116,6 @@ export interface MemberAuthResponse {
   member: MemberInfo;
 }
 
-/** Public Iamport(포트원) config for the browser SDK. */
-export interface IamportConfig {
-  imp: string;
-}
-
-/** Verified identity returned after a successful 본인인증, used to prefill the form. */
-export interface CertificationResult {
-  name: string;
-  phone: string;
-}
-
 export interface SignupPayload {
   email: string;
   password: string;

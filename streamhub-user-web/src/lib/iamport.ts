@@ -1,32 +1,36 @@
 "use client";
 
-/** Iamport(포트원) JS SDK 로딩 + 본인인증 Promise 래퍼. ng-front utils/iamport.ts와 동일. */
+/** Iamport(포트원) JS SDK 로딩 + 결제 Promise 래퍼. ng-api와 동일한 IMP.request_pay 흐름. */
 
 declare global {
   interface Window {
     IMP?: {
       init: (impCode: string) => void;
-      certification: (
-        params: IamportCertificationParams,
-        callback: (res: IamportCertificationResult) => void,
+      request_pay: (
+        params: IamportPayParams,
+        callback: (res: IamportPayResult) => void,
       ) => void;
     };
   }
 }
 
-export type IamportCertificationParams = {
-  merchant_uid: string;
+export type IamportPayParams = {
+  /** PG 채널(예: "html5_inicis"). 미지정 시 가맹점 기본 채널 사용. */
   pg?: string;
-  name?: string;
-  phone?: string;
-  popup?: boolean;
+  pay_method: string;
+  merchant_uid: string;
+  name: string;
+  amount: number;
+  buyer_name?: string;
+  /** 모바일에서 결제 후 돌아올 URL. */
   m_redirect_url?: string;
 };
 
-export type IamportCertificationResult = {
+export type IamportPayResult = {
   success: boolean;
   imp_uid: string;
   merchant_uid: string;
+  paid_amount?: number;
   error_code?: string;
   error_msg?: string;
 };
@@ -48,22 +52,22 @@ function loadIamportSdk(): Promise<void> {
     script.onload = () => resolve();
     script.onerror = () => {
       sdkLoadingPromise = null;
-      reject(new Error("본인인증 모듈을 불러오지 못했습니다."));
+      reject(new Error("결제 모듈을 불러오지 못했습니다."));
     };
     document.head.appendChild(script);
   });
   return sdkLoadingPromise;
 }
 
-/** Loads the SDK, runs IMP.certification, and resolves with the popup result. */
-export async function runCertification(
+/** Loads the SDK, runs IMP.request_pay, and resolves with the payment popup result. */
+export async function runPayment(
   impCode: string,
-  params: IamportCertificationParams,
-): Promise<IamportCertificationResult> {
+  params: IamportPayParams,
+): Promise<IamportPayResult> {
   await loadIamportSdk();
-  if (!window.IMP) throw new Error("본인인증 모듈을 사용할 수 없습니다.");
+  if (!window.IMP) throw new Error("결제 모듈을 사용할 수 없습니다.");
   window.IMP.init(impCode);
-  return new Promise<IamportCertificationResult>((resolve) => {
-    window.IMP!.certification(params, (res) => resolve(res));
+  return new Promise<IamportPayResult>((resolve) => {
+    window.IMP!.request_pay(params, (res) => resolve(res));
   });
 }

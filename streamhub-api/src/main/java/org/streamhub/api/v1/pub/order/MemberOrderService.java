@@ -74,6 +74,7 @@ public class MemberOrderService {
     private final PaymentService paymentService;
     private final org.streamhub.api.v1.delivery.DeliveryService deliveryService;
     private final CouponService couponService;
+    private final org.streamhub.api.base.iamport.IamportProperty iamportProperty;
     private final String tossClientKey;
     private final boolean paymentTestMode;
     private final SecureRandom random = new SecureRandom();
@@ -88,6 +89,7 @@ public class MemberOrderService {
             PaymentService paymentService,
             org.streamhub.api.v1.delivery.DeliveryService deliveryService,
             CouponService couponService,
+            org.streamhub.api.base.iamport.IamportProperty iamportProperty,
             @org.springframework.beans.factory.annotation.Value("${app.payment.toss.client-key:}")
             String tossClientKey,
             @org.springframework.beans.factory.annotation.Value("${app.payment.test-mode:true}")
@@ -101,6 +103,7 @@ public class MemberOrderService {
         this.paymentService = paymentService;
         this.deliveryService = deliveryService;
         this.couponService = couponService;
+        this.iamportProperty = iamportProperty;
         this.tossClientKey = tossClientKey;
         this.paymentTestMode = paymentTestMode;
     }
@@ -172,10 +175,12 @@ public class MemberOrderService {
 
         String orderName = firstProductName(order.getId());
         String customerKey = "member-" + member.getId();
-        // Toss → clientKey for the browser SDK; Kakao/PayPal → redirectUrl from the PG ready/create.
+        // clientKey = browser SDK key: PortOne → 가맹점 식별코드(imp), Toss → toss client key.
+        // Kakao/PayPal carry a redirectUrl from the PG ready/create instead.
+        String clientKey = "PORTONE".equals(provider) ? iamportProperty.getImp() : tossClientKey;
         return new MemberPaymentPrepareResult(
                 order.getOrderNo(), orderName, order.getTotal(), provider,
-                tossClientKey, customerKey, requested.redirectUrl());
+                clientKey, customerKey, requested.redirectUrl());
     }
 
     /**

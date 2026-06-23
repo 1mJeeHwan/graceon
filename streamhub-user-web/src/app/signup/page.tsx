@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Check, ChevronDown, ShieldCheck, UserPlus } from "lucide-react";
+import { Check, ChevronDown, UserPlus } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { runCertification } from "@/lib/iamport";
 
 const field =
   "w-full rounded-xl border border-border bg-surface px-4 py-3 text-active outline-none transition-colors placeholder:text-inactive focus:border-primary";
@@ -23,7 +22,7 @@ const TERMS = [
     key: "agreePrivacy",
     required: true,
     label: "개인정보 수집·이용 동의",
-    body: "수집 항목: 이름, 휴대폰 번호, 이메일. 수집 목적: 본인확인 및 회원 식별, 서비스 제공·고지. 보유 기간: 회원 탈퇴 시까지(관계 법령에 따른 보존 의무가 있는 경우 해당 기간). 동의를 거부할 권리가 있으나, 거부 시 회원가입이 제한됩니다.",
+    body: "수집 항목: 이름, 휴대폰 번호, 이메일. 수집 목적: 회원 식별 및 서비스 제공·고지. 보유 기간: 회원 탈퇴 시까지(관계 법령에 따른 보존 의무가 있는 경우 해당 기간). 동의를 거부할 권리가 있으나, 거부 시 회원가입이 제한됩니다.",
   },
   {
     key: "agreeMarketing",
@@ -34,7 +33,7 @@ const TERMS = [
 ] as const;
 
 type ConsentKey = (typeof TERMS)[number]["key"];
-type Step = "terms" | "verify" | "account";
+type Step = "terms" | "account";
 
 export default function SignupPage() {
   const { member, loading, applySession } = useAuth();
@@ -58,44 +57,15 @@ export default function SignupPage() {
   const requiredOk = agree.agreeTerms && agree.agreePrivacy;
   const allChecked = TERMS.every((t) => agree[t.key]);
 
-  // Step 2: Iamport(포트원) identity verification — name/phone come back from the certification.
+  // Step 2: account
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [verified, setVerified] = useState(false);
-
-  // Step 3: account
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
 
   function toggleAll(next: boolean) {
     setAgree({ agreeTerms: next, agreePrivacy: next, agreeMarketing: next });
-  }
-
-  async function startCertification() {
-    setError(null);
-    setSubmitting(true);
-    try {
-      const { imp } = await api.iamportConfig();
-      const cert = await runCertification(imp, {
-        merchant_uid: `cert_${Date.now()}`,
-        popup: true,
-      });
-      if (!cert.success) {
-        setError("본인인증이 취소되었습니다.");
-        return;
-      }
-      // Backend resolves imp_uid → verified identity and marks the phone verified.
-      const result = await api.certify(cert.imp_uid);
-      setName(result.name);
-      setPhone(result.phone);
-      setVerified(true);
-      setStep("account");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "본인인증에 실패했습니다.");
-    } finally {
-      setSubmitting(false);
-    }
   }
 
   async function submitSignup(e: React.FormEvent) {
@@ -132,18 +102,15 @@ export default function SignupPage() {
         </div>
         <h1 className="text-2xl font-bold">회원가입</h1>
         <p className="mt-1 text-sm text-inactive">
-          {step === "terms" && "약관에 동의해 주세요."}
-          {step === "verify" && "휴대폰 본인인증을 진행해 주세요."}
-          {step === "account" && "로그인에 사용할 계정 정보를 입력해 주세요."}
+          {step === "terms" ? "약관에 동의해 주세요." : "회원 정보를 입력해 주세요."}
         </p>
       </div>
 
       {/* step indicator */}
       <ol className="mb-6 flex items-center justify-center gap-2 text-xs text-inactive">
-        {(["약관", "본인인증", "계정"] as const).map((label, i) => {
-          const active = ["terms", "verify", "account"][i] === step;
-          const done =
-            (i === 0 && step !== "terms") || (i === 1 && step === "account");
+        {(["약관", "정보 입력"] as const).map((label, i) => {
+          const active = (["terms", "account"][i] as Step) === step;
+          const done = i === 0 && step === "account";
           return (
             <li key={label} className="flex items-center gap-2">
               <span
@@ -154,7 +121,7 @@ export default function SignupPage() {
                 {done ? <Check className="h-3 w-3" /> : i + 1}
               </span>
               <span className={active ? "text-active" : ""}>{label}</span>
-              {i < 2 && <span className="mx-1 h-px w-4 bg-border" />}
+              {i < 1 && <span className="mx-1 h-px w-4 bg-border" />}
             </li>
           );
         })}
@@ -223,7 +190,7 @@ export default function SignupPage() {
           <button
             type="button"
             disabled={!requiredOk}
-            onClick={() => setStep("verify")}
+            onClick={() => setStep("account")}
             className="btn-primary w-full disabled:opacity-60"
           >
             다음
@@ -231,44 +198,26 @@ export default function SignupPage() {
         </div>
       )}
 
-      {/* STEP 2 — Iamport(포트원) identity verification */}
-      {step === "verify" && (
-        <div className="space-y-3">
-          <div className="rounded-xl border border-border/70 bg-surface p-4 text-sm leading-relaxed text-inactive">
-            <p className="mb-1 flex items-center gap-1.5 font-semibold text-active">
-              <ShieldCheck className="h-4 w-4 text-primary" />
-              휴대폰 본인인증
-            </p>
-            통신사 본인인증으로 이름과 휴대폰 번호를 확인합니다. 인증이 완료되면 정보가 자동으로
-            입력됩니다.
-          </div>
-
-          <button
-            type="button"
-            onClick={startCertification}
-            disabled={submitting}
-            className="btn-primary w-full disabled:opacity-60"
-          >
-            {submitting ? "본인인증 진행 중…" : "본인인증 시작"}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStep("terms")}
-            className="w-full rounded-xl border border-border py-3 text-sm text-inactive"
-          >
-            이전
-          </button>
-        </div>
-      )}
-
-      {/* STEP 3 — account */}
+      {/* STEP 2 — account */}
       {step === "account" && (
         <form onSubmit={submitSignup} className="space-y-3">
-          <div className="flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm text-primary">
-            <ShieldCheck className="h-4 w-4" />
-            {name} ({phone}) 본인인증 완료
-          </div>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="이름"
+            required
+            className={field}
+          />
+          <input
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="휴대폰 번호 (- 없이)"
+            required
+            className={field}
+          />
           <input
             type="email"
             inputMode="email"
@@ -300,10 +249,17 @@ export default function SignupPage() {
           />
           <button
             type="submit"
-            disabled={submitting || !verified}
+            disabled={submitting}
             className="btn-primary w-full disabled:opacity-60"
           >
             {submitting ? "가입 중…" : "가입하기"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setStep("terms")}
+            className="w-full rounded-xl border border-border py-3 text-sm text-inactive"
+          >
+            이전
           </button>
         </form>
       )}
