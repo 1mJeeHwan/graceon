@@ -3,14 +3,12 @@
 import Link from "next/link";
 import { Coins, Ticket, ChevronRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { useAlbums } from "@/lib/albums";
 import { useGoods } from "@/lib/goods";
 import { useCampaigns } from "@/lib/campaigns";
 import { useMyPoints, useMyCoupons } from "@/lib/me";
 import { ContentContainer } from "./ContentContainer";
 import { TabBanner } from "./TabBanner";
 import { ItemCarousel } from "./ItemCarousel";
-import { AlbumCard } from "./AlbumCard";
 import { GoodsCard } from "./GoodsCard";
 import { CampaignCard } from "./CampaignCard";
 
@@ -103,36 +101,6 @@ function CampaignStoreRow() {
   );
 }
 
-/** Popular albums row (by play count), 더보기 into the full album catalog. */
-function AlbumStoreRow() {
-  const { data, isLoading } = useAlbums({
-    sortBy: "viewCount",
-    sortDir: "desc",
-    pageNumber: 0,
-    pageSize: ROW,
-  });
-  const items = data?.contents ?? [];
-  if (isLoading) {
-    return (
-      <ContentContainer title="인기 음반" moreHref="/albums">
-        <CarouselSkeleton />
-      </ContentContainer>
-    );
-  }
-  if (items.length === 0) return null;
-  return (
-    <ContentContainer title="인기 음반" moreHref="/albums">
-      <ItemCarousel>
-        {items.map((album) => (
-          <ItemCarousel.ItemWrapper key={album.id}>
-            <AlbumCard item={album} size="md" />
-          </ItemCarousel.ItemWrapper>
-        ))}
-      </ItemCarousel>
-    </ContentContainer>
-  );
-}
-
 /** Goods row, 더보기 into the full goods shop. */
 function GoodsStoreRow() {
   const { data, isLoading } = useGoods({ pageNumber: 0, pageSize: ROW });
@@ -159,9 +127,9 @@ function GoodsStoreRow() {
 }
 
 /**
- * Store hub: a single shopping destination consolidating events, albums, and goods — previously
- * scattered as separate app-bar icons. A wallet strip surfaces the member's points/coupons, and
- * each section drills into its existing full catalog page via 더보기.
+ * Store hub: a single shopping destination for events and goods. A wallet strip surfaces the
+ * member's points/coupons, and each section drills into its full catalog page via 더보기. Albums
+ * are no longer sold here — music is a free listening experience (see the 음악 tab).
  */
 export function StoreHub() {
   return (
@@ -172,7 +140,6 @@ export function StoreHub() {
         <WalletStrip />
       </div>
       <CampaignStoreRow />
-      <AlbumStoreRow />
       <GoodsStoreRow />
     </section>
   );

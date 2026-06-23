@@ -8,11 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.streamhub.api.base.exception.ApiException;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.storage.StorageService;
-import org.streamhub.api.v1.album.entity.Album;
 import org.streamhub.api.v1.album.entity.Track;
-import org.streamhub.api.v1.album.repository.AlbumRepository;
 import org.streamhub.api.v1.album.repository.TrackRepository;
-import org.streamhub.api.v1.order.repository.OrderItemRepository;
 
 /**
  * Serves the encrypted full-track HLS stream.
@@ -20,10 +17,9 @@ import org.streamhub.api.v1.order.repository.OrderItemRepository;
  * <ul>
  *   <li>{@link #playlist} (public) — returns {@code index.m3u8} rewritten so segment URLs point at
  *       the CDN ({@code segment-base-url}) and the AES key URI is a relative {@code key} (resolved
- *       by the player against the playlist URL → the access-gated key endpoint). The playlist and
- *       the encrypted segments carry no secret, so they are safe to cache publicly.</li>
- *   <li>{@link #serveKey} (gated) — returns the raw 16-byte AES key only to a member who purchased
- *       the album. This is the single access-control point.</li>
+ *       by the player against the playlist URL → the key endpoint).</li>
+ *   <li>{@link #serveKey} (public) — returns the raw 16-byte AES key. Music is free to listen, so
+ *       there is no purchase gate.</li>
  * </ul>
  */
 @Service
@@ -31,23 +27,17 @@ public class HlsStreamingService {
 
     private static final HexFormat HEX = HexFormat.of();
 
-    private final AlbumRepository albumRepository;
     private final TrackRepository trackRepository;
     private final HlsKeyRepository hlsKeyRepository;
-    private final OrderItemRepository orderItemRepository;
     private final StorageService storageService;
     private final String segmentBaseUrl;
 
-    public HlsStreamingService(AlbumRepository albumRepository,
-                               TrackRepository trackRepository,
+    public HlsStreamingService(TrackRepository trackRepository,
                                HlsKeyRepository hlsKeyRepository,
-                               OrderItemRepository orderItemRepository,
                                StorageService storageService,
                                @Value("${app.hls.segment-base-url:}") String segmentBaseUrl) {
-        this.albumRepository = albumRepository;
         this.trackRepository = trackRepository;
         this.hlsKeyRepository = hlsKeyRepository;
-        this.orderItemRepository = orderItemRepository;
         this.storageService = storageService;
         this.segmentBaseUrl = stripTrailingSlash(segmentBaseUrl);
     }
@@ -62,22 +52,13 @@ public class HlsStreamingService {
     }
 
     /**
-     * Gated: the raw AES-128 key, only for a member who purchased the album.
-     *
-     * @throws ApiException {@code UNAUTHORIZED} if not logged in, {@code FORBIDDEN} if not purchased
+     * The raw AES-128 key for a full track. Music is a free listening experience — there is no
+     * purchase gate, so the key is served to anyone (the {@code memberId} is ignored). The stream is
+     * still AES-packaged; the key endpoint simply no longer restricts access.
      */
     @Transactional(readOnly = true)
     public byte[] serveKey(Long albumId, Long trackId, Long memberId) {
-        if (memberId == null) {
-            throw new ApiException(ResultCode.UNAUTHORIZED, "로그인이 필요합니다");
-        }
         Track track = requireFullTrack(albumId, trackId);
-        Album album = albumRepository.findById(albumId)
-                .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
-        if (album.getGoodsItemId() == null
-                || !orderItemRepository.existsPaidPurchase(memberId, album.getGoodsItemId())) {
-            throw new ApiException(ResultCode.FORBIDDEN, "구매한 회원만 재생할 수 있습니다");
-        }
         HlsKey key = hlsKeyRepository.findById(track.getHlsKeyId())
                 .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND, "키를 찾을 수 없습니다"));
         return HEX.parseHex(key.getKeyHex());

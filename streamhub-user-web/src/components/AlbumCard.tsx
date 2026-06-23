@@ -6,7 +6,7 @@ import { Disc3 } from "lucide-react";
 import { GENRE_LABELS, type AlbumListItem } from "@/lib/albums";
 import { CARD_SIZES, type CardSize } from "./ContentCard";
 
-/** Album cover card: square artwork + title + artist + genre/price line. */
+/** Album cover card: square artwork + title + artist + genre badge (listening, no price). */
 export function AlbumCard({ item, size }: { item: AlbumListItem; size?: CardSize }) {
   const [failed, setFailed] = useState(false);
   const showImage = item.coverUrl && !failed;
@@ -36,9 +36,6 @@ export function AlbumCard({ item, size }: { item: AlbumListItem; size?: CardSize
       <div className="mt-10px">
         <p className="ellipsis-1 text-16px font-bold leading-20px text-active">{item.title}</p>
         <p className="ellipsis-1 mt-0.5 text-12px font-medium leading-20px text-inactive">{item.artist}</p>
-        {item.price != null && (
-          <p className="mt-1 text-[13px] font-bold text-primary">{item.price.toLocaleString()}원</p>
-        )}
       </div>
     </Link>
   );

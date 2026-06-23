@@ -62,7 +62,7 @@ export function AlbumListView() {
         <Disc3 className="h-6 w-6 text-primary" />
         <h1 className="text-2xl font-bold tracking-tight">음반</h1>
       </div>
-      <p className="mt-1 px-5 text-sm text-inactive">찬양 음반을 둘러보고 30초 미리듣기로 들어보세요.</p>
+      <p className="mt-1 px-5 text-sm text-inactive">찬양 음반을 둘러보고 수록곡을 무료로 감상해보세요.</p>
 
       <div className="px-5 pb-2 pt-4">
         <SearchBar value={keyword} onChange={setKeyword} placeholder="음반·아티스트 검색" />
