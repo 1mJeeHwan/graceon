@@ -9,7 +9,7 @@
 
 | 항목 | 값 |
 |------|-----|
-| GitHub 레포 | `1mJeeHwan/streamhub-admin` · 배포 브랜치 **`main`** |
+| GitHub 레포 | `1mJeeHwan/graceon` (구 streamhub-admin) · 배포 브랜치 **`main`** |
 | AWS 계정 | **203677518232** (포트폴리오용) — ⚠️ default 프로파일(191984592385)은 **다른 계정** |
 | AWS 프로파일 | **`deployAccount`** (`~/.aws/credentials`) · 리전 `ap-northeast-2` |
 | 라이브 EC2 | `i-00bcbcea9869916b7` (tag `streamhub-api`) |

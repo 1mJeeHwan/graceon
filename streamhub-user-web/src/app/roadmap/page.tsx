@@ -158,7 +158,7 @@ const LINKS = [
   { label: "사용자 사이트", href: "https://streamhub-user.vercel.app" },
   { label: "관리자 콘솔", href: "https://streamhub-admin.vercel.app" },
   { label: "API (Swagger)", href: "https://dpdtwguq8ke3x.cloudfront.net/swagger-ui/index.html" },
-  { label: "GitHub", href: "https://github.com/1mJeeHwan/streamhub-admin" },
+  { label: "GitHub", href: "https://github.com/1mJeeHwan/graceon" },
 ];
 
 /* --------------------------------------------------------------- markup --- */
