@@ -14,6 +14,7 @@ import org.streamhub.api.v1.member.repository.MemberRepository;
 import org.streamhub.api.v1.pub.auth.dto.MemberAuthResponse;
 import org.streamhub.api.v1.pub.auth.dto.MemberInfo;
 import org.streamhub.api.v1.pub.auth.dto.MemberLoginRequest;
+import org.streamhub.api.v1.pub.auth.dto.MemberSignupRequest;
 
 /**
  * End-user (member) authentication for the public site. Issues member-scoped JWTs that
@@ -28,18 +29,71 @@ public class MemberAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final org.streamhub.api.v1.security.SecurityMonitor securityMonitor;
+    private final PhoneVerificationService phoneVerificationService;
 
     public MemberAuthService(
             MemberRepository memberRepository,
             ChurchRepository churchRepository,
             PasswordEncoder passwordEncoder,
             JwtTokenProvider tokenProvider,
-            org.streamhub.api.v1.security.SecurityMonitor securityMonitor) {
+            org.streamhub.api.v1.security.SecurityMonitor securityMonitor,
+            PhoneVerificationService phoneVerificationService) {
         this.memberRepository = memberRepository;
         this.churchRepository = churchRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
         this.securityMonitor = securityMonitor;
+        this.phoneVerificationService = phoneVerificationService;
+    }
+
+    /**
+     * Registers a new member after phone identity-verification. Consumes the one-time verified flag
+     * for the phone, enforces email/phone uniqueness, stores a BCrypt password, and returns an
+     * access token so the client is logged in immediately. New members are {@link UserStatus#CONFIRMED}
+     * (self-service signup is auto-approved on this public site).
+     */
+    @Transactional
+    public MemberAuthResponse signup(MemberSignupRequest request) {
+        String phone = normalizePhone(request.phone());
+        phoneVerificationService.consumeVerified(phone);
+
+        String email = request.email().trim().toLowerCase();
+        if (memberRepository.existsByEmail(email)) {
+            throw new ApiException(ResultCode.INVALID_PARAMETER, "이미 가입된 이메일입니다");
+        }
+        if (memberRepository.existsByPhone(phone)) {
+            throw new ApiException(ResultCode.INVALID_PARAMETER, "이미 가입된 휴대폰 번호입니다");
+        }
+
+        Church church = churchRepository.findAll().stream().findFirst()
+                .orElseThrow(() -> new ApiException(ResultCode.INTERNAL_ERROR, "가입 가능한 교회가 없습니다"));
+
+        Member member = Member.builder()
+                .churchId(church.getId())
+                .email(email)
+                .password(passwordEncoder.encode(request.password()))
+                .name(request.name().trim())
+                .phone(phone)
+                .userStatus(UserStatus.CONFIRMED)
+                .liveYn("N")
+                .marketingAgreed(request.agreeMarketing())
+                .build();
+        memberRepository.save(member);
+
+        String token = tokenProvider.createMemberAccessToken(member);
+        return new MemberAuthResponse(token, tokenProvider.getMemberExpSeconds(), toInfo(member));
+    }
+
+    /** Formats a phone as 010-XXXX-XXXX (matching seeded members) from any digit/hyphen input. */
+    private String normalizePhone(String raw) {
+        String digits = raw.replaceAll("\\D", "");
+        if (digits.length() == 11) {
+            return digits.substring(0, 3) + "-" + digits.substring(3, 7) + "-" + digits.substring(7);
+        }
+        if (digits.length() == 10) {
+            return digits.substring(0, 3) + "-" + digits.substring(3, 6) + "-" + digits.substring(6);
+        }
+        return digits;
     }
 
     @Transactional(readOnly = true)

@@ -21,6 +21,11 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     /** Member login is by email. */
     Optional<Member> findByEmail(String email);
 
+    /** Sign-up uniqueness guards. */
+    boolean existsByEmail(String email);
+
+    boolean existsByPhone(String phone);
+
     /**
      * Atomically adjusts the cached point balance by {@code delta} in a single guarded UPDATE,
      * eliminating the read-modify-write race that let concurrent grant/deduct/accrual writers

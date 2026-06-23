@@ -9,9 +9,11 @@ import type {
   InfinityList,
   MemberAuthResponse,
   MemberInfo,
+  PhoneVerifyResult,
   PostDetail,
   PostListItem,
   ResultDTO,
+  SignupPayload,
 } from "./types";
 import { fixImageUrl } from "./image";
 
@@ -133,4 +135,15 @@ export const api = {
   login: (email: string, password: string) =>
     request<MemberAuthResponse>("/pub/v1/auth/login", { method: "POST", body: { email, password } }),
   me: (token: string) => request<MemberInfo>("/pub/v1/auth/me", { token }),
+
+  // Sign-up + phone identity verification
+  requestVerification: (name: string, carrier: string, phone: string) =>
+    request<PhoneVerifyResult>("/pub/v1/auth/verify/request", {
+      method: "POST",
+      body: { name, carrier, phone },
+    }),
+  confirmVerification: (phone: string, code: string) =>
+    request<void>("/pub/v1/auth/verify/confirm", { method: "POST", body: { phone, code } }),
+  signup: (payload: SignupPayload) =>
+    request<MemberAuthResponse>("/pub/v1/auth/signup", { method: "POST", body: payload }),
 };

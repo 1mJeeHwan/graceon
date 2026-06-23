@@ -115,3 +115,19 @@ export interface MemberAuthResponse {
   expiresIn: number;
   member: MemberInfo;
 }
+
+/** Result of requesting an SMS auth code. `devCode` is present only in demo mode. */
+export interface PhoneVerifyResult {
+  expiresIn: number;
+  devCode: string | null;
+}
+
+export interface SignupPayload {
+  email: string;
+  password: string;
+  name: string;
+  phone: string;
+  agreeTerms: boolean;
+  agreePrivacy: boolean;
+  agreeMarketing: boolean;
+}

@@ -66,6 +66,13 @@ public class Member {
     @Column(name = "point_balance", nullable = false)
     private long pointBalance;
 
+    /**
+     * Marketing-communication consent (선택 약관). Nullable so the column can be added to an
+     * existing live table without a NOT NULL backfill; null on legacy rows means "not asked".
+     */
+    @Column(name = "marketing_agreed")
+    private Boolean marketingAgreed;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -75,7 +82,8 @@ public class Member {
     @Builder
     private Member(Long churchId, String email, String password, String name,
                    String phone, UserStatus userStatus, String liveYn,
-                   MemberGrade grade, Long pointBalance, LocalDateTime createdAt) {
+                   MemberGrade grade, Long pointBalance, Boolean marketingAgreed,
+                   LocalDateTime createdAt) {
         this.churchId = churchId;
         this.email = email;
         this.password = password;
@@ -85,6 +93,7 @@ public class Member {
         this.liveYn = liveYn;
         this.grade = grade != null ? grade : MemberGrade.BRONZE;
         this.pointBalance = pointBalance != null ? pointBalance : 0L;
+        this.marketingAgreed = marketingAgreed;
         this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
         this.updatedAt = this.createdAt;
     }

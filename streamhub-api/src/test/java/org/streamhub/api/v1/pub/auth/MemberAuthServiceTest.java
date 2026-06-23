@@ -21,8 +21,12 @@ import org.streamhub.api.v1.member.entity.Member;
 import org.streamhub.api.v1.member.entity.UserStatus;
 import org.streamhub.api.v1.member.repository.ChurchRepository;
 import org.streamhub.api.v1.member.repository.MemberRepository;
+import static org.mockito.Mockito.verify;
+
+import java.util.List;
 import org.streamhub.api.v1.pub.auth.dto.MemberAuthResponse;
 import org.streamhub.api.v1.pub.auth.dto.MemberLoginRequest;
+import org.streamhub.api.v1.pub.auth.dto.MemberSignupRequest;
 
 @ExtendWith(MockitoExtension.class)
 class MemberAuthServiceTest {
@@ -41,6 +45,9 @@ class MemberAuthServiceTest {
 
     @Mock
     private org.streamhub.api.v1.security.SecurityMonitor securityMonitor;
+
+    @Mock
+    private PhoneVerificationService phoneVerificationService;
 
     @InjectMocks
     private MemberAuthService memberAuthService;
@@ -114,6 +121,40 @@ class MemberAuthServiceTest {
                 .isInstanceOf(ApiException.class)
                 .extracting("resultCode")
                 .isEqualTo(ResultCode.FORBIDDEN);
+    }
+
+    @Test
+    void signup_verifiedNewMember_createsConfirmedAndIssuesToken() {
+        MemberSignupRequest req = new MemberSignupRequest(
+                "New@Streamhub.test", "password1", "신규회원", "010-9999-8888",
+                true, true, true);
+        when(memberRepository.existsByEmail("new@streamhub.test")).thenReturn(false);
+        when(memberRepository.existsByPhone("010-9999-8888")).thenReturn(false);
+        when(churchRepository.findAll())
+                .thenReturn(List.of(Church.builder().regionId(1L).name("서울중앙교회").openYn("Y").build()));
+        when(passwordEncoder.encode("password1")).thenReturn("hash");
+        when(tokenProvider.createMemberAccessToken(org.mockito.ArgumentMatchers.any())).thenReturn("member.jwt");
+        when(tokenProvider.getMemberExpSeconds()).thenReturn(28800L);
+
+        MemberAuthResponse res = memberAuthService.signup(req);
+
+        assertThat(res.token()).isEqualTo("member.jwt");
+        assertThat(res.member().email()).isEqualTo("new@streamhub.test");
+        verify(phoneVerificationService).consumeVerified("010-9999-8888");
+        verify(memberRepository).save(org.mockito.ArgumentMatchers.any(Member.class));
+    }
+
+    @Test
+    void signup_duplicateEmail_throwsInvalidParameter() {
+        MemberSignupRequest req = new MemberSignupRequest(
+                "dupe@streamhub.test", "password1", "신규회원", "010-9999-8888",
+                true, true, false);
+        when(memberRepository.existsByEmail("dupe@streamhub.test")).thenReturn(true);
+
+        assertThatThrownBy(() -> memberAuthService.signup(req))
+                .isInstanceOf(ApiException.class)
+                .extracting("resultCode")
+                .isEqualTo(ResultCode.INVALID_PARAMETER);
     }
 
     @Test

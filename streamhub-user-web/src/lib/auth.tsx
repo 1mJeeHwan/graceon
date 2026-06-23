@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { api } from "./api";
-import type { MemberInfo } from "./types";
+import type { MemberAuthResponse, MemberInfo } from "./types";
 
 // Trade-off: the member token is kept in localStorage for simplicity (no backend session/cookie
 // plumbing on this read-only public site). It is XSS-exposed; a production build would move to an
@@ -16,6 +16,8 @@ interface AuthState {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  /** Applies an auth response (token + profile) to the session — used after sign-up. */
+  applySession: (res: MemberAuthResponse) => void;
   logout: () => void;
 }
 
@@ -43,12 +45,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await api.login(email, password);
+  const applySession = useCallback((res: MemberAuthResponse) => {
     localStorage.setItem(STORAGE_KEY, res.token);
     setToken(res.token);
     setMember(res.member);
   }, []);
+
+  const login = useCallback(
+    async (email: string, password: string) => {
+      applySession(await api.login(email, password));
+    },
+    [applySession],
+  );
 
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
@@ -57,7 +65,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ member, token, loading, login, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ member, token, loading, login, applySession, logout }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 
