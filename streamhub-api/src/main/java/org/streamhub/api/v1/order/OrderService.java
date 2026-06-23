@@ -354,14 +354,17 @@ public class OrderService {
 
     // --- helpers -----------------------------------------------------------
 
-    /** Resolves the church filter: CHURCH_MANAGER is pinned to its own church. */
+    /**
+     * Resolves the church filter: CHURCH_MANAGER is pinned to its own church; unscoped roles
+     * (SYSTEM and read-only VIEWER) honor the requested church (null = all churches).
+     */
     private Long scopedChurchId(Long requestedChurchId, AdminPrincipal principal) {
-        return principal.isSystem() ? requestedChurchId : principal.churchId();
+        return principal.isUnscoped() ? requestedChurchId : principal.churchId();
     }
 
     /** Loads the order and verifies its owning member is in the operator's church. */
     private void ensureOrderInScope(Long orderId, AdminPrincipal principal) {
-        if (principal.isSystem()) {
+        if (principal.isUnscoped()) {
             return;
         }
         Order order = orderRepository.findById(orderId)
@@ -369,9 +372,12 @@ public class OrderService {
         ensureMemberInScope(order.getMemberId(), principal);
     }
 
-    /** Verifies the member belongs to the operator's church (SYSTEM bypasses). */
+    /**
+     * Verifies the member belongs to the operator's church. Unscoped roles (SYSTEM and read-only
+     * VIEWER) bypass; a CHURCH_MANAGER is restricted to its own church.
+     */
     private void ensureMemberInScope(Long memberId, AdminPrincipal principal) {
-        if (principal.isSystem()) {
+        if (principal.isUnscoped()) {
             return;
         }
         Member member = memberRepository.findById(memberId)

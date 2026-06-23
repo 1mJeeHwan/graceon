@@ -1,16 +1,20 @@
 package org.streamhub.api.auth;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.streamhub.api.auth.dto.LoginRequest;
 import org.streamhub.api.auth.dto.TokenResponse;
 import org.streamhub.api.base.exception.ApiException;
 import org.streamhub.api.base.jwt.JwtTokenProvider;
 import org.streamhub.api.base.response.ResultCode;
+import org.streamhub.api.base.util.ClientIpResolver;
 import org.streamhub.api.v1.admin.entity.AdminAccount;
 import org.streamhub.api.v1.admin.repository.AdminAccountRepository;
 
@@ -25,7 +29,12 @@ public class AuthService {
 
     private static final String REFRESH_KEY_PREFIX = "refresh:";
 
-    /** Redis key prefix for the per-account login-failure counter. */
+    /**
+     * Redis key prefix for the login-failure counter. The counter is keyed on
+     * {@code adminLoginFail:<ip>:<loginId>} so a brute-force lockout only ever applies to the
+     * attacking IP — an abuser cannot lock a victim out of their own account globally by spamming
+     * failures from elsewhere (account-DoS surface removed).
+     */
     private static final String LOGIN_FAIL_KEY_PREFIX = "adminLoginFail:";
 
     /** Consecutive failures (within the window) after which login is locked out. */
@@ -40,6 +49,7 @@ public class AuthService {
     private final StringRedisTemplate redisTemplate;
     private final org.streamhub.api.v1.actionlog.ActionLogPublisher actionLogPublisher;
     private final org.streamhub.api.v1.security.SecurityMonitor securityMonitor;
+    private final ClientIpResolver clientIpResolver;
 
     public AuthService(
             AdminAccountRepository adminRepository,
@@ -47,34 +57,37 @@ public class AuthService {
             JwtTokenProvider tokenProvider,
             StringRedisTemplate redisTemplate,
             org.streamhub.api.v1.actionlog.ActionLogPublisher actionLogPublisher,
-            org.streamhub.api.v1.security.SecurityMonitor securityMonitor) {
+            org.streamhub.api.v1.security.SecurityMonitor securityMonitor,
+            ClientIpResolver clientIpResolver) {
         this.adminRepository = adminRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
         this.redisTemplate = redisTemplate;
         this.actionLogPublisher = actionLogPublisher;
         this.securityMonitor = securityMonitor;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @Transactional(readOnly = true)
     public TokenResponse login(LoginRequest request) {
-        String accountKey = request.loginId() == null ? "" : request.loginId().trim();
-        if (isLockedOut(accountKey)) {
+        String account = request.loginId() == null ? "" : request.loginId().trim();
+        String failKey = loginFailKey(account);
+        if (isLockedOut(failKey)) {
             throw new ApiException(ResultCode.LOGIN_FAILED,
                     "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.");
         }
         AdminAccount admin = adminRepository.findByLoginId(request.loginId())
                 .orElseThrow(() -> {
                     securityMonitor.recordAuthFailure(request.loginId(), "ADMIN");
-                    recordLoginFailure(accountKey);
+                    recordLoginFailure(failKey);
                     return new ApiException(ResultCode.LOGIN_FAILED);
                 });
         if (!passwordEncoder.matches(request.password(), admin.getPassword())) {
             securityMonitor.recordAuthFailure(request.loginId(), "ADMIN");
-            recordLoginFailure(accountKey);
+            recordLoginFailure(failKey);
             throw new ApiException(ResultCode.LOGIN_FAILED);
         }
-        clearLoginFailures(accountKey);
+        clearLoginFailures(failKey);
         TokenResponse tokens = issueTokens(admin);
         actionLogPublisher.publishAs(admin.getId(), admin.getName(),
                 "LOGIN", "ADMIN", String.valueOf(admin.getId()), "로그인");
@@ -82,25 +95,46 @@ public class AuthService {
     }
 
     /**
-     * Best-effort lockout check: returns {@code true} when the per-account failure counter in Redis
+     * Builds the IP-scoped failure-counter key {@code adminLoginFail:<ip>:<loginId>}. Keying on the
+     * client IP (resolved from the current request via {@link ClientIpResolver}, the same way the
+     * audit publisher and security monitor read it) confines a lockout to the attacking source, so
+     * an abuser cannot lock a victim out of their own account by spamming failures. When no IP can
+     * be resolved (off-request, e.g. a test) the key degrades to {@code adminLoginFail:unknown:<id>}.
+     */
+    private String loginFailKey(String account) {
+        String ip = currentIp();
+        return LOGIN_FAIL_KEY_PREFIX + (ip == null ? "unknown" : ip) + ":" + account;
+    }
+
+    /** Resolves the current request's client IP, or null when off a request thread. */
+    private String currentIp() {
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs) {
+            HttpServletRequest request = attrs.getRequest();
+            return clientIpResolver.resolve(request);
+        }
+        return null;
+    }
+
+    /**
+     * Best-effort lockout check: returns {@code true} when the IP-scoped failure counter in Redis
      * has reached {@link #MAX_LOGIN_FAILURES} within {@link #LOGIN_FAIL_WINDOW}. Any Redis hiccup is
      * swallowed (fail-open) so an infra outage never blocks legitimate logins.
      */
-    private boolean isLockedOut(String accountKey) {
+    private boolean isLockedOut(String failKey) {
         try {
-            String count = redisTemplate.opsForValue().get(LOGIN_FAIL_KEY_PREFIX + accountKey);
+            String count = redisTemplate.opsForValue().get(failKey);
             return count != null && Integer.parseInt(count) >= MAX_LOGIN_FAILURES;
         } catch (RuntimeException ignored) {
             return false;
         }
     }
 
-    /** Increments the per-account failure counter, (re)setting the sliding TTL. Best-effort. */
-    private void recordLoginFailure(String accountKey) {
+    /** Increments the IP-scoped failure counter, (re)setting the sliding TTL. Best-effort. */
+    private void recordLoginFailure(String failKey) {
         try {
-            Long count = redisTemplate.opsForValue().increment(LOGIN_FAIL_KEY_PREFIX + accountKey);
+            Long count = redisTemplate.opsForValue().increment(failKey);
             if (count != null && count == 1L) {
-                redisTemplate.expire(LOGIN_FAIL_KEY_PREFIX + accountKey, LOGIN_FAIL_WINDOW);
+                redisTemplate.expire(failKey, LOGIN_FAIL_WINDOW);
             }
         } catch (RuntimeException ignored) {
             // Redis unavailable — skip lockout bookkeeping rather than break login.
@@ -108,9 +142,9 @@ public class AuthService {
     }
 
     /** Clears the failure counter after a successful login. Best-effort. */
-    private void clearLoginFailures(String accountKey) {
+    private void clearLoginFailures(String failKey) {
         try {
-            redisTemplate.delete(LOGIN_FAIL_KEY_PREFIX + accountKey);
+            redisTemplate.delete(failKey);
         } catch (RuntimeException ignored) {
             // ignore
         }

@@ -59,6 +59,7 @@ class MemberOrderServiceTest {
     @Mock private PaymentService paymentService;
     @Mock private org.streamhub.api.v1.delivery.DeliveryService deliveryService;
     @Mock private org.streamhub.api.v1.coupon.CouponService couponService;
+    @Mock private org.streamhub.api.v1.security.SecurityMonitor securityMonitor;
 
     private MemberOrderService service() {
         return service(true);
@@ -71,7 +72,7 @@ class MemberOrderServiceTest {
         return new MemberOrderService(
                 albumRepository, goodsItemRepository, memberRepository, orderRepository,
                 orderItemRepository, orderReceiptRepository, paymentService, deliveryService,
-                couponService, iamportProperty, "demo-client-key", paymentTestMode);
+                couponService, iamportProperty, securityMonitor, "demo-client-key", paymentTestMode);
     }
 
     private Order order(long memberId, long total) {

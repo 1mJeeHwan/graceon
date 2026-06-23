@@ -2,6 +2,7 @@ package org.streamhub.api.v1.pub.media;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.util.Set;
 import org.springframework.http.CacheControl;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.streamhub.api.base.exception.ApiException;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.storage.StorageService;
+import org.streamhub.api.base.util.ClientIpResolver;
+import org.streamhub.api.v1.analytics.PublicIngestRateLimiter;
 
 /**
  * Public read-through proxy for stored media objects ({@code /pub/v1/media/file?key=...}). The media
@@ -38,19 +41,47 @@ public class MediaPublicController {
     private static final Set<String> ALLOWED_PREFIXES =
             Set.of("media", "church", "content", "goods", "album");
 
-    private final StorageService storageService;
+    /**
+     * Hard cap on the size of an object this proxy will stream. Images are capped at 20MB on upload;
+     * this slightly-lower ceiling stops the public proxy being abused to stream arbitrarily large
+     * private-bucket objects through the API (memory + bandwidth amplification).
+     */
+    private static final long MAX_OBJECT_BYTES = 15L * 1024L * 1024L;
 
-    public MediaPublicController(StorageService storageService) {
+    /**
+     * Tokens charged to the per-IP bucket for one {@code /file} request. Kept small (1) because pages
+     * legitimately load many images in a burst, but still bounded so a flood drains the IP's budget.
+     */
+    private static final long FILE_RATE_COST = 1L;
+
+    private final StorageService storageService;
+    private final PublicIngestRateLimiter rateLimiter;
+    private final ClientIpResolver clientIpResolver;
+
+    public MediaPublicController(StorageService storageService,
+                                 PublicIngestRateLimiter rateLimiter,
+                                 ClientIpResolver clientIpResolver) {
         this.storageService = storageService;
+        this.rateLimiter = rateLimiter;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @Operation(summary = "미디어 파일", description = "저장된 미디어 객체(이미지 등)를 키로 스트리밍한다.")
     @GetMapping("/file")
-    public ResponseEntity<byte[]> file(@RequestParam("key") String key) {
+    public ResponseEntity<byte[]> file(@RequestParam("key") String key, HttpServletRequest request) {
         if (!StringUtils.hasText(key)
                 || key.startsWith("hls/")
                 || key.contains("..")
                 || !isAllowed(key)) {
+            throw new ApiException(ResultCode.NOT_FOUND);
+        }
+        // Unauthenticated, permitAll proxy → throttle per client IP so it cannot be flooded.
+        if (!rateLimiter.tryAcquire("media:" + clientIpResolver.resolve(request), FILE_RATE_COST)) {
+            throw new ApiException(ResultCode.INVALID_PARAMETER, "요청이 너무 많습니다");
+        }
+        // Reject oversized objects before reading the body so the proxy cannot be used to stream
+        // arbitrarily large private-bucket objects through the API.
+        if (storageService.size(key) > MAX_OBJECT_BYTES) {
             throw new ApiException(ResultCode.NOT_FOUND);
         }
         byte[] bytes = storageService.getBytes(key);

@@ -75,6 +75,7 @@ public class MemberOrderService {
     private final org.streamhub.api.v1.delivery.DeliveryService deliveryService;
     private final CouponService couponService;
     private final org.streamhub.api.base.iamport.IamportProperty iamportProperty;
+    private final org.streamhub.api.v1.security.SecurityMonitor securityMonitor;
     private final String tossClientKey;
     private final boolean paymentTestMode;
     private final SecureRandom random = new SecureRandom();
@@ -90,6 +91,7 @@ public class MemberOrderService {
             org.streamhub.api.v1.delivery.DeliveryService deliveryService,
             CouponService couponService,
             org.streamhub.api.base.iamport.IamportProperty iamportProperty,
+            org.streamhub.api.v1.security.SecurityMonitor securityMonitor,
             @org.springframework.beans.factory.annotation.Value("${app.payment.toss.client-key:}")
             String tossClientKey,
             @org.springframework.beans.factory.annotation.Value("${app.payment.test-mode:true}")
@@ -104,6 +106,7 @@ public class MemberOrderService {
         this.deliveryService = deliveryService;
         this.couponService = couponService;
         this.iamportProperty = iamportProperty;
+        this.securityMonitor = securityMonitor;
         this.tossClientKey = tossClientKey;
         this.paymentTestMode = paymentTestMode;
     }
@@ -280,8 +283,17 @@ public class MemberOrderService {
             order.applyCoupon(redeemed.couponId());
             orderRepository.saveAndFlush(order);
         } catch (RuntimeException e) {
-            log.warn("쿠폰 소진 실패 — 결제는 완료 유지, 쿠폰 미적용 (orderNo={}, code={}): {}",
-                    order.getOrderNo(), pendingCode, e.getMessage());
+            // Payment is already captured; the order stays PAID with the discount already baked into
+            // the total at prepare time, but the coupon was NOT redeemed (revenue/ledger drift). We do
+            // not roll back the captured payment — instead we make the drift loud and reconcilable:
+            // an ERROR log plus a HIGH security event (best-effort, swallowed by SecurityMonitor) so an
+            // operator can manually reconcile the order/coupon ledger.
+            log.error("쿠폰 소진 실패 — 결제는 완료(PAID) 유지, 쿠폰 미소진 → 수동 정산 필요 (orderNo={}, code={}): {}",
+                    order.getOrderNo(), pendingCode, e.getMessage(), e);
+            securityMonitor.record(
+                    "COUPON_RECONCILE", "HIGH", "MEMBER", order.getMemberId(), null, null,
+                    "결제 완료 후 쿠폰 소진 실패 — 수동 정산 필요 (orderNo=" + order.getOrderNo()
+                            + ", couponCode=" + pendingCode + "): " + e.getMessage());
         }
     }
 

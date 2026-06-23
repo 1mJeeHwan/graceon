@@ -305,14 +305,17 @@ public class WorshipService {
 
     // --- helpers -----------------------------------------------------------
 
-    /** Resolves the church filter: CHURCH_MANAGER is pinned to its own church. */
+    /**
+     * Resolves the church filter: CHURCH_MANAGER is pinned to its own church; unscoped roles
+     * (SYSTEM and read-only VIEWER) honor the requested church (null = all churches).
+     */
     private Long scopedChurchId(Long requestedChurchId, AdminPrincipal principal) {
-        return principal.isSystem() ? requestedChurchId : principal.churchId();
+        return principal.isUnscoped() ? requestedChurchId : principal.churchId();
     }
 
     /** Loads the registration and verifies its church is in the operator's scope. */
     private void ensureRegistrationInScope(Long registrationId, AdminPrincipal principal) {
-        if (principal.isSystem()) {
+        if (principal.isUnscoped()) {
             return;
         }
         WorshipRegistration registration = worshipRegistrationRepository.findById(registrationId)
@@ -320,9 +323,12 @@ public class WorshipService {
         ensureChurchInScope(registration.getChurchId(), principal);
     }
 
-    /** Verifies the church belongs to the operator's scope (SYSTEM bypasses). */
+    /**
+     * Verifies the church belongs to the operator's scope. Unscoped roles (SYSTEM and read-only
+     * VIEWER) bypass; a CHURCH_MANAGER is restricted to its own church.
+     */
     private void ensureChurchInScope(Long churchId, AdminPrincipal principal) {
-        if (!principal.isSystem() && !churchId.equals(principal.churchId())) {
+        if (!principal.isUnscoped() && !churchId.equals(principal.churchId())) {
             throw new ApiException(ResultCode.FORBIDDEN);
         }
     }

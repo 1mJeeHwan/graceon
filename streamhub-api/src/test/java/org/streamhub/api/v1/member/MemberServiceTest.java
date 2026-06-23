@@ -43,6 +43,7 @@ class MemberServiceTest {
 
     private static final AdminPrincipal SYSTEM = new AdminPrincipal(1L, "SYSTEM", null);
     private static final AdminPrincipal MANAGER = new AdminPrincipal(2L, "CHURCH_MANAGER", 3L);
+    private static final AdminPrincipal VIEWER = new AdminPrincipal(4L, "VIEWER", null);
 
     private Member member(long id, long churchId, UserStatus status) {
         Member m = Member.builder()
@@ -114,6 +115,19 @@ class MemberServiceTest {
                 .isInstanceOf(ApiException.class)
                 .extracting("resultCode")
                 .isEqualTo(ResultCode.FORBIDDEN);
+    }
+
+    @Test
+    void getDetail_anyChurch_isAllowedForViewer() {
+        // The read-only VIEWER role is unscoped: it reads detail across every church (list AND
+        // detail), consistently with SYSTEM — never FORBIDDEN like a CHURCH_MANAGER would be.
+        MemberDetail other = new MemberDetail();
+        other.setChurchId(2L);
+        when(memberMapper.selectDetail(9L)).thenReturn(other);
+
+        MemberDetail detail = memberService.getDetail(9L, VIEWER);
+
+        assertThat(detail.getChurchId()).isEqualTo(2L);
     }
 
     @Test

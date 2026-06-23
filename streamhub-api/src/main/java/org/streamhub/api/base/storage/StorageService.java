@@ -14,6 +14,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 /**
@@ -90,6 +91,22 @@ public class StorageService {
         try {
             return s3Client.getObjectAsBytes(
                     GetObjectRequest.builder().bucket(bucket).key(key).build()).asByteArray();
+        } catch (RuntimeException e) {
+            throw new ApiException(ResultCode.NOT_FOUND, "객체를 찾을 수 없습니다: " + key);
+        }
+    }
+
+    /**
+     * Returns an object's size in bytes via a HEAD request, without fetching its body. Used by the
+     * public media proxy to reject oversized objects before streaming them.
+     *
+     * @throws ApiException with {@link ResultCode#NOT_FOUND} if the object does not exist or the
+     *         HEAD request fails
+     */
+    public long size(String key) {
+        try {
+            return s3Client.headObject(
+                    HeadObjectRequest.builder().bucket(bucket).key(key).build()).contentLength();
         } catch (RuntimeException e) {
             throw new ApiException(ResultCode.NOT_FOUND, "객체를 찾을 수 없습니다: " + key);
         }

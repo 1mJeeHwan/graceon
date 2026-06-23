@@ -52,6 +52,9 @@ class MemberAuthServiceTest {
     @Mock
     private org.springframework.data.redis.core.ValueOperations<String, String> valueOps;
 
+    @Mock
+    private org.streamhub.api.base.util.ClientIpResolver clientIpResolver;
+
     @InjectMocks
     private MemberAuthService memberAuthService;
 
@@ -180,8 +183,10 @@ class MemberAuthServiceTest {
     void login_whenAccountLockedOut_rejectsBeforeCheckingPassword() {
         // Failure counter already at the threshold → login is refused for the lockout window
         // without ever touching the member repository, even if the password would be correct.
+        // The counter is IP-scoped (memberLoginFail:<ip>:<email>); off a request thread (as in this
+        // unit test) the IP resolves to "unknown", so the lockout still applies per (ip, account).
         when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.get("memberLoginFail:member01@streamhub.test")).thenReturn("5");
+        when(valueOps.get("memberLoginFail:unknown:member01@streamhub.test")).thenReturn("5");
 
         assertThatThrownBy(() -> memberAuthService.login(
                 new MemberLoginRequest("member01@streamhub.test", "member1234")))
