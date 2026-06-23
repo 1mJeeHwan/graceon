@@ -186,11 +186,11 @@ public class PortfolioSeeder implements CommandLineRunner {
 
     /** CUSTOM notice bodies (deterministic 공지 발송 demo). */
     private static final String[] SMS_NOTICES = {
-            "[StreamHub] 부활절 특별예배 안내 (테스트발송)",
-            "[StreamHub] 주일 온라인 생중계 시작 안내 (테스트발송)",
-            "[StreamHub] 신규 찬양 앨범 발매 소식 (테스트발송)",
-            "[StreamHub] 여름 수련회 신청 안내 (테스트발송)",
-            "[StreamHub] 후원 감사 및 영수증 안내 (테스트발송)",
+            "[은혜온] 부활절 특별예배 안내 (테스트발송)",
+            "[은혜온] 주일 예배 영상 업로드 안내 (테스트발송)",
+            "[은혜온] 신규 찬양 앨범 발매 소식 (테스트발송)",
+            "[은혜온] 여름 수련회 신청 안내 (테스트발송)",
+            "[은혜온] 후원 감사 및 영수증 안내 (테스트발송)",
     };
 
     private final GoodsCategoryRepository goodsCategoryRepository;
