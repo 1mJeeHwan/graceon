@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Upload, X } from "lucide-react";
+import { Images, Loader2, Upload, X } from "lucide-react";
 
-import { mediaUpload } from "@/apis/media";
+import { mediaList, mediaUpload, type MediaAssetDto } from "@/apis/media";
 import {
   useBannerCreate,
   useBannerUpdate,
@@ -206,6 +206,28 @@ export default function BannerFormDialog({
     setForm((prev) => ({ ...prev, linkRefId: item.id, linkLabel: item.title }));
     setLinkResults([]);
     setLinkKeyword("");
+  };
+
+  // --- Media library picker (browse already-uploaded images) ---
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryItems, setLibraryItems] = useState<MediaAssetDto[]>([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+
+  const toggleLibrary = async () => {
+    const next = !showLibrary;
+    setShowLibrary(next);
+    if (next && libraryItems.length === 0) {
+      setLibraryLoading(true);
+      try {
+        // 0-based pagination (page 0 = first page).
+        const res = await mediaList({ pageNumber: 0, pageSize: 24 });
+        setLibraryItems(res.resultObject?.contents ?? []);
+      } catch {
+        setMessage("미디어 라이브러리를 불러오지 못했습니다.");
+      } finally {
+        setLibraryLoading(false);
+      }
+    }
   };
 
   const handleImageUpload = async (file: File | undefined) => {
@@ -462,6 +484,14 @@ export default function BannerFormDialog({
                   )}
                   업로드
                 </button>
+                <button
+                  type="button"
+                  onClick={() => void toggleLibrary()}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <Images className="h-4 w-4" />
+                  라이브러리
+                </button>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -470,6 +500,47 @@ export default function BannerFormDialog({
                   onChange={(event) => void handleImageUpload(event.target.files?.[0])}
                 />
               </div>
+
+              {showLibrary && (
+                <div className="mt-2 rounded-md border border-slate-200 p-2">
+                  {libraryLoading ? (
+                    <div className="flex h-24 items-center justify-center">
+                      <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                    </div>
+                  ) : libraryItems.length === 0 ? (
+                    <p className="py-6 text-center text-sm text-slate-400">
+                      업로드된 이미지가 없습니다. 먼저 업로드해 주세요.
+                    </p>
+                  ) : (
+                    <div className="grid max-h-56 grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-4">
+                      {libraryItems.map((asset) => (
+                        <button
+                          key={asset.id}
+                          type="button"
+                          onClick={() => {
+                            update("imageUrl", asset.url);
+                            setShowLibrary(false);
+                          }}
+                          title={asset.originalName ?? asset.key}
+                          className={`overflow-hidden rounded-md border-2 transition ${
+                            form.imageUrl === asset.url
+                              ? "border-brand"
+                              : "border-transparent hover:border-slate-300"
+                          }`}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={asset.url}
+                            alt={asset.originalName ?? ""}
+                            className="h-16 w-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {form.imageUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
