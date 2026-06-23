@@ -80,11 +80,14 @@ export interface BannerItem {
   sortOrder: number;
 }
 
-/** Site announcement config (GET /pub/v1/announcement) — drives the one-time 안내창 modal. */
-export interface AnnouncementConfig {
-  enabled: boolean;
-  text: string | null;
+/** One active modal-ad announcement (GET /pub/v1/announcement) — drives the 안내창 image popup. */
+export interface AnnouncementAd {
+  id: number;
+  title: string;
+  imageUrl: string | null;
+  /** Resolved click target (internal path or external URL); null = no link. */
   linkUrl: string | null;
+  sortOrder: number;
 }
 
 /** Standard API envelope; "0000" means success. */

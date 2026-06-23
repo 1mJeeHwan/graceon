@@ -1,15 +1,20 @@
 package org.streamhub.api.v1.announcement;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.streamhub.api.base.exception.ApiException;
+import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.v1.announcement.dto.AnnouncementDto;
+import org.streamhub.api.v1.announcement.dto.AnnouncementSearchRequest;
 import org.streamhub.api.v1.announcement.entity.Announcement;
 import org.streamhub.api.v1.announcement.repository.AnnouncementRepository;
 
 /**
- * Site announcement config (안내창). A single editable row: {@link #save} upserts it, {@link #get}
- * reads it (admin), and {@link #getPublic} returns it for the user site (disabled default when no
- * row exists, so the modal simply doesn't show).
+ * Modal-ad announcements (안내창), managed like banners: list/detail/create/update/sort/delete for
+ * the admin, and {@link #listPublicActive()} for the user site (enabled + within the display window,
+ * in display order). Each row is one image popup ad.
  */
 @Service
 public class AnnouncementService {
@@ -21,30 +26,72 @@ public class AnnouncementService {
     }
 
     @Transactional(readOnly = true)
-    public AnnouncementDto get() {
-        return announcementRepository.findTopByOrderByIdAsc()
+    public List<AnnouncementDto> list(AnnouncementSearchRequest request) {
+        Boolean enabled = request == null ? null : request.enabled();
+        return announcementRepository.findAllByOrderBySortOrderAscIdAsc().stream()
+                .filter(a -> enabled == null || a.isEnabled() == enabled)
                 .map(AnnouncementDto::from)
-                .orElseGet(AnnouncementDto::disabled);
+                .toList();
     }
 
-    /** Public read: identical shape; callers (user site) only act when {@code enabled} is true. */
     @Transactional(readOnly = true)
-    public AnnouncementDto getPublic() {
-        return get();
+    public AnnouncementDto getDetail(Long id) {
+        return AnnouncementDto.from(find(id));
+    }
+
+    /** Public read: only active ads (enabled + within the display window), in display order. */
+    @Transactional(readOnly = true)
+    public List<AnnouncementDto> listPublicActive() {
+        LocalDateTime now = LocalDateTime.now();
+        return announcementRepository.findAllByOrderBySortOrderAscIdAsc().stream()
+                .filter(Announcement::isEnabled)
+                .filter(a -> a.getStartAt() == null || !a.getStartAt().isAfter(now))
+                .filter(a -> a.getEndAt() == null || !a.getEndAt().isBefore(now))
+                .map(AnnouncementDto::from)
+                .toList();
     }
 
     @Transactional
-    public AnnouncementDto save(AnnouncementDto request) {
-        Announcement announcement = announcementRepository.findTopByOrderByIdAsc().orElse(null);
-        if (announcement == null) {
-            announcement = Announcement.builder()
-                    .enabled(request.enabled())
-                    .text(request.text())
-                    .linkUrl(request.linkUrl())
-                    .build();
-        } else {
-            announcement.update(request.enabled(), request.text(), request.linkUrl());
-        }
-        return AnnouncementDto.from(announcementRepository.save(announcement));
+    public AnnouncementDto create(AnnouncementDto request) {
+        Announcement saved = announcementRepository.save(Announcement.builder()
+                .title(request.getTitle())
+                .imageUrl(request.getImageUrl())
+                .linkType(request.getLinkType())
+                .linkRefId(request.getLinkRefId())
+                .linkLabel(request.getLinkLabel())
+                .linkUrl(request.getLinkUrl())
+                .startAt(request.getStartAt())
+                .endAt(request.getEndAt())
+                .sortOrder(request.getSortOrder())
+                .enabled(request.isEnabled())
+                .build());
+        return AnnouncementDto.from(saved);
+    }
+
+    @Transactional
+    public AnnouncementDto update(Long id, AnnouncementDto request) {
+        Announcement announcement = find(id);
+        announcement.update(
+                request.getTitle(), request.getImageUrl(), request.getLinkType(),
+                request.getLinkRefId(), request.getLinkLabel(), request.getLinkUrl(),
+                request.getStartAt(), request.getEndAt(), request.getSortOrder(), request.isEnabled());
+        return AnnouncementDto.from(announcementRepository.saveAndFlush(announcement));
+    }
+
+    @Transactional
+    public AnnouncementDto updateSortOrder(Long id, int sortOrder) {
+        Announcement announcement = find(id);
+        announcement.updateSortOrder(sortOrder);
+        return AnnouncementDto.from(announcementRepository.saveAndFlush(announcement));
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        announcementRepository.delete(find(id));
+    }
+
+    private Announcement find(Long id) {
+        return announcementRepository.findById(id)
+                .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
     }
 }

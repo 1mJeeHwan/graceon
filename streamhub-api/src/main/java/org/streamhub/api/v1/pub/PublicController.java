@@ -111,10 +111,10 @@ public class PublicController {
         return ResultDTO.ok(bannerService.listPublic(target));
     }
 
-    @Operation(summary = "공개 안내창", description = "사이트 안내창 설정(노출 여부·문구·링크). enabled=false면 미노출.")
+    @Operation(summary = "공개 안내창", description = "노출 중인 안내창(모달 광고) 목록. 노출여부·기간으로 필터, 정렬순.")
     @GetMapping("/announcement")
-    public ResultDTO<AnnouncementDto> announcement() {
-        return ResultDTO.ok(announcementService.getPublic());
+    public ResultDTO<List<AnnouncementDto>> announcement() {
+        return ResultDTO.ok(announcementService.listPublicActive());
     }
 
     @Operation(summary = "공개 콘텐츠 목록",
