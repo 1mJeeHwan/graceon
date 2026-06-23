@@ -15,13 +15,14 @@ import org.streamhub.api.base.exception.ApiException;
 import org.streamhub.api.base.jwt.JwtTokenProvider;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.response.ResultDTO;
+import org.streamhub.api.base.iamport.IamportProperty;
+import org.streamhub.api.v1.pub.auth.dto.CertificationRequest;
+import org.streamhub.api.v1.pub.auth.dto.CertificationResult;
+import org.streamhub.api.v1.pub.auth.dto.IamportConfig;
 import org.streamhub.api.v1.pub.auth.dto.MemberAuthResponse;
 import org.streamhub.api.v1.pub.auth.dto.MemberInfo;
 import org.streamhub.api.v1.pub.auth.dto.MemberLoginRequest;
 import org.streamhub.api.v1.pub.auth.dto.MemberSignupRequest;
-import org.streamhub.api.v1.pub.auth.dto.PhoneConfirmRequest;
-import org.streamhub.api.v1.pub.auth.dto.PhoneVerifyRequest;
-import org.streamhub.api.v1.pub.auth.dto.PhoneVerifyResponse;
 
 /**
  * End-user authentication endpoints under the public ({@code /pub/**}, permitAll) namespace.
@@ -36,14 +37,14 @@ public class MemberAuthController {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final MemberAuthService memberAuthService;
-    private final PhoneVerificationService phoneVerificationService;
+    private final IamportProperty iamportProperty;
     private final JwtTokenProvider tokenProvider;
 
     public MemberAuthController(MemberAuthService memberAuthService,
-                               PhoneVerificationService phoneVerificationService,
+                               IamportProperty iamportProperty,
                                JwtTokenProvider tokenProvider) {
         this.memberAuthService = memberAuthService;
-        this.phoneVerificationService = phoneVerificationService;
+        this.iamportProperty = iamportProperty;
         this.tokenProvider = tokenProvider;
     }
 
@@ -53,18 +54,17 @@ public class MemberAuthController {
         return ResultDTO.ok(memberAuthService.login(request));
     }
 
-    @Operation(summary = "휴대폰 본인인증 요청",
-            description = "휴대폰 번호로 인증번호를 발급한다. 데모 환경에서는 응답에 인증번호를 포함한다.")
-    @PostMapping("/verify/request")
-    public ResultDTO<PhoneVerifyResponse> requestVerification(@Valid @RequestBody PhoneVerifyRequest request) {
-        return ResultDTO.ok(phoneVerificationService.requestCode(request.phone()));
+    @Operation(summary = "Iamport 설정", description = "브라우저 본인인증 SDK(IMP.init)에 쓸 가맹점 코드를 반환한다.")
+    @GetMapping("/iamport-config")
+    public ResultDTO<IamportConfig> iamportConfig() {
+        return ResultDTO.ok(new IamportConfig(iamportProperty.getImp()));
     }
 
-    @Operation(summary = "휴대폰 본인인증 확인", description = "발급된 인증번호를 검증한다.")
-    @PostMapping("/verify/confirm")
-    public ResultDTO<Void> confirmVerification(@Valid @RequestBody PhoneConfirmRequest request) {
-        phoneVerificationService.confirmCode(request.phone(), request.code());
-        return ResultDTO.ok(null);
+    @Operation(summary = "휴대폰 본인인증 확인",
+            description = "Iamport 본인인증 팝업이 발급한 imp_uid로 인증 결과(이름·휴대폰)를 조회·검증한다.")
+    @PostMapping("/verify/certification")
+    public ResultDTO<CertificationResult> certification(@Valid @RequestBody CertificationRequest request) {
+        return ResultDTO.ok(memberAuthService.certify(request.impUid()));
     }
 
     @Operation(summary = "회원가입",

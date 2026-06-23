@@ -138,7 +138,21 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Iamport(포트원) 본인인증 REST 클라이언트 — ng-api와 동일(certificationByImpUid). -->
+        <dependency>
+            <groupId>com.github.iamport</groupId>
+            <artifactId>iamport-rest-client-java</artifactId>
+            <version>0.2.23</version>
+        </dependency>
     </dependencies>
+
+    <repositories>
+        <!-- iamport-rest-client-java is published via JitPack. -->
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>

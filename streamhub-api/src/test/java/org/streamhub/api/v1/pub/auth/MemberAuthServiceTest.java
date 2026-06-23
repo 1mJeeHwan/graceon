@@ -49,6 +49,9 @@ class MemberAuthServiceTest {
     @Mock
     private PhoneVerificationService phoneVerificationService;
 
+    @Mock
+    private org.streamhub.api.base.iamport.IamportCertService iamportCertService;
+
     @InjectMocks
     private MemberAuthService memberAuthService;
 

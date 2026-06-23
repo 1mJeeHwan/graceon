@@ -6,11 +6,10 @@ import Link from "next/link";
 import { Check, ChevronDown, ShieldCheck, UserPlus } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { runCertification } from "@/lib/iamport";
 
 const field =
   "w-full rounded-xl border border-border bg-surface px-4 py-3 text-active outline-none transition-colors placeholder:text-inactive focus:border-primary";
-
-const CARRIERS = ["SKT", "KT", "LG U+", "알뜰폰"] as const;
 
 /** Required (필수) and optional (선택) consents shown on the terms step. */
 const TERMS = [
@@ -59,12 +58,9 @@ export default function SignupPage() {
   const requiredOk = agree.agreeTerms && agree.agreePrivacy;
   const allChecked = TERMS.every((t) => agree[t.key]);
 
-  // Step 2: phone verification
+  // Step 2: Iamport(포트원) identity verification — name/phone come back from the certification.
   const [name, setName] = useState("");
-  const [carrier, setCarrier] = useState<string>(CARRIERS[0]);
   const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
-  const [codeSent, setCodeSent] = useState(false);
   const [verified, setVerified] = useState(false);
 
   // Step 3: account
@@ -76,34 +72,27 @@ export default function SignupPage() {
     setAgree({ agreeTerms: next, agreePrivacy: next, agreeMarketing: next });
   }
 
-  async function sendCode() {
-    setError(null);
-    if (!name.trim() || !phone.trim()) {
-      setError("이름과 휴대폰 번호를 입력해 주세요.");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const res = await api.requestVerification(name.trim(), carrier, phone.trim());
-      setCodeSent(true);
-      // Demo: no real SMS gateway, so the API returns the code — prefill it for the tester.
-      if (res.devCode) setCode(res.devCode);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "인증번호 발송에 실패했습니다.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function confirmCode() {
+  async function startCertification() {
     setError(null);
     setSubmitting(true);
     try {
-      await api.confirmVerification(phone.trim(), code.trim());
+      const { imp } = await api.iamportConfig();
+      const cert = await runCertification(imp, {
+        merchant_uid: `cert_${Date.now()}`,
+        popup: true,
+      });
+      if (!cert.success) {
+        setError("본인인증이 취소되었습니다.");
+        return;
+      }
+      // Backend resolves imp_uid → verified identity and marks the phone verified.
+      const result = await api.certify(cert.imp_uid);
+      setName(result.name);
+      setPhone(result.phone);
       setVerified(true);
       setStep("account");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "인증에 실패했습니다.");
+      setError(err instanceof Error ? err.message : "본인인증에 실패했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -242,67 +231,26 @@ export default function SignupPage() {
         </div>
       )}
 
-      {/* STEP 2 — phone verification */}
+      {/* STEP 2 — Iamport(포트원) identity verification */}
       {step === "verify" && (
         <div className="space-y-3">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="이름"
-            required
-            className={field}
-          />
-          <select value={carrier} onChange={(e) => setCarrier(e.target.value)} className={field}>
-            {CARRIERS.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <div className="flex gap-2">
-            <input
-              type="tel"
-              inputMode="numeric"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="휴대폰 번호 (- 없이)"
-              className={field}
-            />
-            <button
-              type="button"
-              onClick={sendCode}
-              disabled={submitting}
-              className="shrink-0 rounded-xl border border-primary px-4 text-sm font-semibold text-primary disabled:opacity-60"
-            >
-              {codeSent ? "재발송" : "인증요청"}
-            </button>
+          <div className="rounded-xl border border-border/70 bg-surface p-4 text-sm leading-relaxed text-inactive">
+            <p className="mb-1 flex items-center gap-1.5 font-semibold text-active">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              휴대폰 본인인증
+            </p>
+            통신사 본인인증으로 이름과 휴대폰 번호를 확인합니다. 인증이 완료되면 정보가 자동으로
+            입력됩니다.
           </div>
 
-          {codeSent && (
-            <>
-              <div className="flex gap-2">
-                <input
-                  inputMode="numeric"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="인증번호 6자리"
-                  className={field}
-                />
-                <button
-                  type="button"
-                  onClick={confirmCode}
-                  disabled={submitting || !code.trim()}
-                  className="shrink-0 rounded-xl bg-primary px-4 text-sm font-semibold text-bg disabled:opacity-60"
-                >
-                  확인
-                </button>
-              </div>
-              <p className="flex items-center gap-1 text-xs text-inactive">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                데모 환경: 실제 SMS 대신 인증번호가 자동 입력됩니다(3분 내 유효).
-              </p>
-            </>
-          )}
+          <button
+            type="button"
+            onClick={startCertification}
+            disabled={submitting}
+            className="btn-primary w-full disabled:opacity-60"
+          >
+            {submitting ? "본인인증 진행 중…" : "본인인증 시작"}
+          </button>
 
           <button
             type="button"

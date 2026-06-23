@@ -7,9 +7,10 @@ import type {
   ContentType,
   HomeBundle,
   InfinityList,
+  CertificationResult,
+  IamportConfig,
   MemberAuthResponse,
   MemberInfo,
-  PhoneVerifyResult,
   PostDetail,
   PostListItem,
   ResultDTO,
@@ -136,14 +137,13 @@ export const api = {
     request<MemberAuthResponse>("/pub/v1/auth/login", { method: "POST", body: { email, password } }),
   me: (token: string) => request<MemberInfo>("/pub/v1/auth/me", { token }),
 
-  // Sign-up + phone identity verification
-  requestVerification: (name: string, carrier: string, phone: string) =>
-    request<PhoneVerifyResult>("/pub/v1/auth/verify/request", {
+  // Sign-up + Iamport(포트원) identity verification
+  iamportConfig: () => request<IamportConfig>("/pub/v1/auth/iamport-config"),
+  certify: (impUid: string) =>
+    request<CertificationResult>("/pub/v1/auth/verify/certification", {
       method: "POST",
-      body: { name, carrier, phone },
+      body: { impUid },
     }),
-  confirmVerification: (phone: string, code: string) =>
-    request<void>("/pub/v1/auth/verify/confirm", { method: "POST", body: { phone, code } }),
   signup: (payload: SignupPayload) =>
     request<MemberAuthResponse>("/pub/v1/auth/signup", { method: "POST", body: payload }),
 };

@@ -11,6 +11,10 @@ import org.streamhub.api.v1.member.entity.Member;
 import org.streamhub.api.v1.member.entity.UserStatus;
 import org.streamhub.api.v1.member.repository.ChurchRepository;
 import org.streamhub.api.v1.member.repository.MemberRepository;
+import com.siot.IamportRestClient.response.Certification;
+import org.springframework.util.StringUtils;
+import org.streamhub.api.base.iamport.IamportCertService;
+import org.streamhub.api.v1.pub.auth.dto.CertificationResult;
 import org.streamhub.api.v1.pub.auth.dto.MemberAuthResponse;
 import org.streamhub.api.v1.pub.auth.dto.MemberInfo;
 import org.streamhub.api.v1.pub.auth.dto.MemberLoginRequest;
@@ -30,6 +34,7 @@ public class MemberAuthService {
     private final JwtTokenProvider tokenProvider;
     private final org.streamhub.api.v1.security.SecurityMonitor securityMonitor;
     private final PhoneVerificationService phoneVerificationService;
+    private final IamportCertService iamportCertService;
 
     public MemberAuthService(
             MemberRepository memberRepository,
@@ -37,13 +42,31 @@ public class MemberAuthService {
             PasswordEncoder passwordEncoder,
             JwtTokenProvider tokenProvider,
             org.streamhub.api.v1.security.SecurityMonitor securityMonitor,
-            PhoneVerificationService phoneVerificationService) {
+            PhoneVerificationService phoneVerificationService,
+            IamportCertService iamportCertService) {
         this.memberRepository = memberRepository;
         this.churchRepository = churchRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
         this.securityMonitor = securityMonitor;
         this.phoneVerificationService = phoneVerificationService;
+        this.iamportCertService = iamportCertService;
+    }
+
+    /**
+     * Resolves an Iamport {@code imp_uid} to the certified identity, marks the phone verified
+     * (one-time, consumed by sign-up), and returns the name/phone to prefill the form.
+     */
+    public CertificationResult certify(String impUid) {
+        Certification cert = iamportCertService.certificate(impUid)
+                .filter(Certification::isCertified)
+                .orElseThrow(() -> new ApiException(ResultCode.INVALID_PARAMETER, "본인인증에 실패했습니다"));
+        String phone = normalizePhone(cert.getPhone());
+        if (!StringUtils.hasText(phone)) {
+            throw new ApiException(ResultCode.INVALID_PARAMETER, "본인인증에서 휴대폰 번호를 가져오지 못했습니다");
+        }
+        phoneVerificationService.markVerified(phone);
+        return new CertificationResult(cert.getName(), phone);
     }
 
     /**
