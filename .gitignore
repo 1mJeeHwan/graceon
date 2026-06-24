@@ -35,3 +35,7 @@ next-env.d.ts
 *.tfstate.*
 *.tfvars
 .gstack/
+
+# Local test/verification artifacts
+.playwright-mcp/
+announcement-popup*.png
