@@ -322,7 +322,7 @@ export default function RoadmapPage() {
         <section className="mt-24 rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-500/10 via-violet-600/10 to-rose-500/10 p-10 text-center">
           <h2 className="text-2xl font-bold text-white sm:text-3xl">직접 둘러보세요</h2>
           <p className="mx-auto mt-3 max-w-md text-sm text-slate-300">
-            라이브로 운영 중입니다. 관리자 콘솔은 <code className="rounded bg-white/10 px-1.5 py-0.5 text-cyan-300">admin / admin1234</code> 로 로그인하세요.
+            라이브로 운영 중입니다. 관리자 콘솔은 <code className="rounded bg-white/10 px-1.5 py-0.5 text-cyan-300">viewer / viewer1234</code> (읽기 전용)로 둘러보세요.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             {LINKS.map((l) => (

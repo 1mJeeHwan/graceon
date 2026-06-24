@@ -81,7 +81,7 @@ export APP_CORS_ALLOWED_ORIGINS=https://your-admin.vercel.app,https://your-userw
 docker compose -f docker-compose.yml -f docker-compose.deploy.yml up -d   # recreates api with new env
 ```
 
-Admin demo login: `admin` / `admin1234`. Public site needs no login.
+Admin demo login (read-only): `viewer` / `viewer1234`. Public site needs no login.
 
 ---
 

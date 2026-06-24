@@ -32,3 +32,12 @@ jwt:
 
 server:
   port: 8080
+
+# Swagger/OpenAPI off in prod: don't expose the full API surface (incl. admin endpoints) or the
+# origin host in the generated `servers` url. The Orval client is generated at build time from the
+# dev spec, so runtime never needs this. Set SPRINGDOC_ENABLED=true to re-enable temporarily.
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:false}
+  swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:false}

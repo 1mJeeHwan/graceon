@@ -13,9 +13,8 @@
 > - 로드맵(쇼케이스) — https://streamhub-user.vercel.app/roadmap
 > - 사용자 사이트 — https://streamhub-user.vercel.app
 > - 관리자 콘솔 — https://streamhub-admin.vercel.app
->     - `admin` / `admin1234` (시스템 — 전체 데이터)
->     - `manager` / `manager1234` (교회 관리자 — 본인 교회 데이터로 스코핑, RBAC 멀티테넌시 확인용)
-> - API(Swagger) — https://dpdtwguq8ke3x.cloudfront.net/swagger-ui/index.html
+>     - `viewer` / `viewer1234` (읽기 전용 — 전체 화면 둘러보기용 공개 데모 계정)
+>     - RBAC: SYSTEM / CHURCH_MANAGER(교회 스코핑) / VIEWER 역할 구현 (쓰기 권한 계정은 비공개)
 > - 사용자 데모 계정 — `member01@streamhub.test` / `member1234`
 
 ---

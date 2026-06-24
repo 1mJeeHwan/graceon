@@ -15,9 +15,8 @@ deployment pipeline on top.
 > - Roadmap (showcase) — https://streamhub-user.vercel.app/roadmap
 > - User site — https://streamhub-user.vercel.app
 > - Admin console — https://streamhub-admin.vercel.app
->     - `admin` / `admin1234` (system — all data)
->     - `manager` / `manager1234` (church manager — scoped to its own church's data; demonstrates RBAC multi-tenancy)
-> - API (Swagger) — https://dpdtwguq8ke3x.cloudfront.net/swagger-ui/index.html
+>     - `viewer` / `viewer1234` (read-only — public demo account to browse every screen)
+>     - RBAC: SYSTEM / CHURCH_MANAGER (church-scoped) / VIEWER implemented (write-capable accounts are private)
 > - User demo account — `member01@streamhub.test` / `member1234`
 
 ---

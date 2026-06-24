@@ -70,9 +70,9 @@ cd deploy/scripts
 
 확인:
 ```bash
-curl http://<api_public_dns>:8080/v3/api-docs    # 200이면 OK
+curl http://<api_public_dns>:8080/actuator/health    # {"status":"UP"} 이면 OK
 ```
-첫 부팅 시 Hibernate가 스키마 생성 + 시드 계정(admin/admin1234)이 들어갑니다.
+첫 부팅 시 Hibernate가 스키마 생성 + 시드 계정(admin/admin1234, manager/manager1234, viewer/viewer1234)이 들어갑니다. 운영 시 시드 비밀번호는 관리자 콘솔에서 변경하세요.
 
 ---
 
