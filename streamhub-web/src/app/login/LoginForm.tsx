@@ -31,6 +31,10 @@ export default function LoginForm() {
       ? rawCallbackUrl
       : "/dashboard";
 
+  // ?demo=1 (from the public roadmap) prefills the read-only VIEWER demo account so visitors can
+  // browse the admin without typing. The account is read-only (no :write), so this exposes nothing.
+  const isDemo = searchParams.get("demo") === "1";
+
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -39,7 +43,9 @@ export default function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { loginId: "", password: "" },
+    defaultValues: isDemo
+      ? { loginId: "viewer", password: "viewer1234" }
+      : { loginId: "", password: "" },
   });
 
   const onSubmit = async (values: LoginFormValues) => {
@@ -98,6 +104,12 @@ export default function LoginForm() {
           <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
         )}
       </div>
+
+      {isDemo && (
+        <p className="rounded-md bg-brand/10 px-3 py-2 text-xs text-brand">
+          읽기 전용 데모 계정이 입력되었습니다. 로그인 버튼을 눌러 둘러보세요.
+        </p>
+      )}
 
       {formError && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">

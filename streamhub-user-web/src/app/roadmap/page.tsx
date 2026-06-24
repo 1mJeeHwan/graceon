@@ -156,8 +156,8 @@ const STACK = [
 
 const LINKS = [
   { label: "사용자 사이트", href: "https://streamhub-user.vercel.app" },
-  { label: "관리자 콘솔", href: "https://streamhub-admin.vercel.app" },
-  { label: "API (Swagger)", href: "https://dpdtwguq8ke3x.cloudfront.net/swagger-ui/index.html" },
+  // ?demo=1 → 로그인 폼에 읽기 전용 viewer 계정 자동 입력
+  { label: "관리자 콘솔 (구경하기)", href: "https://streamhub-admin.vercel.app/login?demo=1" },
   { label: "GitHub", href: "https://github.com/1mJeeHwan/graceon" },
 ];
 
