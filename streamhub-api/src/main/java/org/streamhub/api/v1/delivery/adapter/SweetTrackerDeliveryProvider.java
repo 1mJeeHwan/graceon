@@ -42,7 +42,7 @@ public class SweetTrackerDeliveryProvider implements DeliveryTrackingProvider {
 
     @Override
     public List<Carrier> carriers() {
-        JsonNode node = get(UriComponentsBuilder.fromHttpUrl(BASE + "/companylist")
+        JsonNode node = get(UriComponentsBuilder.fromUriString(BASE + "/companylist")
                 .queryParam("t_key", apiKey).toUriString());
         List<Carrier> carriers = new ArrayList<>();
         JsonNode companies = node.get("Company");
@@ -58,7 +58,7 @@ public class SweetTrackerDeliveryProvider implements DeliveryTrackingProvider {
 
     @Override
     public String recommendCarrier(String invoice) {
-        JsonNode node = get(UriComponentsBuilder.fromHttpUrl(BASE + "/recommend")
+        JsonNode node = get(UriComponentsBuilder.fromUriString(BASE + "/recommend")
                 .queryParam("t_key", apiKey).queryParam("t_invoice", invoice).toUriString());
         JsonNode recommend = node.get("Recommend");
         if (recommend != null && recommend.isArray() && !recommend.isEmpty()) {
@@ -69,7 +69,7 @@ public class SweetTrackerDeliveryProvider implements DeliveryTrackingProvider {
 
     @Override
     public Tracking track(String carrierCode, String invoice) {
-        JsonNode node = get(UriComponentsBuilder.fromHttpUrl(BASE + "/trackingInfo")
+        JsonNode node = get(UriComponentsBuilder.fromUriString(BASE + "/trackingInfo")
                 .queryParam("t_key", apiKey)
                 .queryParam("t_code", carrierCode)
                 .queryParam("t_invoice", invoice)

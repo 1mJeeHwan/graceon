@@ -50,7 +50,7 @@
                └───────────────┬───────────────────┘
                                ▼
         ┌──────────────────────────────────────────────┐
-        │       streamhub-api (Spring Boot 3.4)          │
+        │       streamhub-api (Spring Boot 4.1)          │
         │  SecurityFilterChain (stateless JWT)           │
         │   └ 관리자 토큰 ↔ 회원 토큰 격리 (role 클레임)   │
         │  Controller → Service                          │

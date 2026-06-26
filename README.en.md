@@ -52,7 +52,7 @@ deployment pipeline on top.
                └───────────────┬───────────────────┘
                                ▼
         ┌──────────────────────────────────────────────┐
-        │       streamhub-api (Spring Boot 3.4)          │
+        │       streamhub-api (Spring Boot 4.1)          │
         │  SecurityFilterChain (stateless JWT)           │
         │   └ admin token ↔ member token isolation       │
         │  Controller → Service                          │

@@ -1,6 +1,10 @@
 spring:
   application:
     name: streamhub-api
+  # Boot 4 defaults the HTTP JSON engine to Jackson 3. Keep Jackson 2's serialization defaults so
+  # REST responses stay consistent with the Boot 3.4 baseline during this upgrade.
+  jackson:
+    use-jackson2-defaults: true
   profiles:
     active: local
   servlet:

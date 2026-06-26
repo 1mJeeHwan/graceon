@@ -122,7 +122,7 @@ public class KakaoChurchDiscoveryProvider implements ChurchDiscoveryProvider {
     }
 
     private JsonNode call(String query, double lat, double lng, int radiusM, int page) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(KEYWORD_URL)
+        URI uri = UriComponentsBuilder.fromUriString(KEYWORD_URL)
                 .queryParam("query", query)
                 .queryParam("x", lng) // Kakao x = longitude
                 .queryParam("y", lat) // Kakao y = latitude

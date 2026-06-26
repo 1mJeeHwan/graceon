@@ -222,7 +222,7 @@ resource "aws_db_subnet_group" "main" {
 resource "aws_db_instance" "mysql" {
   identifier             = "${var.project}-mysql"
   engine                 = "mysql"
-  engine_version         = "8.0"
+  engine_version         = "8.4"  # LTS (8.0 reaches end of standard support; 9.x is Innovation-only, not on RDS)
   instance_class         = var.db_instance_class
   allocated_storage      = 20
   storage_type           = "gp2"

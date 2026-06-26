@@ -76,7 +76,7 @@ public class KakaoGeocodeProvider implements GeocodeProvider {
 
     /** Calls a Local search endpoint and returns the first {@code documents} entry, or null. */
     private JsonNode firstDocument(String baseUrl, String query) {
-        URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
+        URI uri = UriComponentsBuilder.fromUriString(baseUrl)
                 .queryParam("query", query)
                 .queryParam("size", 1)
                 .encode(StandardCharsets.UTF_8)
