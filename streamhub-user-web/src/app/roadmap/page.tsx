@@ -35,7 +35,7 @@ const PHASES = [
     icon: Server,
     title: "백엔드 코어",
     desc: "인증 · RBAC · 콘텐츠 · 회원 · 비동기 감사로그. 동작하는 수직 슬라이스로 시작.",
-    tags: ["Spring Boot 3", "JPA + MyBatis", "Redis", "S3 · SQS"],
+    tags: ["Spring Boot 4", "JPA + MyBatis", "Redis", "S3 · SQS"],
   },
   {
     icon: LayoutDashboard,
@@ -137,9 +137,9 @@ const AREAS = [
 ];
 
 const STACK = [
-  "Spring Boot 3.4",
+  "Spring Boot 4.1",
   "Java 21",
-  "MySQL 8",
+  "MySQL 8.4",
   "Redis",
   "Next.js 14",
   "React 18",
