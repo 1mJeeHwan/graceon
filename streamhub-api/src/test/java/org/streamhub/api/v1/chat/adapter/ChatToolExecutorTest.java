@@ -56,9 +56,12 @@ class ChatToolExecutorTest {
     }
 
     @Test
-    void featureOverview_listsDomainsAndTitles() {
+    void featureOverview_listsUserFacingTitles_notAdminOnes() {
         String overview = executor.featureOverview();
-        assertThat(overview).contains("후원·구독").contains("굿즈샵").contains("주문 관리");
+        assertThat(overview).contains("후원·구독").contains("굿즈샵").contains("주문·배송 조회");
+        // Admin-only features must not appear in the public overview.
+        assertThat(overview).doesNotContain("통합 운영 대시보드").doesNotContain("회원 관리")
+                .doesNotContain("감사 로그");
     }
 
     @Test

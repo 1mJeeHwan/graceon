@@ -29,7 +29,10 @@ public class FeatureCatalogService {
     private final Map<String, FeatureInfo> byId;
 
     public FeatureCatalogService(ObjectMapper objectMapper) {
-        this.all = load(objectMapper);
+        // The public chatbot must never surface admin-only features (or their admin console paths),
+        // so admin-audience entries are dropped up front: they are invisible to search, the overview
+        // and id lookup alike. This is the single chokepoint that enforces "no admin route leaks".
+        this.all = load(objectMapper).stream().filter(FeatureInfo::isUserFacing).toList();
         Map<String, FeatureInfo> index = new LinkedHashMap<>();
         for (FeatureInfo f : all) {
             index.put(f.id(), f);

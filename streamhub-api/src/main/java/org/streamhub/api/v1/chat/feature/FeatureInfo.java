@@ -17,6 +17,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * @param keywords space/comma-separated synonyms in the words users actually type (colloquial +
  *                 admin terms), so the chatbot's keyword search reaches this feature however the
  *                 question is phrased. May be {@code null} for older entries.
+ * @param audience {@code user} (public site only), {@code admin} (admin console only — never shown
+ *                 by the public chatbot), or {@code both}. {@code null} is treated as {@code admin}
+ *                 (hidden) so a new entry is never leaked to users by accident.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record FeatureInfo(
@@ -27,5 +30,11 @@ public record FeatureInfo(
         String status,
         String href,
         String howTo,
-        String keywords) {
+        String keywords,
+        String audience) {
+
+    /** Whether this feature may be surfaced to a public (non-admin) chatbot user. */
+    public boolean isUserFacing() {
+        return "user".equalsIgnoreCase(audience) || "both".equalsIgnoreCase(audience);
+    }
 }

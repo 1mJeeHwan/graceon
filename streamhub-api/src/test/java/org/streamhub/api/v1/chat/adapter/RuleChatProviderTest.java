@@ -76,13 +76,9 @@ class RuleChatProviderTest {
                 "찜한 곡 내 재생목록",       // no intent marker → was FALLBACK
                 "내 시청 기록 이어보기",      // no intent marker → was FALLBACK
                 "통합검색 어떻게 해?",        // "검색" → content search that finds nothing
-                "콘텐츠 조회수",             // CONTENT_SEARCH for "조회수" finds nothing → content-stats
                 "상품 재고 문의",            // PRODUCT_INQUIRY → no product named "상품"
-                "굿즈샵 구경",               // PRODUCT_INQUIRY finds nothing → goods feature
-                "상품 카테고리",             // PRODUCT_INQUIRY → goods-category
-                "재고 재입고 알림",          // PRODUCT_INQUIRY → goods-stock
-                "굿즈 문의",                 // PRODUCT_INQUIRY → goods-inquiry
-                "상품 후기 평점",            // PRODUCT_INQUIRY → goods-review
+                "굿즈 문의",                 // PRODUCT_INQUIRY → goods-inquiry feature
+                "이벤트는 뭐야",             // category/domain question
                 "마이페이지 뭐가 있어?",      // overview
                 "교회찾기 기능");            // must hit churches, not a wrong feature
         for (String q : questions) {

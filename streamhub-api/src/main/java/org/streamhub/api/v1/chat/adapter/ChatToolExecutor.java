@@ -46,13 +46,15 @@ public class ChatToolExecutor {
     private static final Map<String, String> DOMAIN_LABELS = buildDomainLabels();
 
     private static Map<String, String> buildDomainLabels() {
+        // User-facing groupings (no admin jargon). Domains with only admin features (settings)
+        // simply produce no titles in the overview and are skipped.
         Map<String, String> m = new LinkedHashMap<>();
         m.put("support", "후원·구독");
         m.put("shop", "굿즈샵");
-        m.put("content", "콘텐츠");
-        m.put("member", "회원");
+        m.put("content", "영상·음악");
+        m.put("member", "내 정보·회원");
         m.put("community", "소통");
-        m.put("marketing", "마케팅");
+        m.put("marketing", "이벤트");
         m.put("settings", "설정");
         return m;
     }
@@ -93,15 +95,55 @@ public class ChatToolExecutor {
      * features' how-to. Single entry point so the rule provider and the LLM share one behaviour.
      */
     public String featureGuide(String message) {
-        List<FeatureInfo> hits = featureCatalog.search(message, FEATURE_TOP_N);
-        if (hits.isEmpty() || isBroadQuery(message)) {
+        if (isBroadQuery(message)) {
             return featureOverview();
         }
-        StringBuilder sb = new StringBuilder();
-        for (FeatureInfo f : hits) {
+        List<FeatureInfo> hits = featureCatalog.search(message, FEATURE_TOP_N);
+        if (!hits.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (FeatureInfo f : hits) {
+                sb.append(formatFeature(f)).append('\n');
+            }
+            return sb.toString().trim();
+        }
+        // No specific feature, but the message names a whole category ("콘텐츠 뭐 있어") → list it.
+        String domain = matchDomain(message);
+        if (domain != null) {
+            return domainFeatures(domain);
+        }
+        return featureOverview();
+    }
+
+    /** The user-facing features in one domain, or the overview if the domain has none. */
+    private String domainFeatures(String domain) {
+        List<FeatureInfo> inDomain = featureCatalog.all().stream()
+                .filter(f -> domain.equals(f.domain()))
+                .toList();
+        if (inDomain.isEmpty()) {
+            return featureOverview();
+        }
+        String label = DOMAIN_LABELS.getOrDefault(domain, domain);
+        StringBuilder sb = new StringBuilder("[" + label + "] 기능입니다:\n");
+        for (FeatureInfo f : inDomain) {
             sb.append(formatFeature(f)).append('\n');
         }
         return sb.toString().trim();
+    }
+
+    /** Domain code whose label the message references (e.g. "이벤트는 뭐야" → marketing), or null. */
+    private String matchDomain(String message) {
+        if (message == null) {
+            return null;
+        }
+        String lower = message.toLowerCase(Locale.ROOT);
+        for (Map.Entry<String, String> e : DOMAIN_LABELS.entrySet()) {
+            for (String part : e.getValue().toLowerCase(Locale.ROOT).split("[^가-힣a-z]+")) {
+                if (part.length() >= 2 && lower.contains(part)) {
+                    return e.getKey();
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -110,7 +152,7 @@ public class ChatToolExecutor {
      * but names a real feature ("찜한 곡 재생목록", "통합검색") is answered from the catalog instead.
      */
     public boolean hasFeature(String message) {
-        return !featureCatalog.search(message, 1).isEmpty();
+        return !featureCatalog.search(message, 1).isEmpty() || matchDomain(message) != null;
     }
 
     /** A grouped, domain-by-domain overview of the whole catalog (capped per domain). */
