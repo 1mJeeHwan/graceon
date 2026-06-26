@@ -76,6 +76,7 @@ class RuleChatProviderTest {
                 "찜한 곡 내 재생목록",       // no intent marker → was FALLBACK
                 "내 시청 기록 이어보기",      // no intent marker → was FALLBACK
                 "통합검색 어떻게 해?",        // "검색" → content search that finds nothing
+                "상품 재고 문의",            // PRODUCT_INQUIRY → no product named "상품"
                 "마이페이지 뭐가 있어?",      // overview
                 "교회찾기 기능");            // must hit churches, not a wrong feature
         for (String q : questions) {

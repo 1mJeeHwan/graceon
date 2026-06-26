@@ -147,6 +147,11 @@ public class RuleChatProvider implements ChatProvider {
         // Rich-message cards (G): each product becomes a deep-link tile to /goods/{id}.
         List<ChatCard> cards = toolExecutor.productCards(keyword);
         if (cards.isEmpty()) {
+            // No matching product, but a generic "상품 재고 문의" names shop features → guide instead
+            // of dead-ending. Only a query that matches no feature either shows the "찾지 못함" line.
+            if (toolExecutor.hasFeature(message)) {
+                return replyFeatureGuide(message);
+            }
             return ChatReply.of(
                     "\"" + keyword + "\" 관련 상품을 찾지 못했습니다. 다른 키워드로 검색해 보세요.",
                     ChatIntent.PRODUCT_INQUIRY);
