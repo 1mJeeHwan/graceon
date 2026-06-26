@@ -74,9 +74,9 @@ public class RuleChatProvider implements ChatProvider {
         // explains the feature instead of dead-ending as a failed search.
         if (intent == ChatIntent.CONTENT_SEARCH) {
             ChatReply contentReply = replyContentSearch(message);
-            if (contentReply.cards().isEmpty()
-                    && intentClassifier.looksLikeFeature(message)
-                    && toolExecutor.hasFeature(message)) {
+            // Found no content, but the message names a real feature ("콘텐츠 조회수", "통합검색 어떻게")
+            // → answer from the catalog instead of dead-ending as a failed search.
+            if (contentReply.cards().isEmpty() && toolExecutor.hasFeature(message)) {
                 return replyFeatureGuide(message);
             }
             return contentReply;
