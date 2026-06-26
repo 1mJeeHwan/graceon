@@ -35,6 +35,21 @@ class FeatureCatalogServiceTest {
     }
 
     @Test
+    void search_handlesAttachedKoreanParticle() {
+        // A josa attached to the keyword ("쿠폰은", "포인트는") must still match.
+        assertThat(service.search("쿠폰은 뭐야", 5)).anyMatch(f -> f.id().equals("coupons"));
+        assertThat(service.search("포인트는 어디서 봐", 5)).anyMatch(f -> f.id().equals("points"));
+    }
+
+    @Test
+    void search_excludesAdminFeatures() {
+        // Admin-only features (and their console routes) are invisible to the public chatbot.
+        assertThat(service.get("dashboard")).isNull();
+        assertThat(service.get("action-log")).isNull();
+        assertThat(service.all()).noneMatch(f -> f.id().equals("members"));
+    }
+
+    @Test
     void search_blankQuery_returnsCappedList() {
         assertThat(service.search("  ", 3)).hasSize(3);
     }

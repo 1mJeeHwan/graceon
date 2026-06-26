@@ -85,12 +85,15 @@ public class FeatureCatalogService {
                 if (token.isBlank()) {
                     continue;
                 }
+                // Match the raw token and a Korean-particle-stripped variant ("마케팅은" → "마케팅",
+                // "포인트는" → "포인트"), so a natural question with an attached josa still matches.
+                String bare = stripJosa(token);
                 // A hit on the title/keywords is worth more than an incidental how-to mention, so a
                 // feature whose name IS the query ("마이페이지") outranks one that only references it
                 // in passing ("…는 마이페이지에서 확인합니다").
-                if (primary.contains(token)) {
+                if (primary.contains(token) || primary.contains(bare)) {
                     score += 2;
-                } else if (secondary.contains(token)) {
+                } else if (secondary.contains(token) || secondary.contains(bare)) {
                     score += 1;
                 }
             }
@@ -100,6 +103,21 @@ public class FeatureCatalogService {
         }
         scored.sort(Comparator.comparingInt(Scored::score).reversed());
         return scored.stream().limit(cap).map(Scored::feature).toList();
+    }
+
+    /** Common trailing Korean particles (josa), longest first so "에서/으로" strip before "에/로". */
+    private static final List<String> JOSA = List.of(
+            "에서", "으로", "에게", "한테", "까지", "부터", "보다", "처럼", "은", "는", "이", "가",
+            "을", "를", "과", "와", "도", "만", "의", "에", "로", "랑");
+
+    /** Strips one trailing particle from a token when ≥2 chars remain ("이벤트는" → "이벤트"). */
+    private String stripJosa(String token) {
+        for (String josa : JOSA) {
+            if (token.length() > josa.length() + 1 && token.endsWith(josa)) {
+                return token.substring(0, token.length() - josa.length());
+            }
+        }
+        return token;
     }
 
     /** The intended search hooks: id, title and the curated user-phrasing keywords. */
