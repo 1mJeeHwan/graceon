@@ -1,10 +1,10 @@
 package org.streamhub.api.v1.chat;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.streamhub.api.base.exception.ApiException;
-import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.v1.chat.adapter.ChatProvider;
 import org.streamhub.api.v1.chat.adapter.ChatProviderRouter;
 import org.streamhub.api.v1.chat.adapter.ChatReply;
@@ -36,6 +36,9 @@ public class ChatService {
     /** Max prior turns fed back to the provider as context (bounds LLM token use). */
     private static final int MAX_HISTORY_TURNS = 10;
 
+    /** Source of session secrets — cryptographically strong, shared (thread-safe). */
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatUnansweredRepository chatUnansweredRepository;
@@ -56,11 +59,7 @@ public class ChatService {
     @Transactional
     public ChatReplyDto send(ChatSendRequest request) {
         ChatProvider provider = chatProviderRouter.resolve();
-        ChatSession session = chatSessionRepository.findBySessionKey(request.sessionKey())
-                .orElseGet(() -> chatSessionRepository.save(ChatSession.builder()
-                        .sessionKey(request.sessionKey())
-                        .provider(provider.code())
-                        .build()));
+        ChatSession session = resolveOwnedSession(request, provider.code());
 
         // Prior turns (before this message) become the provider's conversation context.
         List<ChatTurn> history = recentHistory(session.getId());
@@ -90,7 +89,52 @@ public class ChatService {
         }
 
         boolean testMode = !"LLM".equals(provider.code());
-        return ChatReplyDto.of(reply, testMode);
+        return ChatReplyDto.of(reply, testMode, session.getSessionKey(), session.getSessionToken());
+    }
+
+    /**
+     * Resolves the session the caller owns, or issues a fresh one. The caller continues an existing
+     * session only by presenting its secret {@code sessionToken}; an unknown key, a missing token, or
+     * a token mismatch all yield a brand-new server-issued session (self-healing — never a hard error)
+     * so no caller can hijack or write into another session by knowing only its {@code sessionKey}.
+     */
+    private ChatSession resolveOwnedSession(ChatSendRequest request, String providerCode) {
+        if (request.sessionKey() != null && !request.sessionKey().isBlank()) {
+            ChatSession existing = chatSessionRepository.findBySessionKey(request.sessionKey()).orElse(null);
+            if (existing != null) {
+                if (existing.getSessionToken() != null
+                        && existing.getSessionToken().equals(request.sessionToken())) {
+                    return existing; // proven owner → continue
+                }
+                // Key exists but caller can't prove ownership → fall through to a fresh session.
+            } else {
+                // Unknown key the caller chose: safe to create it (no one owns it yet).
+                return createSession(request.sessionKey(), providerCode);
+            }
+        }
+        return createSession(randomKey(), providerCode);
+    }
+
+    private ChatSession createSession(String sessionKey, String providerCode) {
+        return chatSessionRepository.save(ChatSession.builder()
+                .sessionKey(sessionKey)
+                .sessionToken(randomToken())
+                .provider(providerCode)
+                .build());
+    }
+
+    /** 32-byte URL-safe random — the session's secret capability. */
+    private String randomToken() {
+        byte[] bytes = new byte[32];
+        SECURE_RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    /** 18-byte URL-safe random session id (≤40 chars) when the client supplied none. */
+    private String randomKey() {
+        byte[] bytes = new byte[18];
+        SECURE_RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     /** Loads the last {@value #MAX_HISTORY_TURNS} stored turns for a session (oldest first). */
@@ -103,11 +147,19 @@ public class ChatService {
                 .toList();
     }
 
-    /** Returns the full message history for a session (oldest first). */
+    /**
+     * Returns a session's full message history (oldest first), but ONLY to the owner: the caller must
+     * present the session's secret {@code sessionToken}. A missing/mismatched token (or unknown key)
+     * yields an empty list — never the conversation — so the public history endpoint can't be used to
+     * read another user's chat by its {@code sessionKey} alone.
+     */
     @Transactional(readOnly = true)
-    public List<ChatHistoryItem> history(String sessionKey) {
-        ChatSession session = chatSessionRepository.findBySessionKey(sessionKey)
-                .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
+    public List<ChatHistoryItem> history(String sessionKey, String sessionToken) {
+        ChatSession session = chatSessionRepository.findBySessionKey(sessionKey).orElse(null);
+        if (session == null || session.getSessionToken() == null
+                || sessionToken == null || !session.getSessionToken().equals(sessionToken)) {
+            return List.of();
+        }
         return chatMessageRepository.findBySessionIdOrderByCreatedAtAscIdAsc(session.getId()).stream()
                 .map(ChatHistoryItem::from)
                 .toList();

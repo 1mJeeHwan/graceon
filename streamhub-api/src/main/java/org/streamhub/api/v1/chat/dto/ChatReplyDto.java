@@ -9,6 +9,8 @@ import org.streamhub.api.v1.chat.entity.ChatIntent;
  * Chat reply response (C5). Carries {@code testMode} so the widget can label a rule-based demo reply
  * honestly, plus optional rich-message {@code cards} (G) the widget renders as deep-link tiles.
  *
+ * @param sessionKey   the (possibly newly issued) session id the client should store and replay
+ * @param sessionToken the session's secret capability — store it and send it back to continue
  * @param text         bot reply text
  * @param intent       intent classified from this single message
  * @param quickReplies suggested follow-up buttons
@@ -16,15 +18,18 @@ import org.streamhub.api.v1.chat.entity.ChatIntent;
  * @param testMode     true for the rule provider (not a real LLM auto-response)
  */
 public record ChatReplyDto(
+        String sessionKey,
+        String sessionToken,
         String text,
         ChatIntent intent,
         List<String> quickReplies,
         List<ChatCard> cards,
         boolean testMode) {
 
-    /** Maps an adapter {@link ChatReply} to the API DTO. */
-    public static ChatReplyDto of(ChatReply reply, boolean testMode) {
-        return new ChatReplyDto(reply.text(), reply.intent(), reply.quickReplies(),
-                reply.cards(), testMode);
+    /** Maps an adapter {@link ChatReply} to the API DTO, tagging the owning session's key+token. */
+    public static ChatReplyDto of(ChatReply reply, boolean testMode, String sessionKey,
+                                  String sessionToken) {
+        return new ChatReplyDto(sessionKey, sessionToken, reply.text(), reply.intent(),
+                reply.quickReplies(), reply.cards(), testMode);
     }
 }

@@ -16,22 +16,8 @@ import { safeHref } from "@/lib/url";
 import { useAuth } from "@/lib/auth";
 import { useAudioPlayer } from "./player/AudioPlayerProvider";
 
-/** localStorage key for the front-generated chat session id (UUID). */
-const SESSION_STORAGE_KEY = "streamhub.chat.sessionKey";
-
 /** localStorage key for the user-dragged launcher position ({side, bottom}). */
 const POS_STORAGE_KEY = "streamhub.chat.launcherPos";
-
-/** Reads (or lazily creates) the per-browser session key kept in localStorage. */
-function getSessionKey(): string {
-  if (typeof window === "undefined") return "";
-  let key = window.localStorage.getItem(SESSION_STORAGE_KEY);
-  if (!key) {
-    key = crypto.randomUUID().slice(0, 40);
-    window.localStorage.setItem(SESSION_STORAGE_KEY, key);
-  }
-  return key;
-}
 
 let counter = 0;
 function nextId(): string {
@@ -83,7 +69,7 @@ export function ChatbotWidget() {
 
       // Feature guidance + (auth-aware) "check my …" answers are resolved client-side first;
       // anything else falls through to the backend/mock (FAQ · order lookup · product).
-      const reply = (await answerLocally(text, token)) ?? (await sendChat(getSessionKey(), text));
+      const reply = (await answerLocally(text, token)) ?? (await sendChat(text));
 
       setMessages((prev) => [
         ...prev,

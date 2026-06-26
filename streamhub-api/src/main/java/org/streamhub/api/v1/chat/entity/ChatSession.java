@@ -26,9 +26,17 @@ public class ChatSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Front-generated UUID ({@code crypto.randomUUID()}); unique. */
+    /** Session identifier; unique. (Not a secret — it appears in the history path.) */
     @Column(name = "session_key", nullable = false, unique = true, length = 40)
     private String sessionKey;
+
+    /**
+     * Server-issued secret capability for this session. Returned to the creating client and required
+     * (in a header, never the URL) to continue the session or read its history, so a leaked/guessed
+     * {@code sessionKey} alone cannot read the conversation. Nullable only for legacy rows.
+     */
+    @Column(name = "session_token", length = 64)
+    private String sessionToken;
 
     /** Associated member when logged in (nullable for anonymous widget use). */
     @Column(name = "member_id")
@@ -42,8 +50,10 @@ public class ChatSession {
     private LocalDateTime createdAt;
 
     @Builder
-    private ChatSession(String sessionKey, Long memberId, String provider, LocalDateTime createdAt) {
+    private ChatSession(String sessionKey, String sessionToken, Long memberId, String provider,
+                        LocalDateTime createdAt) {
         this.sessionKey = sessionKey;
+        this.sessionToken = sessionToken;
         this.memberId = memberId;
         this.provider = provider != null ? provider : "RULE";
         this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();

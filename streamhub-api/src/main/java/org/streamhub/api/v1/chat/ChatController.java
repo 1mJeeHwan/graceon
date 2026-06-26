@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.streamhub.api.base.response.ResultCode;
@@ -68,9 +69,13 @@ public class ChatController {
         return ResponseEntity.ok(ResultDTO.ok(chatService.send(request)));
     }
 
-    @Operation(summary = "챗봇 대화 이력", description = "세션키 기준 전체 대화 이력(오래된 순).")
+    @Operation(summary = "챗봇 대화 이력",
+            description = "본인 세션만 조회 가능 — 발급받은 세션 토큰(X-Chat-Session-Token 헤더)이 일치해야 한다. "
+                    + "토큰이 없거나 틀리면 빈 목록을 반환한다(타인 대화 열람 불가).")
     @GetMapping("/{sessionKey}/history")
-    public ResultDTO<List<ChatHistoryItem>> history(@PathVariable String sessionKey) {
-        return ResultDTO.ok(chatService.history(sessionKey));
+    public ResultDTO<List<ChatHistoryItem>> history(
+            @PathVariable String sessionKey,
+            @RequestHeader(name = "X-Chat-Session-Token", required = false) String sessionToken) {
+        return ResultDTO.ok(chatService.history(sessionKey, sessionToken));
     }
 }

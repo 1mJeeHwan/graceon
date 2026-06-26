@@ -39,6 +39,9 @@ export interface ChatCard {
 
 /** Backend reply payload (ChatReplyDto). `testMode` is always true in the demo. */
 export interface ChatReply {
+  /** Server-issued session id + secret to store and replay (present on backend replies). */
+  sessionKey?: string;
+  sessionToken?: string;
   text: string;
   intent: ChatIntent;
   quickReplies: string[];
@@ -47,6 +50,34 @@ export interface ChatReply {
   testMode: boolean;
   /** True when produced by the local mock rather than the backend (UI hint only). */
   mocked?: boolean;
+}
+
+// ── Session capability (server-issued) ───────────────────────────────────────
+// The conversation is owned by a server-issued {sessionKey, sessionToken}: the token is the secret
+// that lets only this browser continue the session / read its history. We cache both in
+// localStorage and replay them; the server self-heals (issues a fresh session) if they don't match.
+const SESSION_KEY_STORAGE = "streamhub.chat.sessionKey";
+const SESSION_TOKEN_STORAGE = "streamhub.chat.sessionToken";
+
+function readSession(): { key: string; token: string } {
+  if (typeof window === "undefined") return { key: "", token: "" };
+  try {
+    return {
+      key: window.localStorage.getItem(SESSION_KEY_STORAGE) ?? "",
+      token: window.localStorage.getItem(SESSION_TOKEN_STORAGE) ?? "",
+    };
+  } catch {
+    return { key: "", token: "" };
+  }
+}
+
+function writeSession(key: string, token: string): void {
+  try {
+    window.localStorage.setItem(SESSION_KEY_STORAGE, key);
+    window.localStorage.setItem(SESSION_TOKEN_STORAGE, token);
+  } catch {
+    /* ignore blocked storage */
+  }
 }
 
 /** A single rendered chat bubble in the widget. */
@@ -60,16 +91,23 @@ export interface ChatMessage {
 
 interface ChatSendRequest {
   sessionKey: string;
+  sessionToken: string;
   message: string;
 }
 
 /**
- * Sends a user message. Tries the backend first; on any error (e.g. 4010 before the path is
- * whitelisted, or network failure) returns a rule-based mock reply so the demo always responds.
+ * Sends a user message. Replays the cached session {key, token} so the server can attribute the
+ * turn to this browser's session, and stores whatever session the server returns (it may issue a
+ * fresh one). On any backend error, degrades to a local rule-based mock so the demo always responds.
  */
-export async function sendChat(sessionKey: string, message: string): Promise<ChatReply> {
+export async function sendChat(message: string): Promise<ChatReply> {
+  const { key, token } = readSession();
   try {
-    return await sendChatBackend({ sessionKey, message });
+    const reply = await sendChatBackend({ sessionKey: key, sessionToken: token, message });
+    if (reply.sessionKey && reply.sessionToken) {
+      writeSession(reply.sessionKey, reply.sessionToken);
+    }
+    return reply;
   } catch {
     // Backend unavailable or not yet public — degrade to the local rule-based scenario.
     return mockReply(message);
