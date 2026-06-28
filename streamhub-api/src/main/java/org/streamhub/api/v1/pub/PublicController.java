@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -146,6 +147,13 @@ public class PublicController {
     @GetMapping("/contents/{id}")
     public ResultDTO<PublicContentDetail> contentDetail(@PathVariable Long id) {
         return ResultDTO.ok(contentService.getPublicDetail(id));
+    }
+
+    @Operation(summary = "콘텐츠 조회수 +1", description = "공개 사이트에서 콘텐츠 접속 시마다 호출 — 접속자 누구든 조회수를 1 증가시킨다(중복 제거 없음).")
+    @PostMapping("/contents/{id}/view")
+    public ResultDTO<Void> contentView(@PathVariable Long id) {
+        contentService.recordView(id);
+        return ResultDTO.ok(null);
     }
 
     @Operation(summary = "공개 게시글 목록", description = "PUBLISHED 게시글 목록(검색·페이지네이션).")

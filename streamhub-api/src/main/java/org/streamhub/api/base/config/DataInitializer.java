@@ -265,10 +265,8 @@ public class DataInitializer implements CommandLineRunner {
         String address = (isSeoul ? "서울특별시 " : "경기도 ")
                 + district + " " + place + "로 " + (10 + seq * 3 % 200);
         String zipcode = String.format("%05d", 10000 + seq * 137 % 89999);
-        // Reuse the verified Unsplash sermon/worship thumbnails (StorageService.publicUrl pass-through).
-        String thumbnail = (seq % 2 == 0)
-                ? SERMON_THUMBS[seq % SERMON_THUMBS.length]
-                : WORSHIP_THUMBS[seq % WORSHIP_THUMBS.length];
+        // Reuse the verified Unsplash church thumbnails (StorageService.publicUrl pass-through).
+        String thumbnail = CONTENT_THUMBS[seq % CONTENT_THUMBS.length];
         // 1~2 rows hidden from public search as a "노출 제외" demo (id=1 always visible).
         String useYn = (seq == 9 || seq == 33) ? "N" : "Y";
 
@@ -378,21 +376,21 @@ public class DataInitializer implements CommandLineRunner {
             "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
     };
 
-    // License-safe (Unsplash) church/worship photos used as content thumbnails so the user
-    // site looks like a real church-broadcast service. VIDEO → sanctuary/sermon scenes,
-    // SOUND → worship/praise scenes. URLs verified to resolve (HTTP 200, image/jpeg).
+    // License-safe (Unsplash) church/worship photos used as content thumbnails so the user site
+    // looks like a real church-broadcast service. One pooled list indexed by the running item index
+    // so EVERY item (video or sound) gets a distinct image — previously SOUND items, which only
+    // occur at i%3==2, all collapsed onto WORSHIP_THUMBS[2] (one identical thumbnail).
+    // URLs verified to resolve (HTTP 200, image/jpeg).
     private static final String THUMB_Q = "?w=640&q=80&auto=format&fit=crop";
-    private static final String[] SERMON_THUMBS = {
+    private static final String[] CONTENT_THUMBS = {
             "https://images.unsplash.com/photo-1438032005730-c779502df39b" + THUMB_Q, // stained-glass sanctuary
+            "https://images.unsplash.com/photo-1507692049790-de58290a4334" + THUMB_Q, // worship, hands raised
             "https://images.unsplash.com/photo-1473177104440-ffee2f376098" + THUMB_Q, // cathedral nave
+            "https://images.unsplash.com/photo-1438232992991-995b7058bbb3" + THUMB_Q, // praise night, stage
             "https://images.unsplash.com/photo-1519491050282-cf00c82424b4" + THUMB_Q, // wooden chapel pews
+            "https://images.unsplash.com/photo-1506157786151-b8491531f063" + THUMB_Q, // worship crowd, lights
             "https://images.unsplash.com/photo-1510590337019-5ef8d3d32116" + THUMB_Q, // open Bible, congregation
             "https://images.unsplash.com/photo-1529070538774-1843cb3265df" + THUMB_Q, // small-group / study
-    };
-    private static final String[] WORSHIP_THUMBS = {
-            "https://images.unsplash.com/photo-1507692049790-de58290a4334" + THUMB_Q, // worship, hands raised
-            "https://images.unsplash.com/photo-1438232992991-995b7058bbb3" + THUMB_Q, // praise night, stage
-            "https://images.unsplash.com/photo-1506157786151-b8491531f063" + THUMB_Q, // worship crowd, lights
     };
 
     /** Seeds channels (one per church), demo contents, and hashtags. */
@@ -432,9 +430,7 @@ public class DataInitializer implements CommandLineRunner {
             String mediaUrl = type == ContentType.VIDEO
                     ? SAMPLE_VIDEOS[i % SAMPLE_VIDEOS.length]
                     : SAMPLE_AUDIOS[i % SAMPLE_AUDIOS.length];
-            String thumbUrl = type == ContentType.VIDEO
-                    ? SERMON_THUMBS[i % SERMON_THUMBS.length]
-                    : WORSHIP_THUMBS[i % WORSHIP_THUMBS.length];
+            String thumbUrl = CONTENT_THUMBS[i % CONTENT_THUMBS.length];
             Content content = contentRepository.save(Content.builder()
                     .channelId(channelIds.get(i % channelIds.size()))
                     .type(type)

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useContent } from "@/lib/queries";
-import { ApiError } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { recordWatch } from "@/lib/me";
 import { VideoPlayer } from "@/components/VideoPlayer";
@@ -19,6 +19,11 @@ export default function VideoDetailPage({ params }: { params: { id: string } }) 
   useEffect(() => {
     if (data && token) recordWatch(id, token);
   }, [data, token, id]);
+
+  // Public view count: one per access by anyone (member or not), fire-and-forget.
+  useEffect(() => {
+    if (data) void api.recordView(id).catch(() => {});
+  }, [data, id]);
 
   return (
     <div className="animate-fade-up">

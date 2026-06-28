@@ -167,19 +167,30 @@ public class ContentService {
     }
 
     /**
-     * Public detail: 404 unless PUBLISHED, and atomically increments the view count. Returns a
-     * curated {@link PublicContentDetail} so anonymous callers never see the internal status, the
-     * raw storage key or audit timestamps.
+     * Public detail: 404 unless PUBLISHED. A <b>pure read</b> (no view-count side effect) so it stays
+     * cacheable and idempotent — view counting is done explicitly via {@link #recordView(Long)} from
+     * the client, which counts every access reliably regardless of any GET caching. Returns a curated
+     * {@link PublicContentDetail} so anonymous callers never see the internal status, raw storage key
+     * or audit timestamps.
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public PublicContentDetail getPublicDetail(Long id) {
         ContentDetail detail = getDetail(id, SYSTEM_PRINCIPAL); // throws NOT_FOUND if missing
         if (detail.getStatus() != ContentStatus.PUBLISHED) {
             throw new ApiException(ResultCode.NOT_FOUND);
         }
-        contentRepository.incrementViewCount(id);
-        detail.setViewCount((detail.getViewCount() == null ? 0L : detail.getViewCount()) + 1);
         return PublicContentDetail.from(detail);
+    }
+
+    /**
+     * Counts one view of a PUBLISHED content. Called by the public site on every content open, so a
+     * view is recorded on each access by anyone (no per-user dedup, by design). Atomic and silent —
+     * a missing/non-published id simply counts nothing (0 rows).
+     * ponytail: no dedup/rate-limit; add a per-IP cooldown if view inflation ever matters.
+     */
+    @Transactional
+    public void recordView(Long id) {
+        contentRepository.incrementViewCount(id);
     }
 
     /**

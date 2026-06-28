@@ -119,6 +119,8 @@ export const api = {
   contents: (p: ContentListParams = {}) =>
     request<InfinityList<ContentListItem>>(`/pub/v1/contents${query({ ...p })}`),
   content: (id: number) => request<ContentDetail>(`/pub/v1/contents/${id}`),
+  /** Records one view (anyone, every access). Fire-and-forget at the call site. */
+  recordView: (id: number) => request<void>(`/pub/v1/contents/${id}/view`, { method: "POST" }),
   channels: (p: ChannelListParams = {}) =>
     request<PublicChannel[]>(`/pub/v1/channels${query({ ...p })}`),
   posts: (p: PostListParams = {}) =>

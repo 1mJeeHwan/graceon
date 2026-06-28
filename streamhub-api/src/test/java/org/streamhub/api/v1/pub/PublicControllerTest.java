@@ -2,8 +2,10 @@ package org.streamhub.api.v1.pub;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -96,6 +98,13 @@ class PublicControllerTest {
                 .andExpect(jsonPath("$.resultObject.status").doesNotExist())
                 .andExpect(jsonPath("$.resultObject.thumbnailKey").doesNotExist())
                 .andExpect(jsonPath("$.resultObject.updatedAt").doesNotExist());
+    }
+
+    @Test
+    void contentView_recordsAViewForAnyone() throws Exception {
+        mvc.perform(post("/pub/v1/contents/7/view"))
+                .andExpect(status().isOk());
+        verify(contentService).recordView(7L);
     }
 
     @Test
