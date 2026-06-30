@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.boot.restclient.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
 /**
  * Provides a Jackson 2 {@link ObjectMapper} bean for the app's internal JSON work.
@@ -31,5 +33,20 @@ public class JacksonConfig {
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .build();
+    }
+
+    /**
+     * Registers a Jackson 2 message converter on every auto-configured {@link
+     * org.springframework.web.client.RestClient}. Boot 4's RestClient defaults to the Jackson 3
+     * converter, which cannot read/write the Jackson 2 {@code com.fasterxml...JsonNode} (and DTOs)
+     * that all the external-API adapters use ({@code .bodyTo(JsonNode.class)} on Kakao 장소검색/지오코딩,
+     * Toss/Kakao/PayPal 결제, 배송조회, Gemini) — without this they throw on every call (e.g. the map
+     * 교회검색 returned 500). Adding it at index 0 makes Jackson 2 types resolve first; Jackson 3 types
+     * still fall through to the Jackson 3 converter.
+     */
+    @Bean
+    public RestClientCustomizer jackson2RestClientCustomizer(ObjectMapper objectMapper) {
+        return builder -> builder.messageConverters(converters ->
+                converters.add(0, new MappingJackson2HttpMessageConverter(objectMapper)));
     }
 }
