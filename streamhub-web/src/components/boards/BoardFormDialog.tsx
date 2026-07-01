@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Loader2, X } from "lucide-react";
 
 import { useBoardCreate, useBoardUpdate } from "@/apis/query/board/board";
-import { type BoardDto } from "@/apis/query/streamHubAdminAPI.schemas";
+import { type BoardDto } from "@/apis/query/graceOnAdminAPI.schemas";
 import { SUCCESS_CODE } from "@/types/api";
 
 const FIELD_CLASS =

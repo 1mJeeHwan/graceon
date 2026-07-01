@@ -12,7 +12,7 @@ import {
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
-import type { ChurchListItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { ChurchListItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import {
   DenominationBadge,
   OpenBadge,

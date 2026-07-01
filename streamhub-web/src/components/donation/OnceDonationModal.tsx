@@ -7,7 +7,7 @@ import { Loader2, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { memberList } from "@/apis/query/member/member";
-import type { OnceDonationRequest } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { OnceDonationRequest } from "@/apis/query/graceOnAdminAPI.schemas";
 import { FIELD_CLASS } from "@/lib/content-form";
 import TestModeBadge from "@/components/donation/TestModeBadge";
 

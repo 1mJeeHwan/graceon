@@ -18,7 +18,7 @@ import {
   PaymentListItemKind,
   PaymentListItemPayStatus,
   type PaymentListItem,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDateTime } from "@/lib/format";
 import {
   KIND_META,

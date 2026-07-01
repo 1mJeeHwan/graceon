@@ -13,7 +13,7 @@ import {
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
-import type { DonationListItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { DonationListItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDateTime, formatNumber } from "@/lib/format";
 import DonationStatusBadge from "@/components/donation/DonationStatusBadge";
 import DonationTypeBadge from "@/components/donation/DonationTypeBadge";

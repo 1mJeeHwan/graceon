@@ -10,7 +10,7 @@ import {
   SmsSearchRequestKind,
   type SmsListItem,
   type SmsSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import SmsSendModal from "@/components/sms/SmsSendModal";
 
 const SmsGrid = dynamic(() => import("@/components/sms/SmsGrid"), {

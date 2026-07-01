@@ -15,7 +15,7 @@ import {
   type DonationListItem,
   type DonationSearchRequest,
   type OnceDonationRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import OnceDonationModal from "@/components/donation/OnceDonationModal";
 import TestModeBadge from "@/components/donation/TestModeBadge";
 import { SUCCESS_CODE } from "@/types/api";

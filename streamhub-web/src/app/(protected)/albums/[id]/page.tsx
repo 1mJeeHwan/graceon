@@ -15,7 +15,7 @@ import {
 import {
   type AlbumCreateRequest,
   type AlbumDetail,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDate } from "@/lib/format";
 import {
   AlbumGenreBadge,

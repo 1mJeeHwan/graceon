@@ -14,7 +14,7 @@ import { useDashboardSummary } from "@/apis/query/dashboard/dashboard";
 import type {
   DashboardSummaryResponse,
   KpiDelta,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 
 import KpiCard from "./KpiCard";
 

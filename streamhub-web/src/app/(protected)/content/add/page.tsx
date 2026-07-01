@@ -13,7 +13,7 @@ import {
   ContentCreateRequestStatus,
   ContentCreateRequestType,
   type ContentCreateRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import ThumbnailUpload from "@/components/content/ThumbnailUpload";
 import { FIELD_CLASS, parseHashtags } from "@/lib/content-form";
 import { SUCCESS_CODE } from "@/types/api";
@@ -32,6 +32,7 @@ const createSchema = z.object({
   durationSec: z.string().optional(),
   status: z.enum(["DRAFT", "PUBLISHED"]),
   hashtags: z.string().optional(),
+  notifyOnPublish: z.boolean().default(false),
 });
 
 type CreateFormValues = z.infer<typeof createSchema>;
@@ -52,6 +53,7 @@ export default function ContentAddPage() {
     register,
     handleSubmit,
     control,
+    watch,
     formState: { errors },
   } = useForm<CreateFormValues>({
     resolver: zodResolver(createSchema),
@@ -63,6 +65,7 @@ export default function ContentAddPage() {
       durationSec: "",
       status: "DRAFT",
       hashtags: "",
+      notifyOnPublish: false,
     },
   });
 
@@ -86,6 +89,7 @@ export default function ContentAddPage() {
       thumbnailKey: thumbnail?.key,
       status: values.status,
       hashtags: parseHashtags(values.hashtags),
+      notifyOnPublish: values.notifyOnPublish,
     };
 
     createMutation.mutate(
@@ -303,6 +307,27 @@ export default function ContentAddPage() {
                 )}
               />
             </div>
+          </div>
+
+          {/* Auto-notify on publish */}
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="notifyOnPublish"
+                {...register("notifyOnPublish")}
+                className="h-4 w-4 rounded border-slate-300"
+              />
+              <label htmlFor="notifyOnPublish" className="text-sm text-slate-700">
+                업로드 후 해당 교회 회원 전체에게 자동 공지 발송
+              </label>
+            </div>
+            {watch("notifyOnPublish") && (
+              <p className="mt-2 text-xs text-amber-700">
+                선택한 채널이 속한 교회의 전체 회원에게 PUSH 알림이 즉시
+                발송됩니다. 되돌릴 수 없습니다.
+              </p>
+            )}
           </div>
         </div>
 

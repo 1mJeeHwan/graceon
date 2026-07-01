@@ -11,7 +11,7 @@ import {
   PaymentSearchRequestKind,
   type PaymentListItem,
   type PaymentSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { PAY_STATUS_META } from "@/lib/payment-status";
 import { SUCCESS_CODE } from "@/types/api";
 

@@ -12,7 +12,7 @@ import {
   CampaignDtoType,
   type CampaignDto,
   type CampaignDtoType as CampaignType,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { SUCCESS_CODE } from "@/types/api";
 
 interface CampaignFormDialogProps {

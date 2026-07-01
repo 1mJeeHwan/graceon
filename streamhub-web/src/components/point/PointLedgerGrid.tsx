@@ -13,7 +13,7 @@ import {
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
-import type { PointLedgerListItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { PointLedgerListItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDate, formatDateTime } from "@/lib/format";
 import {
   LedgerStatusBadge,

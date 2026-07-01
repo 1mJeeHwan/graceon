@@ -24,7 +24,7 @@ import {
   type CampaignDtoStatus as CampaignStatus,
   type CampaignDtoType as CampaignType,
   type CampaignSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import CampaignFormDialog from "@/components/campaigns/CampaignFormDialog";
 import { SUCCESS_CODE } from "@/types/api";
 

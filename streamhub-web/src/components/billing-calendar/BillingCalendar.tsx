@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import type { BillingCalendarItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { BillingCalendarItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatNumber } from "@/lib/format";
 
 interface BillingCalendarProps {

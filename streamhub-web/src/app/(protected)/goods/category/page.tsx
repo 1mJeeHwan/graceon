@@ -9,7 +9,7 @@ import {
   goodsCategoryList,
   useGoodsCategoryDelete,
 } from "@/apis/query/goods-category/goods-category";
-import { type GoodsCategoryNodeDto } from "@/apis/query/streamHubAdminAPI.schemas";
+import { type GoodsCategoryNodeDto } from "@/apis/query/graceOnAdminAPI.schemas";
 import GoodsCategoryFormDialog from "@/components/goods-category/GoodsCategoryFormDialog";
 import { SUCCESS_CODE } from "@/types/api";
 

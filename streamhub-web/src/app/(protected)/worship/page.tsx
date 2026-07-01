@@ -10,7 +10,7 @@ import {
   WorshipSearchRequestStatus,
   type WorshipRegistrationListItem,
   type WorshipSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 
 const WorshipGrid = dynamic(() => import("@/components/worship/WorshipGrid"), {
   ssr: false,

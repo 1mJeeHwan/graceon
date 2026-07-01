@@ -15,7 +15,7 @@ import {
   type InquiryDto,
   type InquirySearchRequestCategory,
   type InquirySearchRequestStatus,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import InquiryAnswerDialog from "@/components/inquiry/InquiryAnswerDialog";
 import { SUCCESS_CODE } from "@/types/api";
 

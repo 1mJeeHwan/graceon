@@ -10,7 +10,7 @@ import {
   OrderSearchRequestStatus,
   type OrderListItem,
   type OrderSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 
 const OrderGrid = dynamic(() => import("@/components/order/OrderGrid"), {
   ssr: false,

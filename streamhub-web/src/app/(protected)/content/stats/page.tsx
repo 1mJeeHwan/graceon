@@ -14,7 +14,7 @@ import type {
   ChannelWatchItem,
   SummaryResponse,
   TopContentItem,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import ApexChart from "@/components/dashboard/ApexChart";
 import { formatNumber, secondsToHours } from "@/lib/format";
 

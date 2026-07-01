@@ -15,7 +15,7 @@ import {
 import {
   type ChurchDetail,
   type ChurchUpsertRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDate } from "@/lib/format";
 import {
   DenominationBadge,

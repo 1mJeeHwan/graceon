@@ -1,7 +1,7 @@
 import {
   PaymentListItemKind,
   PaymentListItemPayStatus,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 
 /** Receipt-kind badge metadata (입금 vs 환불). */
 export const KIND_META: Record<

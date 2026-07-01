@@ -151,7 +151,7 @@ public record ContentCreateRequest(
 - [ ] `ContentController.create()` `@PreAuthorize` SpEL 확장
 - [ ] §6 Open Question(트랜잭션 결합 여부) 결정 후 반영
 - [ ] `./mvnw test` 그린 확인
-- [ ] Colima 기동 후 `/v3/api-docs`에서 `ContentCreateRequest.notifyOnPublish` 필드 노출 확인 → **배포**
+- [x] Colima 기동 후 `/v3/api-docs`에서 `ContentCreateRequest.notifyOnPublish` 필드 노출 확인 → **배포 완료** (2026-07-01, 사용자 확인)
 
 ---
 

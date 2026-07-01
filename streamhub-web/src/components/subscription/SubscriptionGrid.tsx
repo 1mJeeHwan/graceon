@@ -14,7 +14,7 @@ import {
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
-import type { SubscriptionListItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { SubscriptionListItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDate } from "@/lib/format";
 import SubscriptionStatusBadge from "@/components/subscription/SubscriptionStatusBadge";
 import GradeBadge from "@/components/subscription/GradeBadge";

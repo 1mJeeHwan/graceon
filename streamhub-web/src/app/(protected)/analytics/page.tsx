@@ -18,7 +18,7 @@ import {
   ContentStatDtoContentType,
   type CountItemDto,
   type TimeseriesPointDto,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import AnalyticsDailyTrendChart from "@/components/analytics/AnalyticsDailyTrendChart";
 import AnalyticsDeviceDonutChart from "@/components/analytics/AnalyticsDeviceDonutChart";
 import { formatDateTime, formatNumber } from "@/lib/format";

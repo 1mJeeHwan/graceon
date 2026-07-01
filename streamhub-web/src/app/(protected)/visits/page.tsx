@@ -14,7 +14,7 @@ import {
   type PathCountDto,
   type VisitLogDto,
   type VisitSummaryDto,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import VisitDailyTrendChart from "@/components/visits/VisitDailyTrendChart";
 import VisitDeviceBreakdownChart from "@/components/visits/VisitDeviceBreakdownChart";
 import { formatDateTime, formatNumber } from "@/lib/format";

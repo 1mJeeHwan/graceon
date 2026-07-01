@@ -19,7 +19,7 @@ import {
   type NotificationLogDtoStatus as StatusType,
   type NotificationSearchRequest,
   type NotificationSummaryDto,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import NotificationSendModal from "@/components/notification/NotificationSendModal";
 import { canWrite } from "@/lib/auth-utils";
 import { SUCCESS_CODE } from "@/types/api";

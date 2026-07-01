@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowDown, ArrowUp, Minus, type LucideIcon } from "lucide-react";
 import type { ApexOptions } from "apexcharts";
 
-import type { KpiDelta } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { KpiDelta } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatNumber } from "@/lib/format";
 
 import ApexChart from "./ApexChart";

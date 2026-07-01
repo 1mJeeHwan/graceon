@@ -122,7 +122,7 @@ function operationName(operation, route, verb) {
     } else if (lastIsAction || parts.length) {
       action = parts.join(""); // GET /x/summary, GET /pub/contents
     } else {
-      action = "Detail"; // GET /domain-root (rare)
+      action = "List"; // GET /domain-root collection (e.g. GET /v1/playlist)
     }
   } else if (lastIsParam || !lastIsAction) {
     action = parts.join("") + ucfirst(CRUD[method] || method);

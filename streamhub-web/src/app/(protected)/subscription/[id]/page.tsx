@@ -12,7 +12,7 @@ import {
 import {
   SubscriptionStatusRequestStatus,
   type SubscriptionDetail,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import GradeBadge from "@/components/subscription/GradeBadge";
 import SubscriptionStatusBadge from "@/components/subscription/SubscriptionStatusBadge";

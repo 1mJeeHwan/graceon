@@ -7,7 +7,7 @@ import {
   AlbumCreateRequestStatus,
   type AlbumCreateRequest,
   type AlbumDetail,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 
 /** Common input styling shared across the album forms (mirrors goods FIELD_CLASS). */
 export const FIELD_CLASS =

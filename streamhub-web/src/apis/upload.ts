@@ -2,7 +2,7 @@ import { axiosInstance } from "@/apis/custom-instance";
 import type {
   ResultDTOUploadResponse,
   UploadResponse,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 
 /**
  * uploadFile sends a single file to the content upload endpoint as multipart

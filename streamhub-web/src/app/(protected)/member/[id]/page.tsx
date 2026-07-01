@@ -9,7 +9,7 @@ import { z } from "zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 import { useMemberDetail, useMemberUpdate } from "@/apis/query/member/member";
-import type { MemberDetail } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { MemberDetail } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDate } from "@/lib/format";
 import StatusBadge from "@/components/member/StatusBadge";
 import { SUCCESS_CODE } from "@/types/api";

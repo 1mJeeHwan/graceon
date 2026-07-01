@@ -9,7 +9,7 @@ import { pointList } from "@/apis/query/point/point";
 import type {
   PointLedgerListItem,
   PointLedgerSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import GrantPointForm from "@/components/point/GrantPointForm";
 
 const PointLedgerGrid = dynamic(

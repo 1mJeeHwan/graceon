@@ -12,7 +12,7 @@ import {
   ContentSearchRequestType,
   type ContentListItem,
   type ContentSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 
 const ContentGrid = dynamic(() => import("@/components/content/ContentGrid"), {
   ssr: false,

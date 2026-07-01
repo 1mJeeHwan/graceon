@@ -15,7 +15,7 @@ import {
 import type {
   PlanCreateRequest,
   PlanResponse,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { canWrite, isSystem } from "@/lib/auth-utils";
 import { formatNumber } from "@/lib/format";
 import GradeBadge from "@/components/subscription/GradeBadge";

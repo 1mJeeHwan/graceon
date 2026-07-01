@@ -14,7 +14,7 @@ import {
   ChurchSearchRequestDenomination,
   type ChurchListItem,
   type ChurchSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { DENOMINATION_LABELS } from "@/lib/church-form";
 
 const ChurchGrid = dynamic(() => import("@/components/churches/ChurchGrid"), {

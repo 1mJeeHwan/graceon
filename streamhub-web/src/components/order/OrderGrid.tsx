@@ -14,7 +14,7 @@ import {
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
-import type { OrderListItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { OrderListItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDateTime } from "@/lib/format";
 import OrderStatusBadge from "@/components/order/OrderStatusBadge";
 

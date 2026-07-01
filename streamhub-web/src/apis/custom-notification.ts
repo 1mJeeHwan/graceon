@@ -11,7 +11,7 @@
  */
 import { customInstance } from "./custom-instance";
 
-import type { NotificationLogDto } from "./query/streamHubAdminAPI.schemas";
+import type { NotificationLogDto } from "./query/graceOnAdminAPI.schemas";
 
 /** Delivery channel for a notification send. */
 export type NotificationSendChannel = "SMS" | "PUSH" | "EMAIL";

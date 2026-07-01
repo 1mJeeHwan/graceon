@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, X } from "lucide-react";
 
 import { useStoreCreate, useStoreUpdate } from "@/apis/query/store/store";
-import { type StoreDto } from "@/apis/query/streamHubAdminAPI.schemas";
+import { type StoreDto } from "@/apis/query/graceOnAdminAPI.schemas";
 import {
   FIELD_CLASS,
   buildStoreDefaults,

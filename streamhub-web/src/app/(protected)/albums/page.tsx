@@ -12,7 +12,7 @@ import {
   AlbumSearchRequestStatus,
   type AlbumListItem,
   type AlbumSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { GENRE_LABELS, STATUS_LABELS } from "@/lib/album-form";
 
 const AlbumGrid = dynamic(() => import("@/components/albums/AlbumGrid"), {

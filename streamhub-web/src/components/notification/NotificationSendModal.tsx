@@ -10,7 +10,7 @@ import { useMemberList } from "@/apis/query/member/member";
 import type {
   MemberListItem,
   MemberSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import {
   notificationSend,
   type NotificationSendChannel,

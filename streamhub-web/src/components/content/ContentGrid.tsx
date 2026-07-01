@@ -14,7 +14,7 @@ import {
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
-import type { ContentListItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { ContentListItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDate, formatDuration } from "@/lib/format";
 import {
   ContentStatusBadge,

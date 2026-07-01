@@ -24,7 +24,7 @@ import {
   type BannerSearchRequest,
   type BannerSearchRequestDevice,
   type BannerSearchRequestPosition,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import BannerFormDialog from "@/components/banners/BannerFormDialog";
 import { SUCCESS_CODE } from "@/types/api";
 

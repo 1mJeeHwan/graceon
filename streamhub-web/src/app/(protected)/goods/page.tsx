@@ -12,7 +12,7 @@ import {
   type GoodsListItem,
   type GoodsSearchRequest,
   type Row,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { SUCCESS_CODE } from "@/types/api";
 
 const GoodsGrid = dynamic(() => import("@/components/goods/GoodsGrid"), {

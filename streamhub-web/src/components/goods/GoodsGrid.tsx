@@ -14,7 +14,7 @@ import {
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
-import type { GoodsListItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { GoodsListItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import { GoodsStatusBadge } from "@/components/goods/GoodsStatusBadge";
 
 // AG Grid v33 requires explicit module registration. Registering the full

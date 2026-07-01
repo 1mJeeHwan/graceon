@@ -7,7 +7,7 @@ import type {
   GoodsDetail,
   GoodsOptionDto,
   GoodsImageDto,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 
 /** Common input styling used across the goods forms (mirrors content FIELD_CLASS). */
 export const FIELD_CLASS =

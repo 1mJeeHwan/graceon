@@ -12,7 +12,7 @@ import {
   type GoodsInquiryDto,
   GoodsInquiryDtoAnswerStatus,
   type GoodsInquirySearchRequestAnswerStatus,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import GoodsInquiryAnswerDialog from "@/components/goods-inquiry/GoodsInquiryAnswerDialog";
 import { SUCCESS_CODE } from "@/types/api";
 

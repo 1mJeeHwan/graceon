@@ -5,7 +5,7 @@ import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { boardList, useBoardDelete } from "@/apis/query/board/board";
-import { type BoardDto } from "@/apis/query/streamHubAdminAPI.schemas";
+import { type BoardDto } from "@/apis/query/graceOnAdminAPI.schemas";
 import BoardFormDialog from "@/components/boards/BoardFormDialog";
 import { SUCCESS_CODE } from "@/types/api";
 

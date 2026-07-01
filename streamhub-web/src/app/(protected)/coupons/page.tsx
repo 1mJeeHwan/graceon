@@ -8,7 +8,7 @@ import { couponList, useCouponDelete } from "@/apis/query/coupon/coupon";
 import {
   type CouponDto,
   type CouponSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import CouponFormDialog from "@/components/coupons/CouponFormDialog";
 import CouponRedemptionsDialog from "@/components/coupons/CouponRedemptionsDialog";
 import { SUCCESS_CODE } from "@/types/api";

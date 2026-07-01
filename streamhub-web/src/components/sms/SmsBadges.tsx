@@ -2,7 +2,7 @@ import {
   SmsListItemChannel,
   SmsListItemKind,
   SmsListItemStatus,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 
 const BADGE_BASE =
   "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium";

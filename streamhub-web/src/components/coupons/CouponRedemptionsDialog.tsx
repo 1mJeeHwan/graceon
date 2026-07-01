@@ -5,7 +5,7 @@ import { Loader2, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { couponRedemptions } from "@/apis/query/coupon/coupon";
-import type { CouponDto, CouponRedemptionItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { CouponDto, CouponRedemptionItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import { SUCCESS_CODE } from "@/types/api";
 
 const formatDateTime = (value?: string): string => {

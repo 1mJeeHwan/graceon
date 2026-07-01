@@ -8,7 +8,7 @@ import {
   type ChurchDetail,
   type ChurchUpsertRequest,
   type WorshipTimeDto,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 
 /** Common input styling shared across the church forms (mirrors goods FIELD_CLASS). */
 export const FIELD_CLASS =

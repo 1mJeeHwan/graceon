@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import { useDashboardFeed } from "@/apis/query/dashboard/dashboard";
-import type { FeedItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { FeedItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDateTime } from "@/lib/format";
 import { relativeTime } from "@/lib/relative-time";
 

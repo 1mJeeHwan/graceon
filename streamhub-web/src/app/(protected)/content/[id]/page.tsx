@@ -19,7 +19,7 @@ import {
   ContentCreateRequestType,
   type ContentCreateRequest,
   type ContentDetail,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDate, formatDuration } from "@/lib/format";
 import {
   ContentStatusBadge,

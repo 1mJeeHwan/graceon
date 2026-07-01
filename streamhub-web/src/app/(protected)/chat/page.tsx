@@ -13,7 +13,7 @@ import {
   type ChatMessageRow,
   ChatMessageRowRole,
   type ChatSessionRow,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { SUCCESS_CODE } from "@/types/api";
 
 const INTENT_LABELS: Record<string, string> = {

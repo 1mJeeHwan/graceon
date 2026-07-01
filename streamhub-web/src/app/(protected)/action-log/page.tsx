@@ -7,7 +7,7 @@ import { useActionLogList } from "@/apis/query/action-log/action-log";
 import type {
   ActionLogItem,
   ActionLogSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDateTime } from "@/lib/format";
 
 const PAGE_SIZE = 15;

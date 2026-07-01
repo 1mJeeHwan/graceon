@@ -12,7 +12,7 @@ import {
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
-import type { SmsListItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { SmsListItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDateTime } from "@/lib/format";
 import {
   SmsChannelBadge,

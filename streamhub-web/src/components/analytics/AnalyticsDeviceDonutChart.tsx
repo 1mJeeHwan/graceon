@@ -2,7 +2,7 @@
 
 import type { ApexOptions } from "apexcharts";
 
-import type { AnalyticsBreakdownDtoByDevice } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { AnalyticsBreakdownDtoByDevice } from "@/apis/query/graceOnAdminAPI.schemas";
 import ApexChart from "@/components/dashboard/ApexChart";
 import ChartCard from "@/components/dashboard/ChartCard";
 

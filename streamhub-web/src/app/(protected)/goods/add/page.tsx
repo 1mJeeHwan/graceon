@@ -11,7 +11,7 @@ import { useGoodsCategories, useGoodsCreate } from "@/apis/query/goods/goods";
 import {
   GoodsCreateRequestStatus,
   type GoodsCreateRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import ThumbnailUpload from "@/components/content/ThumbnailUpload";
 import OptionRows from "@/components/goods/OptionRows";
 import ImageRows from "@/components/goods/ImageRows";

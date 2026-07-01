@@ -8,7 +8,7 @@ import { useCouponCreate, useCouponUpdate } from "@/apis/query/coupon/coupon";
 import {
   type CouponDto,
   type CouponDtoDiscountType,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { SUCCESS_CODE } from "@/types/api";
 
 const FIELD_CLASS =

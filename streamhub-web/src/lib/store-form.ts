@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 
-import type { StoreDto } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { StoreDto } from "@/apis/query/graceOnAdminAPI.schemas";
 
 /** Common input styling shared across the store form (mirrors goods FIELD_CLASS). */
 export const FIELD_CLASS =

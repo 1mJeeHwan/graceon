@@ -7,7 +7,7 @@ import { useGoodsInquiryAnswerUpdate } from "@/apis/query/goods-inquiry/goods-in
 import {
   type GoodsInquiryDto,
   GoodsInquiryDtoAnswerStatus,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { SUCCESS_CODE } from "@/types/api";
 
 interface GoodsInquiryAnswerDialogProps {

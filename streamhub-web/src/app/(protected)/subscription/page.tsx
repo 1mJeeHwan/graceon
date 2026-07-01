@@ -10,7 +10,7 @@ import {
   SubscriptionSearchRequestStatus,
   type SubscriptionListItem,
   type SubscriptionSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import TestModeBadge from "@/components/donation/TestModeBadge";
 
 const SubscriptionGrid = dynamic(

@@ -14,7 +14,7 @@ import {
   type BoardDto,
   type CommunityPostDto,
   type CommunityPostSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import CommunityPostFormDialog from "@/components/posts/CommunityPostFormDialog";
 import { SUCCESS_CODE } from "@/types/api";
 

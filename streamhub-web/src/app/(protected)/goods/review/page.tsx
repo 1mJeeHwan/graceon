@@ -9,7 +9,7 @@ import {
   useGoodsReviewDelete,
   useGoodsReviewDisplayUpdate,
 } from "@/apis/query/goods-review/goods-review";
-import { type GoodsReviewDto } from "@/apis/query/streamHubAdminAPI.schemas";
+import { type GoodsReviewDto } from "@/apis/query/graceOnAdminAPI.schemas";
 import { SUCCESS_CODE } from "@/types/api";
 
 type DisplayFilter = "ALL" | "Y" | "N";

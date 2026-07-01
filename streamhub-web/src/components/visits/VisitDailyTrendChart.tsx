@@ -2,7 +2,7 @@
 
 import type { ApexOptions } from "apexcharts";
 
-import type { DailyCountDto } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { DailyCountDto } from "@/apis/query/graceOnAdminAPI.schemas";
 import ApexChart from "@/components/dashboard/ApexChart";
 import ChartCard from "@/components/dashboard/ChartCard";
 import { formatNumber } from "@/lib/format";

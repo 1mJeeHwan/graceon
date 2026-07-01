@@ -11,7 +11,7 @@ import {
   type AnnouncementLinkType,
 } from "@/apis/announcement";
 import { contentList } from "@/apis/query/content/content";
-import { ContentSearchRequestType } from "@/apis/query/streamHubAdminAPI.schemas";
+import { ContentSearchRequestType } from "@/apis/query/graceOnAdminAPI.schemas";
 import { SUCCESS_CODE } from "@/types/api";
 
 /** Link target type. "" = no link. Content types store the referenced id (path resolved server-side). */

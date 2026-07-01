@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 import { useChurchChurchesCreate } from "@/apis/query/church/church";
-import { type ChurchUpsertRequest } from "@/apis/query/streamHubAdminAPI.schemas";
+import { type ChurchUpsertRequest } from "@/apis/query/graceOnAdminAPI.schemas";
 import ThumbnailUpload from "@/components/content/ThumbnailUpload";
 import WorshipTimeRows from "@/components/churches/WorshipTimeRows";
 import {

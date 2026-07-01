@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 import { useAlbumCreate } from "@/apis/query/album/album";
-import { type AlbumCreateRequest } from "@/apis/query/streamHubAdminAPI.schemas";
+import { type AlbumCreateRequest } from "@/apis/query/graceOnAdminAPI.schemas";
 import ThumbnailUpload from "@/components/content/ThumbnailUpload";
 import TrackRows from "@/components/albums/TrackRows";
 import {

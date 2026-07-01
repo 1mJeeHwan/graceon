@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 
 import { usePointGrant } from "@/apis/query/point/point";
-import type { PointGrantRequest } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { PointGrantRequest } from "@/apis/query/graceOnAdminAPI.schemas";
 import { FIELD_CLASS, grantSchema, type GrantFormValues } from "@/lib/point-form";
 import { SUCCESS_CODE } from "@/types/api";
 

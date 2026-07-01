@@ -18,7 +18,7 @@ import {
   type OrderItemDto,
   type OrderReceiptDto,
   type Tracking,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDateTime } from "@/lib/format";
 import OrderStatusBadge from "@/components/order/OrderStatusBadge";
 import OrderStatusStepper from "@/components/order/OrderStatusStepper";

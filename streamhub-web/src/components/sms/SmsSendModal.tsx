@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Loader2, X } from "lucide-react";
 
 import { useSmsSendCreate } from "@/apis/query/sms/sms";
-import type { SmsSendRequest } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { SmsSendRequest } from "@/apis/query/graceOnAdminAPI.schemas";
 import { FIELD_CLASS } from "@/lib/goods-form";
 import { SUCCESS_CODE } from "@/types/api";
 

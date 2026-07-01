@@ -9,7 +9,7 @@ import {
   MemberSearchRequestUserStatus,
   type MemberListItem,
   type MemberSearchRequest,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { SUCCESS_CODE } from "@/types/api";
 
 const MemberGrid = dynamic(() => import("@/components/member/MemberGrid"), {

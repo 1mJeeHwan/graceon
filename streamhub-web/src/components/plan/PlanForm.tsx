@@ -9,7 +9,7 @@ import {
   PlanCreateRequestGrade,
   type PlanCreateRequest,
   type PlanResponse,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { FIELD_CLASS } from "@/lib/content-form";
 import { GRADE_LABEL, type PlanGrade } from "@/lib/subscription-status";
 

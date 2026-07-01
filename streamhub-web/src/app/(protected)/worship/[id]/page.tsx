@@ -9,7 +9,7 @@ import { useWorshipDetail, useWorshipStatus } from "@/apis/query/worship/worship
 import {
   type RegistrationFamilyDto,
   type WorshipRegistrationDetail,
-} from "@/apis/query/streamHubAdminAPI.schemas";
+} from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDate, formatDateTime } from "@/lib/format";
 import WorshipStatusBadge from "@/components/worship/WorshipStatusBadge";
 import WorshipStatusStepper from "@/components/worship/WorshipStatusStepper";

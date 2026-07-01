@@ -5,7 +5,7 @@ import { Loader2, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { storeList, useStoreDelete } from "@/apis/query/store/store";
-import { type StoreDto } from "@/apis/query/streamHubAdminAPI.schemas";
+import { type StoreDto } from "@/apis/query/graceOnAdminAPI.schemas";
 import StoreFormDialog from "@/components/stores/StoreFormDialog";
 import { SUCCESS_CODE } from "@/types/api";
 

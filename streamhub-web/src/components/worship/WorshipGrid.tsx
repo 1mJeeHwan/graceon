@@ -14,7 +14,7 @@ import {
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
-import type { WorshipRegistrationListItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { WorshipRegistrationListItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDateTime } from "@/lib/format";
 import {
   GENDER_LABEL,

@@ -12,7 +12,7 @@ import {
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
-import type { AlbumListItem } from "@/apis/query/streamHubAdminAPI.schemas";
+import type { AlbumListItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import {
   AlbumGenreBadge,
   AlbumStatusBadge,
