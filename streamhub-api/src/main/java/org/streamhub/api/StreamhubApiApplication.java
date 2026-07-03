@@ -1,5 +1,6 @@
 package org.streamhub.api;
 
+import java.util.TimeZone;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -21,6 +22,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class StreamhubApiApplication {
 
     public static void main(String[] args) {
+        // Service operates on Korea time: all LocalDate/LocalDateTime.now() calls (visit stats,
+        // daily aggregation buckets, seeders) must use KST regardless of the host's zone — the
+        // prod container runs on a UTC EC2 host, and the JDBC URL already declares Asia/Seoul.
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
         SpringApplication.run(StreamhubApiApplication.class, args);
     }
 }
