@@ -15,16 +15,15 @@ import org.springframework.stereotype.Component;
  * (a client can send {@code X-Forwarded-For: 1.2.3.4} and spoof any address). Trusting the
  * leftmost hop lets an abuser rotate a fake IP per request and defeat the per-IP limiter entirely.
  *
- * <p><b>Topology:</b> {@code client → CloudFront → Caddy → app}. By the time the request reaches
- * the app, the header reads {@code <real-client>, <cloudfront-edge>} (Caddy's {@code remote_addr}
- * is CloudFront, which CloudFront has already prepended the real client to). Only the single
- * rightmost entry (the CloudFront edge that Caddy appended) is added by trusted infrastructure;
- * the real client is the entry <i>{@code trustedProxyHops}</i> positions from the right (default
- * {@code 1}). Anything further left was supplied by the client and is ignored — even if an abuser
- * spoofs {@code X-Forwarded-For: evil}, CloudFront appends the real viewer after it, so the
- * 1-from-the-right entry is still the genuine client. With the header shorter than expected
- * (direct hit, misconfiguration), we fall back to {@link HttpServletRequest#getRemoteAddr()}
- * rather than trusting a client-controlled value.
+ * <p><b>Topology:</b> {@code client → CloudFront → app}. CloudFront connects straight to the
+ * origin (port 8080 is security-grouped to CloudFront's IP ranges only), and appends the real
+ * viewer IP as the <i>rightmost</i> {@code X-Forwarded-For} entry. With {@code trustedProxyHops}
+ * trusted proxies in front (default {@code 1} = CloudFront), the genuine client is the entry
+ * {@code trustedProxyHops} positions from the <i>end</i> of the chain — i.e. the rightmost entry
+ * for the default. Anything further left was supplied by the client and is ignored — even if an
+ * abuser spoofs {@code X-Forwarded-For: evil}, CloudFront appends the real viewer after it. With
+ * the header shorter than expected (misconfiguration), we fall back to
+ * {@link HttpServletRequest#getRemoteAddr()} rather than trusting a client-controlled value.
  */
 @Component
 public class ClientIpResolver {
@@ -32,10 +31,10 @@ public class ClientIpResolver {
     private static final String FORWARDED_FOR_HEADER = "X-Forwarded-For";
 
     /**
-     * Number of trusted reverse-proxy entries appended to {@code X-Forwarded-For} in front of the
-     * app. The client IP is taken this many positions from the right. Default {@code 1} matches the
-     * CloudFront→Caddy→app topology: at the app the header is {@code <real-client>, <cloudfront>},
-     * so the genuine client sits exactly one hop from the right. Set
+     * Number of trusted reverse proxies in front of the app, each of which appends one entry to
+     * {@code X-Forwarded-For}. The client IP is the entry this many positions from the end of the
+     * chain. Default {@code 1} matches the CloudFront→app topology: CloudFront appends the real
+     * viewer as the rightmost entry, so the genuine client is the last one. Set
      * {@code app.security.trusted-proxy-hops=0} for a direct (no-proxy) deployment so
      * {@code getRemoteAddr()} is always used.
      */
@@ -69,13 +68,14 @@ public class ClientIpResolver {
     }
 
     /**
-     * Picks the {@code trustedProxyHops}-from-the-right entry of the comma-separated forwarded
-     * chain. Returns {@code null} when the chain is shorter than the trusted-hop count (so the
-     * caller falls back to {@code getRemoteAddr()} instead of trusting a client-supplied hop).
+     * Picks the entry {@code trustedProxyHops} positions from the end of the comma-separated
+     * forwarded chain (rightmost for the default of one trusted proxy). Returns {@code null} when
+     * the chain is shorter than the trusted-hop count (so the caller falls back to
+     * {@code getRemoteAddr()} instead of trusting a client-supplied hop).
      */
     private String trustedClientHop(String forwarded) {
         String[] hops = forwarded.split(",");
-        int clientIndex = hops.length - 1 - trustedProxyHops;
+        int clientIndex = hops.length - trustedProxyHops;
         if (clientIndex < 0) {
             return null;
         }
