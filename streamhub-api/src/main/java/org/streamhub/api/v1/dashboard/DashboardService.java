@@ -37,6 +37,9 @@ public class DashboardService {
     /** Default activity-feed page size when an invalid {@code limit} is requested. */
     private static final int DEFAULT_FEED_LIMIT = 20;
 
+    /** How far back the activity feed looks. Bounds the query; older events are not "recent". */
+    private static final int FEED_WINDOW_DAYS = 90;
+
     private final DashboardMapper dashboardMapper;
     private final CustomerInquiryRepository customerInquiryRepository;
 
@@ -144,7 +147,11 @@ public class DashboardService {
      */
     public List<FeedItem> getFeed(int limit, AdminPrincipal principal) {
         int size = limit <= 0 ? DEFAULT_FEED_LIMIT : limit;
-        List<FeedRow> rows = dashboardMapper.recentActivity(size, scopedChurchId(principal));
+        // Bounded window: the feed shows "what just happened", so anything older than this could
+        // never make the newest-N cut anyway, and the bound is what lets each branch use its own
+        // timestamp index instead of scanning.
+        LocalDateTime since = LocalDateTime.now().minusDays(FEED_WINDOW_DAYS);
+        List<FeedRow> rows = dashboardMapper.recentActivity(since, size, scopedChurchId(principal));
 
         List<FeedItem> items = new ArrayList<>(rows.size());
         for (FeedRow row : rows) {

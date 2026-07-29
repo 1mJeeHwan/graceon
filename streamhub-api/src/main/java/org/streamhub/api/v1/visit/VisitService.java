@@ -3,13 +3,12 @@ package org.streamhub.api.v1.visit;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.streamhub.api.v1.visit.dto.DailyCountDto;
@@ -22,9 +21,17 @@ import org.streamhub.api.v1.visit.entity.VisitLog;
 import org.streamhub.api.v1.visit.repository.VisitLogRepository;
 
 /**
- * Front-site visit statistics (접속 통계). The demo dataset is small (~400 rows), so every
- * aggregate is computed in memory from a single range scan rather than via grouped SQL — no
- * analytics store or window functions needed.
+ * Front-site visit statistics (접속 통계).
+ *
+ * <p>Every aggregate is a grouped query. An earlier revision loaded the whole table with
+ * {@code findAll()} and counted in a Java stream, which was fine at the ~400 demo rows it was
+ * written for and unbounded everywhere else: VISIT_LOG is append-only, so its size tracks total
+ * site traffic forever, and the read-only transaction kept every loaded row in the persistence
+ * context on top of the list itself. The dashboard would have died of the site succeeding.
+ *
+ * <p>Zero-filling stays in Java on purpose — the database returns only days and device types that
+ * actually saw traffic, and generating the missing ones in SQL costs more than it saves for a
+ * window of at most a few hundred entries.
  */
 @Slf4j
 @Service
@@ -113,11 +120,15 @@ public class VisitService {
         String keyword = request != null && request.keyword() != null
                 ? request.keyword().trim().toLowerCase() : null;
 
-        return visitLogRepository.findByVisitedAtBetween(from.atStartOfDay(), endOfDay(to)).stream()
+        // Sorting and the row cap are pushed to the database; the two optional filters stay in Java
+        // because they are cheap over an already-capped page and keep the query a single derivation.
+        // If they ever need to filter *before* the cap, they belong in the query too.
+        return visitLogRepository
+                .findByVisitedAtBetweenOrderByVisitedAtDesc(
+                        from.atStartOfDay(), endOfDay(to), PageRequest.of(0, LIST_LIMIT))
+                .stream()
                 .filter(log -> deviceType == null || deviceType == log.getDeviceType())
                 .filter(log -> matchesKeyword(log, keyword))
-                .sorted(Comparator.comparing(VisitLog::getVisitedAt).reversed())
-                .limit(LIST_LIMIT)
                 .map(VisitLogDto::from)
                 .toList();
     }
@@ -133,10 +144,10 @@ public class VisitService {
         LocalDate from = request != null && request.fromDate() != null
                 ? request.fromDate() : to.minusDays(DEFAULT_WINDOW_DAYS - 1L);
 
-        Map<LocalDate, Long> counts = visitLogRepository
-                .findByVisitedAtBetween(from.atStartOfDay(), endOfDay(to)).stream()
-                .collect(Collectors.groupingBy(
-                        log -> log.getVisitedAt().toLocalDate(), Collectors.counting()));
+        Map<LocalDate, Long> counts = new LinkedHashMap<>();
+        for (Object[] row : visitLogRepository.countPerDay(from.atStartOfDay(), endOfDay(to))) {
+            counts.put(toLocalDate(row[0]), (Long) row[1]);
+        }
 
         Map<LocalDate, Long> filled = new LinkedHashMap<>();
         for (LocalDate day = from; !day.isAfter(to); day = day.plusDays(1)) {
@@ -150,37 +161,40 @@ public class VisitService {
     /** All-time traffic summary: totals, today, approx unique IPs, top paths and device breakdown. */
     @Transactional(readOnly = true)
     public VisitSummaryDto summary() {
-        List<VisitLog> logs = visitLogRepository.findAll();
         LocalDate today = LocalDate.now();
 
-        long todayVisits = logs.stream()
-                .filter(log -> today.equals(log.getVisitedAt().toLocalDate()))
-                .count();
-        long uniqueIpApprox = logs.stream()
-                .map(VisitLog::getIpMasked)
-                .filter(ip -> ip != null)
-                .distinct()
-                .count();
+        long total = visitLogRepository.count();
+        long todayVisits = visitLogRepository
+                .countByVisitedAtBetween(today.atStartOfDay(), endOfDay(today));
+        long uniqueIpApprox = visitLogRepository.countDistinctIpMasked();
 
-        List<PathCountDto> topPaths = logs.stream()
-                .collect(Collectors.groupingBy(VisitLog::getPath, Collectors.counting()))
-                .entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(TOP_PATHS)
-                .map(entry -> new PathCountDto(entry.getKey(), entry.getValue()))
+        List<PathCountDto> topPaths = visitLogRepository.countPerPath(PageRequest.of(0, TOP_PATHS))
+                .stream()
+                .map(row -> new PathCountDto((String) row[0], (Long) row[1]))
                 .toList();
 
+        // Every device type appears, including the ones with no traffic, so the chart keeps a
+        // stable set of series instead of columns appearing and vanishing between refreshes.
         Map<DeviceType, Long> deviceBreakdown = new EnumMap<>(DeviceType.class);
         for (DeviceType type : DeviceType.values()) {
             deviceBreakdown.put(type, 0L);
         }
-        for (VisitLog log : logs) {
-            if (log.getDeviceType() != null) {
-                deviceBreakdown.merge(log.getDeviceType(), 1L, Long::sum);
-            }
+        for (Object[] row : visitLogRepository.countPerDeviceType()) {
+            deviceBreakdown.put((DeviceType) row[0], (Long) row[1]);
         }
 
-        return new VisitSummaryDto(logs.size(), todayVisits, uniqueIpApprox, topPaths, deviceBreakdown);
+        return new VisitSummaryDto(total, todayVisits, uniqueIpApprox, topPaths, deviceBreakdown);
+    }
+
+    /** JPA returns {@code cast(... as date)} as java.sql.Date on some providers, LocalDate on others. */
+    private static LocalDate toLocalDate(Object value) {
+        if (value instanceof LocalDate date) {
+            return date;
+        }
+        if (value instanceof java.sql.Date sqlDate) {
+            return sqlDate.toLocalDate();
+        }
+        return LocalDate.parse(value.toString());
     }
 
     // --- helpers -----------------------------------------------------------

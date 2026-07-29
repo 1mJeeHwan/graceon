@@ -1,5 +1,6 @@
 package org.streamhub.api.v1.content.repository;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,4 +19,13 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
     @Query("UPDATE Content c SET c.viewCount = c.viewCount + 1 "
             + "WHERE c.id = :id AND c.status = org.streamhub.api.v1.content.entity.ContentStatus.PUBLISHED")
     int incrementViewCount(@Param("id") Long id);
+    /** Ids of SOUND contents that have a media source but no packaged HLS yet (see TrackRepository). */
+    @Query("""
+            select c.id from Content c
+            where c.type = org.streamhub.api.v1.content.entity.ContentType.SOUND
+              and c.hlsPrefix is null
+              and c.mediaUrl is not null and c.mediaUrl <> ''
+            order by c.id
+            """)
+    List<Long> findAudioPackagingCandidates();
 }

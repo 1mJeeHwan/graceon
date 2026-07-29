@@ -3,13 +3,35 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.streamhub.api.v1.member.mapper.MemberMapper">
 
-    <!-- Shared filter block: keyword (name/email/phone), status, church. -->
+    <!--
+        Shared filter block: keyword (name/email/phone), status, church.
+
+        The keyword branches by input shape instead of running one OR across all three columns with
+        a leading wildcard. That form is unindexable — a leading '%' rules out the B-tree, and the OR
+        rules out an index merge — so every search, and its COUNT(*) twin, full-scanned MEMBER twice.
+
+        Now: an input containing '@' searches email by prefix, an all-digits input searches phone by
+        its digits, and anything else searches name. Prefix matches use idx_member_email /
+        idx_member_phone / idx_member_name. Name keeps the leading wildcard because Korean names are
+        routinely searched by their last two characters and a prefix-only match would be useless —
+        that one is a deliberate scan, not an oversight, and it is now the only one.
+    -->
     <sql id="searchWhere">
         <where>
             <if test="keyword != null and keyword != ''">
-                AND (m.name LIKE CONCAT('%', #{keyword}, '%')
-                     OR m.email LIKE CONCAT('%', #{keyword}, '%')
-                     OR m.phone LIKE CONCAT('%', #{keyword}, '%'))
+                <!-- Double quotes on purpose: OGNL reads a single-quoted one-character literal as a
+                     java.lang.Character, and String.contains needs a CharSequence. -->
+                <choose>
+                    <when test='keyword.contains("@")'>
+                        AND m.email LIKE CONCAT(#{keyword}, '%')
+                    </when>
+                    <when test='keyword.matches("[0-9-]+")'>
+                        AND m.phone LIKE CONCAT(#{keyword}, '%')
+                    </when>
+                    <otherwise>
+                        AND m.name LIKE CONCAT('%', #{keyword}, '%')
+                    </otherwise>
+                </choose>
             </if>
             <if test="userStatus != null and userStatus != ''">
                 AND m.user_status = #{userStatus}

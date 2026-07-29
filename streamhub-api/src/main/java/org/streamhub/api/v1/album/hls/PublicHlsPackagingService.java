@@ -79,21 +79,12 @@ public class PublicHlsPackagingService {
     /** Track ids that have a preview source but no packaged preview HLS yet. */
     @Transactional(readOnly = true)
     public List<Long> previewCandidates() {
-        return trackRepository.findAll().stream()
-                .filter(t -> t.getPreviewHlsPrefix() == null)
-                .filter(t -> t.getPreviewUrl() != null && !t.getPreviewUrl().isBlank())
-                .map(Track::getId)
-                .toList();
+        return trackRepository.findPreviewPackagingCandidates();
     }
 
     /** Audio-content ids that have a media source but no packaged HLS yet. */
     @Transactional(readOnly = true)
     public List<Long> contentAudioCandidates() {
-        return contentRepository.findAll().stream()
-                .filter(c -> c.getType() == ContentType.SOUND)
-                .filter(c -> c.getHlsPrefix() == null)
-                .filter(c -> c.getMediaUrl() != null && !c.getMediaUrl().isBlank())
-                .map(Content::getId)
-                .toList();
+        return contentRepository.findAudioPackagingCandidates();
     }
 }

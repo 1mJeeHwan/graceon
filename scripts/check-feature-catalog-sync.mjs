@@ -2,12 +2,28 @@
 /**
  * Feature-catalog drift guard.
  *
- * The chatbot's knowledge source — streamhub-api/src/main/resources/feature-catalog.json — is a
- * hand-maintained mirror of the admin catalog cards in
- * streamhub-web/src/lib/features.catalog.ts. This script compares the two so they never silently
- * diverge: it checks that the set of feature ids matches and that each shared id has the same
- * title / status / href. The JSON additionally carries a `howTo` field (chatbot usage guide) that
- * has no TS counterpart — its presence/non-emptiness is checked but not compared.
+ * Two descriptions of the same feature set must not drift apart:
+ *   - streamhub-api/src/main/resources/feature-catalog.json — what the chatbot tells users
+ *   - streamhub-web/src/lib/features.catalog.ts — the admin console's catalog cards
+ *
+ * What is compared depends on the JSON entry's `audience`, because the two files describe
+ * different surfaces:
+ *
+ *   - **status, always.** This is the honesty badge (live / demo / external). If the console says a
+ *     feature is a demo while the chatbot calls it live, the product is lying to somebody. This is
+ *     the check the guard exists for.
+ *   - **title and href, only for `audience: "admin"`.** For `user` and `both` entries the JSON
+ *     deliberately describes the *user site* ("굿즈샵" at `/goods`) while the TS describes the
+ *     *admin screen* that manages it ("굿즈 관리" at `/goods`). Requiring those to be equal was
+ *     comparing two different things, and the guard had been failing on ~30 such pairs — a red
+ *     check nobody could act on, which is worse than no check because it trains you to ignore it.
+ *   - **every TS card must exist in the JSON.** An admin feature the chatbot has never heard of
+ *     means the bot answers "no such feature" about something that ships.
+ *   - **JSON-only entries are allowed when `audience: "user"`.** Sign-up, favourites, and watch
+ *     history are user-site features with no admin card by definition. A JSON-only `admin`/`both`
+ *     entry is still drift.
+ *
+ * `howTo` (chatbot usage guide) has no TS counterpart — presence is checked, content is not.
  *
  * Usage:  node scripts/check-feature-catalog-sync.mjs
  * Exit:   0 = in sync, 1 = drift found (prints a report). No deps, no network.
@@ -25,7 +41,13 @@ function readJson() {
   const data = JSON.parse(readFileSync(JSON_PATH, "utf8"));
   const map = new Map();
   for (const f of data.features ?? []) {
-    map.set(f.id, { title: f.title, status: f.status, href: f.href, howTo: f.howTo });
+    map.set(f.id, {
+      title: f.title,
+      status: f.status,
+      href: f.href,
+      howTo: f.howTo,
+      audience: f.audience,
+    });
   }
   return map;
 }
@@ -57,18 +79,30 @@ function main() {
       problems.push(`JSON 누락: "${id}" (TS에는 있음) — feature-catalog.json에 추가 필요`);
       continue;
     }
-    for (const field of ["title", "status", "href"]) {
-      if (t[field] !== j[field]) {
-        problems.push(`불일치 [${id}.${field}]: TS="${t[field]}" vs JSON="${j[field]}"`);
+    // The honesty badge must agree on every shared feature, whoever the audience is.
+    if (t.status !== j.status) {
+      problems.push(
+        `불일치 [${id}.status]: TS="${t.status}" vs JSON="${j.status}" — 실동작/데모 표시가 어긋납니다`,
+      );
+    }
+    // Wording and links only describe the same surface for admin-only features.
+    if (j.audience === "admin") {
+      for (const field of ["title", "href"]) {
+        if (t[field] !== j[field]) {
+          problems.push(`불일치 [${id}.${field}]: TS="${t[field]}" vs JSON="${j[field]}"`);
+        }
       }
     }
     if (!j.howTo || !j.howTo.trim()) {
       problems.push(`howTo 비어있음: "${id}" — 챗봇 사용법 안내 누락`);
     }
   }
-  for (const id of json.keys()) {
-    if (!ts.has(id)) {
-      problems.push(`TS 누락: "${id}" (JSON에는 있음) — 카탈로그 카드 확인`);
+  for (const [id, j] of json) {
+    // User-site features legitimately have no admin card; anything else is a missing card.
+    if (!ts.has(id) && j.audience !== "user") {
+      problems.push(
+        `TS 누락: "${id}" (JSON audience=${j.audience}) — 관리자 카탈로그 카드 확인`,
+      );
     }
   }
 

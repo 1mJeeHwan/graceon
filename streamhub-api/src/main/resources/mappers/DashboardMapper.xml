@@ -116,57 +116,80 @@
     </select>
 
     <!--
-        Most recent N activity events across orders, subscriptions and donations,
-        newest first. UNION ALL of three sources, each tagged with its kind; member
-        name joined for display.
+        Most recent N activity events across orders, subscriptions, donations and signups,
+        newest first. UNION ALL of four sources, each tagged with its kind; member name joined
+        for display.
+
+        Two things keep this from degrading into a full scan of every business table:
+
+        1. Each branch carries its own `since` bound and its own ORDER BY ... LIMIT. Without them
+           the derived table materialised every row ever written before sorting, so the cost grew
+           with lifetime data volume no matter how small `limit` was. An event older than the
+           newest N of its own source can never win the outer sort, so capping per branch cannot
+           change the result — and each branch's ORDER BY can now use that source's own timestamp
+           index, which the derived table could not.
+        2. The church filter is pushed into each branch instead of sitting outside the UNION, so a
+           CHURCH_MANAGER stops paying to sort other churches' rows before discarding them.
     -->
     <select id="recentActivity" resultType="org.streamhub.api.v1.dashboard.dto.FeedRow">
         SELECT u.source_id   AS source_id,
                u.kind        AS kind,
                u.status      AS status,
                u.amount      AS amount,
-               m.name        AS member_name,
+               u.member_name AS member_name,
                u.occurred_at AS occurred_at
         FROM (
-            SELECT o.id          AS source_id,
-                   'ORDER'       AS kind,
-                   o.status      AS status,
-                   o.total       AS amount,
-                   o.member_id   AS member_id,
-                   o.ordered_at  AS occurred_at
-            FROM ORDERS o
+            (SELECT o.id          AS source_id,
+                    'ORDER'       AS kind,
+                    o.status      AS status,
+                    o.total       AS amount,
+                    om.name       AS member_name,
+                    o.ordered_at  AS occurred_at
+             FROM ORDERS o
+             JOIN MEMBER om ON o.member_id = om.id
+             WHERE o.ordered_at &gt;= #{since}
+             <if test="churchId != null">AND om.church_id = #{churchId}</if>
+             ORDER BY o.ordered_at DESC, o.id DESC
+             LIMIT #{limit})
             UNION ALL
-            SELECT s.id          AS source_id,
-                   'SUBSCRIPTION' AS kind,
-                   s.status      AS status,
-                   NULL          AS amount,
-                   s.member_id   AS member_id,
-                   s.started_at  AS occurred_at
-            FROM SUBSCRIPTION s
+            (SELECT s.id           AS source_id,
+                    'SUBSCRIPTION' AS kind,
+                    s.status       AS status,
+                    NULL           AS amount,
+                    sm.name        AS member_name,
+                    s.started_at   AS occurred_at
+             FROM SUBSCRIPTION s
+             JOIN MEMBER sm ON s.member_id = sm.id
+             WHERE s.started_at &gt;= #{since}
+             <if test="churchId != null">AND sm.church_id = #{churchId}</if>
+             ORDER BY s.started_at DESC, s.id DESC
+             LIMIT #{limit})
             UNION ALL
-            SELECT d.id          AS source_id,
-                   'DONATION'    AS kind,
-                   d.type        AS status,
-                   d.amount      AS amount,
-                   d.member_id   AS member_id,
-                   d.paid_at     AS occurred_at
-            FROM DONATION d
-            WHERE d.status = 'PAID'
+            (SELECT d.id          AS source_id,
+                    'DONATION'    AS kind,
+                    d.type        AS status,
+                    d.amount      AS amount,
+                    dm.name       AS member_name,
+                    d.paid_at     AS occurred_at
+             FROM DONATION d
+             JOIN MEMBER dm ON d.member_id = dm.id
+             WHERE d.status = 'PAID' AND d.paid_at &gt;= #{since}
+             <if test="churchId != null">AND dm.church_id = #{churchId}</if>
+             ORDER BY d.paid_at DESC, d.id DESC
+             LIMIT #{limit})
             UNION ALL
-            SELECT mm.id          AS source_id,
-                   'MEMBER'       AS kind,
-                   mm.user_status AS status,
-                   NULL           AS amount,
-                   mm.id          AS member_id,
-                   mm.created_at  AS occurred_at
-            FROM MEMBER mm
+            (SELECT mm.id          AS source_id,
+                    'MEMBER'       AS kind,
+                    mm.user_status AS status,
+                    NULL           AS amount,
+                    mm.name        AS member_name,
+                    mm.created_at  AS occurred_at
+             FROM MEMBER mm
+             WHERE mm.created_at &gt;= #{since}
+             <if test="churchId != null">AND mm.church_id = #{churchId}</if>
+             ORDER BY mm.created_at DESC, mm.id DESC
+             LIMIT #{limit})
         ) u
-        JOIN MEMBER m ON u.member_id = m.id
-        <!-- All three sources carry a NOT NULL member_id, so the MEMBER join never drops rows;
-             it also provides the church column used to scope CHURCH_MANAGER operators. -->
-        <if test="churchId != null">
-            WHERE m.church_id = #{churchId}
-        </if>
         ORDER BY u.occurred_at DESC, u.source_id DESC
         LIMIT #{limit}
     </select>

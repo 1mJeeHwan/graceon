@@ -23,7 +23,11 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "VISIT_LOG", indexes = {
         @Index(name = "idx_visit_visited_at", columnList = "visited_at"),
-        @Index(name = "idx_visit_device", columnList = "device_type")
+        @Index(name = "idx_visit_device", columnList = "device_type"),
+        // Both are grouped on by the summary endpoint (top paths, unique-visitor approximation).
+        // Without them those aggregates full-scan a table that only ever grows.
+        @Index(name = "idx_visit_path", columnList = "path"),
+        @Index(name = "idx_visit_ip_masked", columnList = "ip_masked")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

@@ -1,5 +1,7 @@
 package org.streamhub.api.v1.logarchive;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
@@ -35,6 +37,16 @@ public class LogArchiveService {
     private static final String ACTION_LOG_PREFIX = "logs/archive/action-log/";
     private static final String SECURITY_EVENT_PREFIX = "logs/archive/security-event/";
     private static final String NDJSON_CONTENT_TYPE = "application/x-ndjson";
+
+    /** Rows serialized and uploaded per S3 object. Bounds peak heap regardless of backlog size. */
+    private static final int ARCHIVE_CHUNK_SIZE = 5_000;
+
+    /**
+     * Runaway guard. At {@value #ARCHIVE_CHUNK_SIZE} rows per part this still covers a million rows
+     * in one run; hitting it means something is very wrong, so the run reports failure and leaves
+     * the source data alone rather than purging a partial archive.
+     */
+    private static final int MAX_ARCHIVE_PARTS = 200;
 
     private final ActionLogRepository actionLogRepository;
     private final SecurityEventRepository securityEventRepository;
@@ -74,16 +86,9 @@ public class LogArchiveService {
     }
 
     private int archiveActionLogs(LocalDateTime cutoff, String stamp) {
-        List<ActionLog> rows = actionLogRepository.findByCreatedAtBefore(cutoff);
-        if (rows.isEmpty()) {
-            return 0;
-        }
-        try {
-            byte[] body = toJsonl(rows);
-            storageService.putBytes(ACTION_LOG_PREFIX + stamp + ".jsonl", body, NDJSON_CONTENT_TYPE);
-        } catch (RuntimeException e) {
-            log.warn("Action-log archive upload failed; skipping purge to preserve data: {}",
-                    e.getMessage());
+        int uploaded = uploadInChunks(ACTION_LOG_PREFIX, stamp, page ->
+                actionLogRepository.findByCreatedAtBeforeOrderByIdAsc(cutoff, page));
+        if (uploaded <= 0) {
             return 0;
         }
         int purged = logPurger.purgeActionLogs(cutoff);
@@ -92,22 +97,58 @@ public class LogArchiveService {
     }
 
     private int archiveSecurityEvents(LocalDateTime cutoff, String stamp) {
-        List<SecurityEvent> rows = securityEventRepository.findByCreatedAtBefore(cutoff);
-        if (rows.isEmpty()) {
+        int uploaded = uploadInChunks(SECURITY_EVENT_PREFIX, stamp, page ->
+                securityEventRepository.findByCreatedAtBeforeOrderByIdAsc(cutoff, page));
+        if (uploaded <= 0) {
             return 0;
         }
-        try {
-            byte[] body = toJsonl(rows);
-            storageService.putBytes(SECURITY_EVENT_PREFIX + stamp + ".jsonl", body, NDJSON_CONTENT_TYPE);
-        } catch (RuntimeException e) {
-            log.warn("Security-event archive upload failed; skipping purge to preserve data: {}",
-                    e.getMessage());
-            return 0;
-        }
-        int count = rows.size();
         logPurger.purgeSecurityEvents(cutoff);
-        log.info("Archived and purged {} security-event row(s) older than {}.", count, cutoff);
-        return count;
+        log.info("Archived and purged {} security-event row(s) older than {}.", uploaded, cutoff);
+        return uploaded;
+    }
+
+    /**
+     * Pages through the matching rows, uploading one JSONL object per chunk, and returns how many
+     * rows were archived (0 when there was nothing to do, -1 when an upload failed).
+     *
+     * <p>Chunking is the whole point: the previous version materialised every row, concatenated it
+     * into one {@link StringBuilder}, and converted that to a single {@code byte[]} — three copies
+     * of the entire backlog resident at once, on a 1 GB instance, for a table that grows without
+     * bound between runs. Failure still means "do not purge", so a partial upload leaves the source
+     * rows intact and the next run redoes them.
+     */
+    private int uploadInChunks(String prefix, String stamp,
+                               java.util.function.Function<Pageable, List<?>> fetch) {
+        int total = 0;
+        int part = 0;
+        while (true) {
+            // Offset paging is correct here precisely because nothing is deleted mid-loop: the
+            // candidate set is fixed by the cutoff and ordered by id, so page N+1 continues where
+            // page N stopped. The purge runs once, at the end, after every part is safely uploaded.
+            List<?> chunk = fetch.apply(PageRequest.of(part, ARCHIVE_CHUNK_SIZE));
+            if (chunk.isEmpty()) {
+                break;
+            }
+            String key = prefix + stamp + (part == 0 ? "" : "-" + part) + ".jsonl";
+            try {
+                storageService.putBytes(key, toJsonl(chunk), NDJSON_CONTENT_TYPE);
+            } catch (RuntimeException e) {
+                log.warn("Archive upload failed at {}; skipping purge to preserve data: {}",
+                        key, e.getMessage());
+                return -1;
+            }
+            total += chunk.size();
+            part++;
+            if (chunk.size() < ARCHIVE_CHUNK_SIZE) {
+                break;
+            }
+            if (part >= MAX_ARCHIVE_PARTS) {
+                log.warn("Archive hit the {}-part cap at {} rows; the remainder is left for the "
+                        + "next run and nothing is purged.", MAX_ARCHIVE_PARTS, total);
+                return -1;
+            }
+        }
+        return total;
     }
 
     /** Serializes records to JSONL (one JSON object per line). */

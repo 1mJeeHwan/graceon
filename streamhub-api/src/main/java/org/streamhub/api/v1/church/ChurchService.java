@@ -52,6 +52,13 @@ public class ChurchService {
     /** Degrees of latitude per kilometre (~111 km/deg). */
     private static final double KM_PER_LAT_DEGREE = 111.0;
     /** Hard cap on the public search radius (km) — also Kakao's max, keeps the bbox sane. */
+    /**
+     * Ceiling on rows the bounding-box pre-filter may return. Exact distance and paging still run
+     * in the service (the result merges external POIs, which SQL cannot page over), so this bounds
+     * the work that scales with church density. Comfortably above any realistic page of results.
+     */
+    private static final int MAX_NEARBY_CANDIDATES = 500;
+
     private static final double MAX_RADIUS_KM = 20.0;
 
     private final ChurchMapper churchMapper;
@@ -184,6 +191,7 @@ public class ChurchService {
 
         List<ChurchNearbyItem> candidates = churchMapper.selectInBox(
                 lat - latDelta, lat + latDelta, lng - lngDelta, lng + lngDelta,
+                lat, lng, MAX_NEARBY_CANDIDATES,
                 keyword, request.regionId(), denomination);
 
         List<ChurchNearbyItem> hits = new ArrayList<>();

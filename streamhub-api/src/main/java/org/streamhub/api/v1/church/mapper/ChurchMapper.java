@@ -48,12 +48,21 @@ public interface ChurchMapper {
             @Param("regionId") Long regionId,
             @Param("denomination") String denomination);
 
-    /** Bounding-box pre-filter for location search (index-assisted; refined by Haversine). */
+    /**
+     * Bounding-box pre-filter for location search (index-assisted; refined by Haversine in the
+     * service). Ordered by approximate distance from the centre and capped, so a wide radius in a
+     * dense area cannot return an unbounded candidate set.
+     *
+     * @param maxCandidates hard cap on rows returned; the nearest ones are kept
+     */
     List<ChurchNearbyItem> selectInBox(
             @Param("minLat") double minLat,
             @Param("maxLat") double maxLat,
             @Param("minLng") double minLng,
             @Param("maxLng") double maxLng,
+            @Param("centerLat") double centerLat,
+            @Param("centerLng") double centerLng,
+            @Param("maxCandidates") int maxCandidates,
             @Param("keyword") String keyword,
             @Param("regionId") Long regionId,
             @Param("denomination") String denomination);

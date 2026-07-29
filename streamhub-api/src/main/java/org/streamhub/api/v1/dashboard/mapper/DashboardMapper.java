@@ -46,5 +46,13 @@ public interface DashboardMapper {
                               @Param("churchId") Long churchId);
 
     /** Most recent N activity events (orders ∪ subscriptions ∪ donations), newest first. */
-    List<FeedRow> recentActivity(@Param("limit") int limit, @Param("churchId") Long churchId);
+    /**
+     * @param since   lower time bound applied to every UNION branch; without it each branch would
+     *                scan its whole table before the outer sort could discard the rows
+     * @param limit   per-branch and overall row cap
+     * @param churchId pushed into each branch so a scoped operator never sorts other churches' rows
+     */
+    List<FeedRow> recentActivity(@Param("since") java.time.LocalDateTime since,
+                                 @Param("limit") int limit,
+                                 @Param("churchId") Long churchId);
 }

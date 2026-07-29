@@ -24,7 +24,13 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_member_church", columnList = "church_id"),
         @Index(name = "idx_member_status", columnList = "user_status"),
         @Index(name = "idx_member_created", columnList = "created_at"),
-        @Index(name = "idx_member_grade", columnList = "grade")
+        @Index(name = "idx_member_grade", columnList = "grade"),
+        // The three columns the admin search actually filters on. They had no index at all, so
+        // every keyword search full-scanned the table — twice, counting its COUNT(*) twin.
+        // Email is additionally the login identifier, so this also serves authentication lookups.
+        @Index(name = "idx_member_email", columnList = "email"),
+        @Index(name = "idx_member_phone", columnList = "phone"),
+        @Index(name = "idx_member_name", columnList = "name")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

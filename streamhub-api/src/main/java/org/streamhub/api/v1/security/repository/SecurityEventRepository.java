@@ -1,5 +1,6 @@
 package org.streamhub.api.v1.security.repository;
 
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,6 +24,13 @@ public interface SecurityEventRepository extends JpaRepository<SecurityEvent, Lo
 
     /** Events older than the cutoff, for the retention archive job (Phase 3). */
     List<SecurityEvent> findByCreatedAtBefore(LocalDateTime cutoff);
+
+    /**
+     * One id-ordered chunk of rows older than the cutoff, for the weekly archive. Paged because the
+     * archiver used to load every matching row at once and hold it three times over — as entities,
+     * as one giant StringBuilder, and as the byte array handed to S3.
+     */
+    List<SecurityEvent> findByCreatedAtBeforeOrderByIdAsc(LocalDateTime cutoff, Pageable pageable);
 
     /** Deletes events older than the cutoff after they have been archived (Phase 3 purge). */
     @Modifying

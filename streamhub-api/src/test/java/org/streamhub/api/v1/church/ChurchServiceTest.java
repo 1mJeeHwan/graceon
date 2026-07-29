@@ -71,8 +71,10 @@ class ChurchServiceTest {
         ChurchNearbyItem far = item(2L, 37.5060, 127.0290);
         ChurchNearbyItem noCoord = item(3L, null, null);
 
+        // box bounds (4) + search centre (2) + candidate cap (1) + keyword/region/denomination (3)
         when(churchMapper.selectInBox(anyDouble(), anyDouble(), anyDouble(), anyDouble(),
-                any(), any(), any())).thenReturn(List.of(far, noCoord, near));
+                anyDouble(), anyDouble(), anyInt(), any(), any(), any()))
+                .thenReturn(List.of(far, noCoord, near));
         lenient().when(storageService.publicUrl(anyString())).thenReturn(null);
         when(discoveryProvider.search(anyDouble(), anyDouble(), anyDouble(), any()))
                 .thenReturn(Collections.emptyList());

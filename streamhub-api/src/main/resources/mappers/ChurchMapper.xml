@@ -124,6 +124,17 @@
             AND c.longitude BETWEEN #{minLng} AND #{maxLng}
             <include refid="keywordRegionDenom"/>
         </where>
+        <!--
+            Order by squared planar distance from the search centre and cap the candidate set.
+            The box pre-filter alone returned every church inside the rectangle, so a wide radius in
+            a dense area loaded an unbounded list into the heap and re-scored all of it on every
+            page request. Rows are still refined by exact Haversine in the service — this ordering
+            only decides *which* candidates survive, and the nearest ones always do. Longitude is
+            scaled by cos(lat) so a degree of longitude is comparable to a degree of latitude.
+        -->
+        ORDER BY (POW(c.latitude - #{centerLat}, 2)
+                  + POW((c.longitude - #{centerLng}) * COS(RADIANS(#{centerLat})), 2)) ASC
+        LIMIT #{maxCandidates}
     </select>
 
     <!-- ===== Detail (region name; worship times loaded by service) ===== -->

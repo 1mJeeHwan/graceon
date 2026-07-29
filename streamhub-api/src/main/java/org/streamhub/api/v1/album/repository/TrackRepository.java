@@ -32,4 +32,18 @@ public interface TrackRepository extends JpaRepository<Track, Long> {
     @Query("select count(t) from Track t "
             + "where t.hasFullTrack = false and t.previewUrl is not null and trim(t.previewUrl) <> ''")
     long countUnpackagedWithPreview();
+    /**
+     * Ids of tracks that have a preview source but no packaged preview HLS yet.
+     *
+     * <p>A query rather than {@code findAll()} plus a Java filter: the batch only ever wants the
+     * handful of unpackaged rows, and loading the entire track table to find them made an admin
+     * button's cost scale with the catalogue.
+     */
+    @Query("""
+            select t.id from Track t
+            where t.previewHlsPrefix is null
+              and t.previewUrl is not null and t.previewUrl <> ''
+            order by t.id
+            """)
+    List<Long> findPreviewPackagingCandidates();
 }
