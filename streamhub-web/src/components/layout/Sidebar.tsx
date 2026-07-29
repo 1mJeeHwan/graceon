@@ -206,28 +206,30 @@ export default function Sidebar() {
             open={section.items.some((item) => item.href === activeHref)}
             className="group space-y-1"
           >
-            <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-              <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-90" />
+            <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2 py-2 text-base font-bold text-slate-900 hover:bg-slate-100">
+              <ChevronRight className="h-4 w-4 text-slate-500 transition-transform group-open:rotate-90" />
               {section.title}
             </summary>
-            {section.items.map((item) => {
-              const isActive = item.href === activeHref;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
-                    isActive
-                      ? "bg-brand text-white"
-                      : "text-slate-600 hover:bg-slate-100"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
+            <div className="ml-4 space-y-1 border-l border-slate-200 pl-1">
+              {section.items.map((item) => {
+                const isActive = item.href === activeHref;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 rounded-md px-3 py-1.5 text-[13px] font-medium transition ${
+                      isActive
+                        ? "bg-brand text-white"
+                        : "text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
           </details>
         ))}
       </nav>
