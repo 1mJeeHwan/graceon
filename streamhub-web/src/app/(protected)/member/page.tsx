@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Loader2, X } from "lucide-react";
 
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useWritePermission } from "@/lib/use-permissions";
 import { memberList, useMemberApprove, useMemberDeny } from "@/apis/query/member/member";
 import { dashboardKeys, memberKeys } from "@/lib/query-keys";
 import {
@@ -36,6 +37,8 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 
 export default function MemberPage() {
   // Committed search criteria (applied on 검색 / page change).
+  const { writeGuardProps } = useWritePermission();
+
   const [keyword, setKeyword] = useState("");
   const [status, setStatus] = useState<StatusFilter>("ALL");
   // Drill-down filter seeded from the URL (?churchId=...).
@@ -289,6 +292,7 @@ export default function MemberPage() {
             onClick={handleApprove}
             disabled={selectedIds.length === 0 || isBulkPending}
             className="flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            {...writeGuardProps}
           >
             {approveMutation.isPending && (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -300,6 +304,7 @@ export default function MemberPage() {
             onClick={handleDeny}
             disabled={selectedIds.length === 0 || isBulkPending}
             className="flex items-center gap-1.5 rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+            {...writeGuardProps}
           >
             {denyMutation.isPending && (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />

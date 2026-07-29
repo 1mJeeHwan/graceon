@@ -14,6 +14,7 @@ import {
   type GoodsStockDto,
   type GoodsStockSearchRequest,
 } from "@/apis/query/graceOnAdminAPI.schemas";
+import { useWritePermission } from "@/lib/use-permissions";
 import { SUCCESS_CODE } from "@/types/api";
 
 const isSoldOut = (item: GoodsStockDto) => item.soldOut === "Y";
@@ -24,6 +25,8 @@ const isLowStock = (item: GoodsStockDto) =>
   item.stock <= item.notiQty;
 
 export default function GoodsStockPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const [keyword, setKeyword] = useState("");
   const [lowStock, setLowStock] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -228,6 +231,7 @@ export default function GoodsStockPage() {
                               ? "bg-red-100 text-red-700 hover:bg-red-200"
                               : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
                           }`}
+                          {...writeGuardProps}
                         >
                           {isSoldOut(item) ? "품절" : "판매중"}
                         </button>
@@ -281,6 +285,9 @@ function StockEditDialog({
   onClose,
   onSave,
 }: StockEditDialogProps) {
+  // The dialog is its own component, so it reads the permission itself rather than taking it as a
+  // prop — one less thing a future caller can forget to pass.
+  const { writeGuardProps } = useWritePermission();
   const [stock, setStock] = useState(String(item.stock ?? 0));
   const [notiQty, setNotiQty] = useState(String(item.notiQty ?? 0));
 
@@ -357,6 +364,7 @@ function StockEditDialog({
             type="submit"
             disabled={saving}
             className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark disabled:opacity-50"
+            {...writeGuardProps}
           >
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             저장

@@ -9,6 +9,7 @@ import {
   goodsCategoryList,
   useGoodsCategoryDelete,
 } from "@/apis/query/goods-category/goods-category";
+import { useWritePermission } from "@/lib/use-permissions";
 import { type GoodsCategoryNodeDto } from "@/apis/query/graceOnAdminAPI.schemas";
 import GoodsCategoryFormDialog from "@/components/goods-category/GoodsCategoryFormDialog";
 import { SUCCESS_CODE } from "@/types/api";
@@ -63,6 +64,8 @@ function buildOrderedTree(
 }
 
 export default function GoodsCategoryPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -140,6 +143,7 @@ export default function GoodsCategoryPage() {
           type="button"
           onClick={openCreateRoot}
           className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+          {...writeGuardProps}
         >
           <Plus className="h-4 w-4" />
           최상위 카테고리 등록
@@ -250,7 +254,8 @@ export default function GoodsCategoryPage() {
                             onClick={() => openEdit(node)}
                             className="rounded p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-brand"
                             aria-label="수정"
-                          >
+                          
+                            {...writeGuardProps}>
                             <Pencil className="h-4 w-4" />
                           </button>
                           <button
@@ -259,7 +264,8 @@ export default function GoodsCategoryPage() {
                             disabled={deleteMutation.isPending}
                             className="rounded p-1.5 text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                             aria-label="삭제"
-                          >
+                          
+                            {...writeGuardProps}>
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>

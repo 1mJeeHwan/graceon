@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
+import { useWritePermission } from "@/lib/use-permissions";
 import { useGoodsCategories, useGoodsCreate } from "@/apis/query/goods/goods";
 import {
   GoodsCreateRequestStatus,
@@ -25,6 +26,8 @@ import {
 import { SUCCESS_CODE } from "@/types/api";
 
 export default function GoodsAddPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [thumbnail, setThumbnail] = useState<{ key: string; url: string } | null>(
@@ -361,6 +364,7 @@ export default function GoodsAddPage() {
             type="submit"
             disabled={createMutation.isPending}
             className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+            {...writeGuardProps}
           >
             {createMutation.isPending && (
               <Loader2 className="h-4 w-4 animate-spin" />

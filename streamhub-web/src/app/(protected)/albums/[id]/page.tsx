@@ -16,6 +16,7 @@ import {
   type AlbumCreateRequest,
   type AlbumDetail,
 } from "@/apis/query/graceOnAdminAPI.schemas";
+import { useWritePermission } from "@/lib/use-permissions";
 import { formatDate } from "@/lib/format";
 import {
   AlbumGenreBadge,
@@ -62,6 +63,8 @@ function duration(value?: number | null): string {
 }
 
 export default function AlbumDetailPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const albumId = Number(params.id);
@@ -535,6 +538,7 @@ export default function AlbumDetailPage() {
                   type="button"
                   onClick={startEditing}
                   className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+                  {...writeGuardProps}
                 >
                   수정
                 </button>

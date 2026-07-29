@@ -14,6 +14,7 @@ import {
   ChatMessageRowRole,
   type ChatSessionRow,
 } from "@/apis/query/graceOnAdminAPI.schemas";
+import { useWritePermission } from "@/lib/use-permissions";
 import { SUCCESS_CODE } from "@/types/api";
 
 const INTENT_LABELS: Record<string, string> = {
@@ -47,6 +48,8 @@ function formatDateTime(value?: string): string {
 }
 
 export default function ChatPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const [selectedSessionKey, setSelectedSessionKey] = useState<string | null>(
     null,
   );
@@ -258,6 +261,7 @@ export default function ChatPage() {
                     onClick={handleSend}
                     disabled={replyMutation.isPending || draft.trim() === ""}
                     className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark disabled:opacity-50"
+                    {...writeGuardProps}
                   >
                     {replyMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

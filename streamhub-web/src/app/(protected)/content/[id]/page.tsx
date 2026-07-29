@@ -20,6 +20,7 @@ import {
   type ContentCreateRequest,
   type ContentDetail,
 } from "@/apis/query/graceOnAdminAPI.schemas";
+import { useWritePermission } from "@/lib/use-permissions";
 import { formatDate, formatDuration } from "@/lib/format";
 import {
   ContentStatusBadge,
@@ -74,6 +75,8 @@ function ReadonlyField({ label, value }: ReadonlyFieldProps) {
 }
 
 export default function ContentDetailPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const contentId = Number(params.id);
@@ -550,6 +553,7 @@ export default function ContentDetailPage() {
                   type="button"
                   onClick={startEditing}
                   className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+                  {...writeGuardProps}
                 >
                   수정
                 </button>

@@ -18,6 +18,7 @@ import {
   type GoodsCreateRequest,
   type GoodsDetail,
 } from "@/apis/query/graceOnAdminAPI.schemas";
+import { useWritePermission } from "@/lib/use-permissions";
 import { formatDate } from "@/lib/format";
 import {
   GoodsStatusBadge,
@@ -54,6 +55,8 @@ function money(value?: number | null): string {
 }
 
 export default function GoodsDetailPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const goodsId = Number(params.id);
@@ -651,6 +654,7 @@ export default function GoodsDetailPage() {
                   type="button"
                   onClick={startEditing}
                   className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+                  {...writeGuardProps}
                 >
                   수정
                 </button>

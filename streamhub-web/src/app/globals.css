@@ -21,3 +21,17 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/*
+  Any disabled control reads as disabled.
+
+  Most buttons declare their own `disabled:opacity-50`, but many do not — and a button that is
+  functionally disabled while still looking clickable is worse than one that fails, because the user
+  blames themselves for the click that did nothing. This is the floor; per-button `disabled:`
+  utilities still win where they are more specific.
+*/
+button:disabled,
+button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

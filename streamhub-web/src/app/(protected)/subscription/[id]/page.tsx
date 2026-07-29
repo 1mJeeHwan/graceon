@@ -13,6 +13,7 @@ import {
   SubscriptionStatusRequestStatus,
   type SubscriptionDetail,
 } from "@/apis/query/graceOnAdminAPI.schemas";
+import { useWritePermission } from "@/lib/use-permissions";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import GradeBadge from "@/components/subscription/GradeBadge";
 import SubscriptionStatusBadge from "@/components/subscription/SubscriptionStatusBadge";
@@ -34,6 +35,8 @@ function ReadonlyField({ label, value }: ReadonlyFieldProps) {
 }
 
 export default function SubscriptionDetailPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const params = useParams<{ id: string }>();
   const subscriptionId = Number(params.id);
 
@@ -184,6 +187,7 @@ export default function SubscriptionDetailPage() {
                 onClick={() => transition("PAUSED")}
                 disabled={!canPause || isPending}
                 className="flex items-center gap-1.5 rounded-md border border-amber-300 px-4 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
+                {...writeGuardProps}
               >
                 <Pause className="h-4 w-4" />
                 일시정지
@@ -193,6 +197,7 @@ export default function SubscriptionDetailPage() {
                 onClick={() => transition("ACTIVE")}
                 disabled={!canResume || isPending}
                 className="flex items-center gap-1.5 rounded-md border border-emerald-300 px-4 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+                {...writeGuardProps}
               >
                 <Play className="h-4 w-4" />
                 재개
@@ -207,6 +212,7 @@ export default function SubscriptionDetailPage() {
                 }
                 disabled={!canCancel || isPending}
                 className="flex items-center gap-1.5 rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                {...writeGuardProps}
               >
                 <XCircle className="h-4 w-4" />
                 해지

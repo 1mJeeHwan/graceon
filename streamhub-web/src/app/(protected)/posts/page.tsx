@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Eye, Loader2, Lock, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
+import { useWritePermission } from "@/lib/use-permissions";
 import { boardList } from "@/apis/query/board/board";
 import {
   postCommunityPostDetail,
@@ -22,6 +23,8 @@ const ALL_BOARDS = "";
 
 export default function PostsPage() {
   // Draft filter values (form) vs. applied filter (query input)
+  const { writeGuardProps } = useWritePermission();
+
   const [boardId, setBoardId] = useState<string>(ALL_BOARDS);
   const [keyword, setKeyword] = useState("");
   const [search, setSearch] = useState<CommunityPostSearchRequest>({});
@@ -290,7 +293,8 @@ export default function PostsPage() {
                           }}
                           className="rounded p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-brand"
                           aria-label="수정"
-                        >
+                        
+                          {...writeGuardProps}>
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
@@ -299,6 +303,7 @@ export default function PostsPage() {
                           disabled={deleteMutation.isPending}
                           className="rounded p-1.5 text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                           aria-label="삭제"
+                          {...writeGuardProps}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

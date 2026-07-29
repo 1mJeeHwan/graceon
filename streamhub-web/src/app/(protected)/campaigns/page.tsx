@@ -25,6 +25,7 @@ import {
   type CampaignDtoType as CampaignType,
   type CampaignSearchRequest,
 } from "@/apis/query/graceOnAdminAPI.schemas";
+import { useWritePermission } from "@/lib/use-permissions";
 import CampaignFormDialog from "@/components/campaigns/CampaignFormDialog";
 import { SUCCESS_CODE } from "@/types/api";
 
@@ -69,6 +70,8 @@ function formatPeriod(campaign: CampaignDto): string {
 }
 
 export default function CampaignsPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const [typeFilter, setTypeFilter] = useState<"" | CampaignType>("");
   const [statusFilter, setStatusFilter] = useState<"" | CampaignStatus>("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -183,6 +186,7 @@ export default function CampaignsPage() {
           type="button"
           onClick={openCreate}
           className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+          {...writeGuardProps}
         >
           <Plus className="h-4 w-4" />
           캠페인 등록
@@ -355,7 +359,8 @@ export default function CampaignsPage() {
                         onClick={() => openEdit(campaign)}
                         className="rounded p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-brand"
                         aria-label="수정"
-                      >
+                      
+                        {...writeGuardProps}>
                         <Pencil className="h-4 w-4" />
                       </button>
                       <button
@@ -364,7 +369,8 @@ export default function CampaignsPage() {
                         disabled={deleteMutation.isPending}
                         className="rounded p-1.5 text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                         aria-label="삭제"
-                      >
+                      
+                        {...writeGuardProps}>
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>

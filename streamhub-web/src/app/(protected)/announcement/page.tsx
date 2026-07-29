@@ -19,6 +19,7 @@ import {
   announcementUpdateSort,
   type AnnouncementDto,
 } from "@/apis/announcement";
+import { useWritePermission } from "@/lib/use-permissions";
 import AnnouncementFormDialog from "@/components/announcement/AnnouncementFormDialog";
 import { canWrite } from "@/lib/auth-utils";
 import { SUCCESS_CODE } from "@/types/api";
@@ -47,6 +48,8 @@ const isExpired = (endAt?: string | null) => {
 export default function AnnouncementPage() {
   const { data: session } = useSession();
   const writable = canWrite(session?.user?.role);
+
+  const { writeGuardProps } = useWritePermission();
 
   const [enabledFilter, setEnabledFilter] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -289,7 +292,8 @@ export default function AnnouncementPage() {
                             onClick={() => openEdit(item)}
                             className="rounded p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-brand"
                             aria-label="수정"
-                          >
+                          
+                            {...writeGuardProps}>
                             <Pencil className="h-4 w-4" />
                           </button>
                           {writable && (
@@ -299,7 +303,8 @@ export default function AnnouncementPage() {
                               disabled={busy}
                               className="rounded p-1.5 text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                               aria-label="삭제"
-                            >
+                            
+                              {...writeGuardProps}>
                               <Trash2 className="h-4 w-4" />
                             </button>
                           )}

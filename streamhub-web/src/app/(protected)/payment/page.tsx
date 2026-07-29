@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
+import { useWritePermission } from "@/lib/use-permissions";
 import { paymentList, usePaymentRefundCreate } from "@/apis/query/payment/payment";
 import {
   PaymentListItemPayStatus,
@@ -64,6 +65,8 @@ const FILTER_INPUT_CLASS =
 
 export default function PaymentPage() {
   // Committed search criteria (applied on 검색 / page change).
+  const { writeGuardProps } = useWritePermission();
+
   const [searchField, setSearchField] = useState<SearchField>("orderNo");
   const [keyword, setKeyword] = useState("");
   const [kind, setKind] = useState<KindFilter>("ALL");
@@ -504,6 +507,7 @@ export default function PaymentPage() {
                 onClick={confirmRefund}
                 disabled={refundMutation.isPending}
                 className="flex items-center gap-1.5 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                {...writeGuardProps}
               >
                 {refundMutation.isPending && (
                   <Loader2 className="h-4 w-4 animate-spin" />

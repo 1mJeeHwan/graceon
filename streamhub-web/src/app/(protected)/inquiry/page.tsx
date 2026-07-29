@@ -16,6 +16,7 @@ import {
   type InquirySearchRequestCategory,
   type InquirySearchRequestStatus,
 } from "@/apis/query/graceOnAdminAPI.schemas";
+import { useWritePermission } from "@/lib/use-permissions";
 import InquiryAnswerDialog from "@/components/inquiry/InquiryAnswerDialog";
 import { SUCCESS_CODE } from "@/types/api";
 
@@ -72,6 +73,8 @@ const STATUS_ORDER: Record<InquiryDtoStatus, number> = {
 };
 
 export default function InquiryPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("ALL");
   const [answering, setAnswering] = useState<InquiryDto | null>(null);
@@ -320,6 +323,7 @@ export default function InquiryPage() {
                             type="button"
                             onClick={() => setAnswering(inquiry)}
                             className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-brand"
+                            {...writeGuardProps}
                           >
                             <MessageSquare className="h-3.5 w-3.5" />
                             답변
@@ -329,6 +333,7 @@ export default function InquiryPage() {
                             onClick={() => handleClose(inquiry)}
                             disabled={isClosed || closeMutation.isPending}
                             className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-emerald-700 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-600"
+                            {...writeGuardProps}
                           >
                             <CheckCircle2 className="h-3.5 w-3.5" />
                             종료
@@ -339,7 +344,8 @@ export default function InquiryPage() {
                             disabled={deleteMutation.isPending}
                             className="rounded p-1.5 text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                             aria-label="삭제"
-                          >
+                          
+                            {...writeGuardProps}>
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>

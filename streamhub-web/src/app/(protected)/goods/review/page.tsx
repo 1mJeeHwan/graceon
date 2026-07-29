@@ -9,6 +9,7 @@ import {
   useGoodsReviewDelete,
   useGoodsReviewDisplayUpdate,
 } from "@/apis/query/goods-review/goods-review";
+import { useWritePermission } from "@/lib/use-permissions";
 import { type GoodsReviewDto } from "@/apis/query/graceOnAdminAPI.schemas";
 import { SUCCESS_CODE } from "@/types/api";
 
@@ -26,6 +27,8 @@ const renderStars = (rating: number): string => {
 };
 
 export default function GoodsReviewPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const [filter, setFilter] = useState<DisplayFilter>("ALL");
   const [message, setMessage] = useState<string | null>(null);
 
@@ -213,6 +216,7 @@ export default function GoodsReviewPage() {
                           aria-label={
                             review.displayYn === "N" ? "노출하기" : "숨기기"
                           }
+                          {...writeGuardProps}
                         >
                           {review.displayYn === "N" ? (
                             <Eye className="h-4 w-4" />
@@ -226,6 +230,7 @@ export default function GoodsReviewPage() {
                           disabled={isMutating}
                           className="rounded p-1.5 text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                           aria-label="삭제"
+                          {...writeGuardProps}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

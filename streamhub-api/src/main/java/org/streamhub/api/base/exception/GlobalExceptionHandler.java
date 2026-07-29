@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.response.ResultDTO;
 import org.streamhub.api.base.security.AdminPrincipal;
@@ -130,6 +132,22 @@ public class GlobalExceptionHandler {
         log.warn("Missing request parameter: {}", ex.getMessage());
         return ResponseEntity.status(ResultCode.INVALID_PARAMETER.getHttpStatus())
                 .body(ResultDTO.error(ResultCode.INVALID_PARAMETER));
+    }
+
+    /**
+     * A request that matches no handler is a 404, not a 500.
+     *
+     * <p>Without this, an unknown path fell through to the catch-all below and answered "서버 오류가
+     * 발생했습니다" — telling a caller their correct request broke the server, when in fact their URL
+     * was simply wrong. It also filled the error log with stack traces from routine 404s, which
+     * buries the failures that do matter. Logged at DEBUG for the same reason: a mistyped URL is
+     * not an incident.
+     */
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    public ResponseEntity<ResultDTO<Void>> handleNotFound(Exception ex) {
+        log.debug("No handler for request: {}", ex.getMessage());
+        return ResponseEntity.status(ResultCode.NOT_FOUND.getHttpStatus())
+                .body(ResultDTO.error(ResultCode.NOT_FOUND));
     }
 
     @ExceptionHandler(Exception.class)

@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
+import { useWritePermission } from "@/lib/use-permissions";
 import { useContentChannels, useContentCreate } from "@/apis/query/content/content";
 import {
   ContentCreateRequestStatus,
@@ -38,6 +39,8 @@ const createSchema = z.object({
 type CreateFormValues = z.infer<typeof createSchema>;
 
 export default function ContentAddPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [thumbnail, setThumbnail] = useState<{ key: string; url: string } | null>(
@@ -342,6 +345,7 @@ export default function ContentAddPage() {
             type="submit"
             disabled={createMutation.isPending}
             className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+            {...writeGuardProps}
           >
             {createMutation.isPending && (
               <Loader2 className="h-4 w-4 animate-spin" />

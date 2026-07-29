@@ -4,7 +4,19 @@ import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { LogOut } from "lucide-react";
 
-import { isSystem } from "@/lib/auth-utils";
+import type { AdminRole } from "@/lib/auth-utils";
+
+/**
+ * Display name per role. Written as an exhaustive map rather than a ternary on {@code isSystem}:
+ * that shortcut labelled everyone who was not SYSTEM as "교회 관리자", so the read-only VIEWER —
+ * the account the README hands out for browsing the demo — saw itself described as a church
+ * operator with write access it does not have.
+ */
+const ROLE_LABEL: Record<AdminRole, string> = {
+  SYSTEM: "시스템 관리자",
+  CHURCH_MANAGER: "교회 관리자",
+  VIEWER: "읽기 전용",
+};
 
 /**
  * Header shows the logged-in operator and a logout control. Logout clears the
@@ -17,8 +29,8 @@ export default function Header() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const name = session?.user?.name ?? "운영자";
-  const role = session?.user?.role;
-  const roleLabel = isSystem(role) ? "시스템 관리자" : "교회 관리자";
+  const role = session?.user?.role as AdminRole | undefined;
+  const roleLabel = role ? ROLE_LABEL[role] : "운영자";
 
   const handleLogout = async () => {
     setIsLoggingOut(true);

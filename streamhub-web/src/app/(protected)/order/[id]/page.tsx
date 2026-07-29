@@ -19,6 +19,7 @@ import {
   type OrderReceiptDto,
   type Tracking,
 } from "@/apis/query/graceOnAdminAPI.schemas";
+import { useWritePermission } from "@/lib/use-permissions";
 import { formatDateTime } from "@/lib/format";
 import OrderStatusBadge from "@/components/order/OrderStatusBadge";
 import OrderStatusStepper from "@/components/order/OrderStatusStepper";
@@ -63,6 +64,8 @@ function payMethodLabel(value?: string): string {
 }
 
 export default function OrderDetailPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const params = useParams<{ id: string }>();
   const orderId = Number(params.id);
 
@@ -504,6 +507,7 @@ export default function OrderDetailPage() {
                   !isTrackingEnabled(status) || changeTrackingMutation.isPending
                 }
                 className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+                {...writeGuardProps}
               >
                 {changeTrackingMutation.isPending && (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -634,6 +638,7 @@ export default function OrderDetailPage() {
                 onClick={() => submitTransition(pendingTransition, memo)}
                 disabled={changeStatusMutation.isPending}
                 className="flex items-center gap-1.5 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                {...writeGuardProps}
               >
                 {changeStatusMutation.isPending && (
                   <Loader2 className="h-4 w-4 animate-spin" />

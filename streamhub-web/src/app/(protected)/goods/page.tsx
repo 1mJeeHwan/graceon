@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Loader2, Plus, Save, X } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
+import { useWritePermission } from "@/lib/use-permissions";
 import { goodsList, useGoodsBulk, useGoodsCategories } from "@/apis/query/goods/goods";
 import {
   GoodsSearchRequestStatus,
@@ -43,6 +44,8 @@ const SOLD_OUT_OPTIONS: { value: SoldOutFilter; label: string }[] = [
 
 export default function GoodsPage() {
   // Committed search criteria (applied on 검색 / page change).
+  const { writeGuardProps } = useWritePermission();
+
   const [keyword, setKeyword] = useState("");
   const [categoryId, setCategoryId] = useState<string>("ALL");
   const [status, setStatus] = useState<StatusFilter>("ALL");
@@ -353,6 +356,7 @@ export default function GoodsPage() {
           onClick={handleBulkSave}
           disabled={dirtyCount === 0 || bulkMutation.isPending}
           className="flex items-center gap-1.5 rounded-md border border-brand px-4 py-2 text-sm font-medium text-brand transition hover:bg-brand/5 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400"
+          {...writeGuardProps}
         >
           {bulkMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />

@@ -16,6 +16,7 @@ import {
   type ChurchDetail,
   type ChurchUpsertRequest,
 } from "@/apis/query/graceOnAdminAPI.schemas";
+import { useWritePermission } from "@/lib/use-permissions";
 import { formatDate } from "@/lib/format";
 import {
   DenominationBadge,
@@ -51,6 +52,8 @@ function ReadonlyField({ label, value }: ReadonlyFieldProps) {
 }
 
 export default function ChurchDetailPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const churchId = Number(params.id);
@@ -708,6 +711,7 @@ export default function ChurchDetailPage() {
                   type="button"
                   onClick={startEditing}
                   className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+                  {...writeGuardProps}
                 >
                   수정
                 </button>

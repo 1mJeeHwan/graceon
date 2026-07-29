@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
+import { useWritePermission } from "@/lib/use-permissions";
 import { boardList, useBoardDelete } from "@/apis/query/board/board";
 import { type BoardDto } from "@/apis/query/graceOnAdminAPI.schemas";
 import BoardFormDialog from "@/components/boards/BoardFormDialog";
@@ -22,6 +23,8 @@ function LevelBadge({ level }: { level?: number }) {
 }
 
 export default function BoardsPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const [keyword, setKeyword] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<BoardDto | null>(null);
@@ -103,6 +106,7 @@ export default function BoardsPage() {
           type="button"
           onClick={openCreate}
           className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+          {...writeGuardProps}
         >
           <Plus className="h-4 w-4" />
           게시판 등록
@@ -212,7 +216,8 @@ export default function BoardsPage() {
                           onClick={() => openEdit(board)}
                           className="rounded p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-brand"
                           aria-label="수정"
-                        >
+                        
+                          {...writeGuardProps}>
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
@@ -221,7 +226,8 @@ export default function BoardsPage() {
                           disabled={deleteMutation.isPending}
                           className="rounded p-1.5 text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                           aria-label="삭제"
-                        >
+                        
+                          {...writeGuardProps}>
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>

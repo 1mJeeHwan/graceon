@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
+import { useWritePermission } from "@/lib/use-permissions";
 import { useWorshipDetail, useWorshipStatus } from "@/apis/query/worship/worship";
 import {
   type RegistrationFamilyDto,
@@ -46,6 +47,8 @@ function yesNo(value?: string): string {
 }
 
 export default function WorshipDetailPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const params = useParams<{ id: string }>();
   const worshipId = Number(params.id);
 
@@ -338,6 +341,7 @@ export default function WorshipDetailPage() {
                 onClick={() => submitTransition(pendingTransition, memo)}
                 disabled={changeStatusMutation.isPending}
                 className="flex items-center gap-1.5 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                {...writeGuardProps}
               >
                 {changeStatusMutation.isPending && (
                   <Loader2 className="h-4 w-4 animate-spin" />

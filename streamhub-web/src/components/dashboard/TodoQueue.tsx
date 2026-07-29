@@ -30,7 +30,9 @@ const TODOS: TodoConfig[] = [
     key: "unansweredInquiry",
     label: "미답변 문의",
     description: "대기 중인 문의에 답변하세요.",
-    href: "/member",
+    // Was "/member" — the card counted inquiries and sent you to member management, where there is
+    // nothing to answer. A to-do card's whole job is to land on the screen that clears it.
+    href: "/inquiry",
     icon: HelpCircle,
     unitSuffix: "건",
   },
@@ -38,7 +40,9 @@ const TODOS: TodoConfig[] = [
     key: "lowStock",
     label: "재고 경고",
     description: "재고가 부족한 상품을 점검하세요.",
-    href: "/goods",
+    // The goods list cannot edit stock; 옵션·재고 관리 is where the count is acted on, and it is
+    // where the matching KPI card already pointed.
+    href: "/goods/stock",
     icon: PackageX,
     unitSuffix: "종",
   },

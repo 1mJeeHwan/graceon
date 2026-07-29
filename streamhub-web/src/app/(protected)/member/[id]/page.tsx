@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
+import { useWritePermission } from "@/lib/use-permissions";
 import { useMemberDetail, useMemberUpdate } from "@/apis/query/member/member";
 import type { MemberDetail } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDate } from "@/lib/format";
@@ -45,6 +46,8 @@ function ReadonlyField({ label, value }: ReadonlyFieldProps) {
 }
 
 export default function MemberDetailPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const params = useParams<{ id: string }>();
   const memberId = Number(params.id);
 
@@ -302,6 +305,7 @@ export default function MemberDetailPage() {
                 type="button"
                 onClick={startEditing}
                 className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+                {...writeGuardProps}
               >
                 수정
               </button>

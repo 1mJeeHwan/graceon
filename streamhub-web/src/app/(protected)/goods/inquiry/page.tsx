@@ -13,6 +13,7 @@ import {
   GoodsInquiryDtoAnswerStatus,
   type GoodsInquirySearchRequestAnswerStatus,
 } from "@/apis/query/graceOnAdminAPI.schemas";
+import { useWritePermission } from "@/lib/use-permissions";
 import GoodsInquiryAnswerDialog from "@/components/goods-inquiry/GoodsInquiryAnswerDialog";
 import { SUCCESS_CODE } from "@/types/api";
 
@@ -32,6 +33,8 @@ function formatDate(value?: string): string {
 }
 
 export default function GoodsInquiryPage() {
+  const { writeGuardProps } = useWritePermission();
+
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [answering, setAnswering] = useState<GoodsInquiryDto | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -218,6 +221,7 @@ export default function GoodsInquiryPage() {
                             onClick={() => openAnswer(inquiry)}
                             className="inline-flex items-center gap-1 rounded p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-brand"
                             aria-label="답변"
+                            {...writeGuardProps}
                           >
                             <MessageSquare className="h-4 w-4" />
                             <span className="text-xs font-medium">답변</span>
@@ -228,7 +232,8 @@ export default function GoodsInquiryPage() {
                             disabled={deleteMutation.isPending}
                             className="rounded p-1.5 text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                             aria-label="삭제"
-                          >
+                          
+                            {...writeGuardProps}>
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
