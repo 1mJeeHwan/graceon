@@ -14,7 +14,9 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  ActionLogCursorRequest,
   ActionLogSearchRequest,
+  ResultDTOResCursorListActionLogItem,
   ResultDTOResInfinityListActionLogItem,
 } from "../graceOnAdminAPI.schemas";
 
@@ -100,6 +102,89 @@ export const useActionLogList = <TError = unknown, TContext = unknown>(
   TContext
 > => {
   const mutationOptions = getActionLogListMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+/**
+ * 커서(keyset) 기반 조회. 깊은 페이지에서도 일정한 응답 시간이며, 조회 중 새 로그가 쌓여도 행이 중복되지 않는다.
+ * @summary 감사 로그 커서 목록
+ */
+export const actionLogCursorCreate = (
+  actionLogCursorRequest: ActionLogCursorRequest,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOResCursorListActionLogItem>({
+    url: `/v1/action-log/cursor`,
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    data: actionLogCursorRequest,
+    signal,
+  });
+};
+
+export const getActionLogCursorCreateMutationOptions = <
+  TError = unknown,
+  TContext = unknown
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof actionLogCursorCreate>>,
+    TError,
+    { data: ActionLogCursorRequest },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof actionLogCursorCreate>>,
+  TError,
+  { data: ActionLogCursorRequest },
+  TContext
+> => {
+  const mutationKey = ["actionLogCursorCreate"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof actionLogCursorCreate>>,
+    { data: ActionLogCursorRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return actionLogCursorCreate(data);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ActionLogCursorCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof actionLogCursorCreate>>
+>;
+export type ActionLogCursorCreateMutationBody = ActionLogCursorRequest;
+export type ActionLogCursorCreateMutationError = unknown;
+
+/**
+ * @summary 감사 로그 커서 목록
+ */
+export const useActionLogCursorCreate = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof actionLogCursorCreate>>,
+      TError,
+      { data: ActionLogCursorRequest },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof actionLogCursorCreate>>,
+  TError,
+  { data: ActionLogCursorRequest },
+  TContext
+> => {
+  const mutationOptions = getActionLogCursorCreateMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };

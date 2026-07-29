@@ -5,23 +5,113 @@
  * 관리자 내부 API (a production service 관리자 API 포트폴리오 클론)
  * OpenAPI spec version: v1
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { ResultDTOMeResponse } from "../graceOnAdminAPI.schemas";
+import type {
+  PasswordChangeRequest,
+  ResultDTOMeResponse,
+  ResultDTOVoid,
+} from "../graceOnAdminAPI.schemas";
 
 import { customInstance } from "../../custom-instance";
 
+/**
+ * 현재 비밀번호 확인 후 변경한다. 변경 시 저장된 refresh 토큰이 폐기되어 재로그인이 필요하다. 권한 검사 없이 본인 계정만 대상이므로 VIEWER 데모 계정도 자기 비밀번호는 바꿀 수 있다.
+ * @summary 비밀번호 변경
+ */
+export const adminMePasswordCreate = (
+  passwordChangeRequest: PasswordChangeRequest,
+  signal?: AbortSignal
+) => {
+  return customInstance<ResultDTOVoid>({
+    url: `/v1/admin/me/password`,
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    data: passwordChangeRequest,
+    signal,
+  });
+};
+
+export const getAdminMePasswordCreateMutationOptions = <
+  TError = unknown,
+  TContext = unknown
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminMePasswordCreate>>,
+    TError,
+    { data: PasswordChangeRequest },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminMePasswordCreate>>,
+  TError,
+  { data: PasswordChangeRequest },
+  TContext
+> => {
+  const mutationKey = ["adminMePasswordCreate"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminMePasswordCreate>>,
+    { data: PasswordChangeRequest }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminMePasswordCreate(data);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminMePasswordCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminMePasswordCreate>>
+>;
+export type AdminMePasswordCreateMutationBody = PasswordChangeRequest;
+export type AdminMePasswordCreateMutationError = unknown;
+
+/**
+ * @summary 비밀번호 변경
+ */
+export const useAdminMePasswordCreate = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof adminMePasswordCreate>>,
+      TError,
+      { data: PasswordChangeRequest },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof adminMePasswordCreate>>,
+  TError,
+  { data: PasswordChangeRequest },
+  TContext
+> => {
+  const mutationOptions = getAdminMePasswordCreateMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
 /**
  * 현재 인증된 운영자 정보를 반환한다.
  * @summary 내 정보

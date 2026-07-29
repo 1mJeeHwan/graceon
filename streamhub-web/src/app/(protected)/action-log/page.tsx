@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
-import { useActionLogList } from "@/apis/query/action-log/action-log";
-import type {
-  ActionLogItem,
-  ActionLogSearchRequest,
-} from "@/apis/query/graceOnAdminAPI.schemas";
+import { useActionLogCursorCreate } from "@/apis/query/action-log/action-log";
+import type { ActionLogItem } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDateTime } from "@/lib/format";
 
 const PAGE_SIZE = 15;
@@ -37,44 +34,60 @@ function actionColor(action?: string): string {
   return "bg-amber-100 text-amber-700";
 }
 
+/**
+ * Audit log — keyset ("더 보기") paging rather than page numbers.
+ *
+ * The table is append-only and read newest-first, the worst case for offset paging: deep pages make
+ * MySQL walk and discard every skipped row, each page pays a COUNT(*), and a log written while the
+ * operator reads shifts every row down so the next page repeats what was just shown. The cursor
+ * carries the last row's (created_at, id) sort key instead, so pages stay a fixed-size index scan
+ * and never overlap. Total count is gone with the COUNT — the loaded count is shown instead.
+ */
 export default function ActionLogPage() {
   const [action, setAction] = useState("");
   const [keyword, setKeyword] = useState("");
   const [actionDraft, setActionDraft] = useState("");
   const [keywordDraft, setKeywordDraft] = useState("");
-  const [pageNumber, setPageNumber] = useState(1);
+  const [rows, setRows] = useState<ActionLogItem[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
+  const [hasNext, setHasNext] = useState(false);
 
-  const listMutation = useActionLogList();
-  const { mutate: fetchList } = listMutation;
+  const cursorMutation = useActionLogCursorCreate();
+  const { mutate: fetchPage } = cursorMutation;
 
-  const searchRequest = useMemo<ActionLogSearchRequest>(
-    () => ({
-      pageNumber: pageNumber - 1, // UI 1-based → backend 0-based
-      pageSize: PAGE_SIZE,
-      action: action || undefined,
-      keyword: keyword.trim() || undefined,
-    }),
-    [pageNumber, action, keyword],
+  const loadPage = useCallback(
+    (cursor: string | undefined, filters: { action: string; keyword: string }) => {
+      fetchPage(
+        {
+          data: {
+            cursor,
+            pageSize: PAGE_SIZE,
+            action: filters.action || undefined,
+            keyword: filters.keyword.trim() || undefined,
+          },
+        },
+        {
+          onSuccess: (res) => {
+            const page = res.resultObject;
+            const contents = page?.contents ?? [];
+            // A cursor means "append"; no cursor means a fresh search that replaces the list.
+            setRows((prev) => (cursor ? [...prev, ...contents] : contents));
+            setNextCursor(page?.nextCursor);
+            setHasNext(page?.hasNext ?? false);
+          },
+        },
+      );
+    },
+    [fetchPage],
   );
 
   useEffect(() => {
-    fetchList({ data: searchRequest });
-  }, [fetchList, searchRequest]);
-
-  const result = listMutation.data?.resultObject;
-  const rows: ActionLogItem[] = result?.contents ?? [];
-  const totalCount = result?.totalCount ?? 0;
-  const totalPage = result?.totalPage ?? 0;
+    loadPage(undefined, { action, keyword });
+  }, [loadPage, action, keyword]);
 
   const handleSearch = () => {
     setAction(actionDraft);
     setKeyword(keywordDraft);
-    setPageNumber(1);
-  };
-
-  const goToPage = (next: number) => {
-    if (next < 1 || (totalPage > 0 && next > totalPage)) return;
-    setPageNumber(next);
   };
 
   return (
@@ -82,7 +95,8 @@ export default function ActionLogPage() {
       <div className="mb-4">
         <h1 className="text-xl font-semibold text-slate-900">감사 로그</h1>
         <p className="mt-1 text-sm text-slate-500">
-          관리자 활동 기록입니다. 액션은 SQS를 거쳐 비동기로 적재됩니다.
+          관리자 활동 기록입니다. 액션은 SQS를 거쳐 비동기로 적재되며, 목록은 커서(keyset)
+          페이징이라 읽는 중 새 기록이 쌓여도 행이 중복되지 않습니다.
         </p>
       </div>
 
@@ -128,7 +142,9 @@ export default function ActionLogPage() {
         </button>
       </div>
 
-      <p className="mb-3 text-sm text-slate-600">총 {totalCount.toLocaleString()}건</p>
+      <p className="mb-3 text-sm text-slate-600">
+        {rows.length.toLocaleString()}건 표시{hasNext ? " (더 있음)" : ""}
+      </p>
 
       {/* Table */}
       <div className="overflow-hidden rounded-md border border-slate-200 bg-white">
@@ -143,7 +159,7 @@ export default function ActionLogPage() {
             </tr>
           </thead>
           <tbody>
-            {listMutation.isPending ? (
+            {cursorMutation.isPending && rows.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-16 text-center">
                   <Loader2 className="mx-auto h-5 w-5 animate-spin text-slate-400" />
@@ -183,27 +199,15 @@ export default function ActionLogPage() {
         </table>
       </div>
 
-      {/* Pagination */}
-      {totalPage > 1 && (
-        <div className="mt-4 flex items-center justify-center gap-2">
+      {hasNext && (
+        <div className="mt-4 flex justify-center">
           <button
             type="button"
-            onClick={() => goToPage(pageNumber - 1)}
-            disabled={pageNumber <= 1}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => loadPage(nextCursor, { action, keyword })}
+            disabled={cursorMutation.isPending}
+            className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            이전
-          </button>
-          <span className="text-sm text-slate-600">
-            {pageNumber} / {totalPage}
-          </span>
-          <button
-            type="button"
-            onClick={() => goToPage(pageNumber + 1)}
-            disabled={pageNumber >= totalPage}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            다음
+            {cursorMutation.isPending ? "불러오는 중…" : "더 보기"}
           </button>
         </div>
       )}

@@ -2756,6 +2756,16 @@ export interface ResultDTOResInfinityListAlbumListItem {
   resultObject?: ResInfinityListAlbumListItem;
 }
 
+export interface PasswordChangeRequest {
+  /** @minLength 1 */
+  currentPassword: string;
+  /**
+   * @minLength 10
+   * @maxLength 72
+   */
+  newPassword: string;
+}
+
 export interface ArchiveResult {
   actionLogs?: number;
   securityEvents?: number;
@@ -2796,6 +2806,25 @@ export interface ResultDTOResInfinityListActionLogItem {
   resultCode?: string;
   resultMessage?: string;
   resultObject?: ResInfinityListActionLogItem;
+}
+
+export interface ActionLogCursorRequest {
+  cursor?: string;
+  pageSize?: number;
+  action?: string;
+  keyword?: string;
+}
+
+export interface ResCursorListActionLogItem {
+  contents?: ActionLogItem[];
+  nextCursor?: string;
+  hasNext?: boolean;
+}
+
+export interface ResultDTOResCursorListActionLogItem {
+  resultCode?: string;
+  resultMessage?: string;
+  resultObject?: ResCursorListActionLogItem;
 }
 
 export interface RegistrationFamilyDto {

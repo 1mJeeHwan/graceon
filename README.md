@@ -117,10 +117,14 @@ cd streamhub-user-web && npm install --legacy-peer-deps && npm run dev
 ## 테스트
 
 ```bash
-cd streamhub-api && ./mvnw test
+cd streamhub-api && ./mvnw test   # 백엔드 315개
+cd streamhub-web && npm test      # 관리자 프론트 16개 (vitest)
+cd streamhub-user-web && npm test # 사용자 프론트 (vitest)
 ```
 JUnit 5 + Mockito 단위 테스트 — JWT 발급/검증/회전 + 관리자↔회원 토큰 격리, 회원 RBAC 스코핑·상태 전이,
-쿠폰 할인 계산, 주문/구독 상태머신, 정기결제 멱등성·실패 처리 등.
+쿠폰 할인 계산, 주문/구독 상태머신, 정기결제 멱등성·실패 처리, 감사 로그 커서 페이징 등.
+프론트는 순수 로직 위주 — 사이드바 활성 판정·역할 게이트·메뉴 무결성, 그리고 주문 상태 전이표가
+백엔드 상태머신과 어긋나면 실패하는 동기화 테스트.
 
 ---
 

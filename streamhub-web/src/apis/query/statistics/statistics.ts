@@ -339,7 +339,7 @@ export function useStatisticsTopContents<
 }
 
 /**
- * 총 회원/신규(7일)/총 조회수/총 콘텐츠. Redis 캐싱(60s).
+ * 총 회원/신규(7일)/총 조회수/총 콘텐츠. 회원 지표는 소속 교회로 스코핑되고, 콘텐츠 지표는 CONTENT에 교회 차원이 없어 플랫폼 전체다. Redis 캐싱(60s, 교회별 키).
  * @summary 요약 카드
  */
 export const statisticsSummary = (signal?: AbortSignal) => {
@@ -487,6 +487,7 @@ export function useStatisticsSummary<
 }
 
 /**
+ * CHURCH_MANAGER는 자기 교회 가입만 집계된다.
  * @summary 일별 가입 추이
  */
 export const statisticsMemberTrend = (

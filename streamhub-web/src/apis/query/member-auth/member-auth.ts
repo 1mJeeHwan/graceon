@@ -26,6 +26,7 @@ import type {
   MemberSignupRequest,
   ResultDTOMemberAuthResponse,
   ResultDTOMemberInfo,
+  ResultDTOVoid,
 } from "../graceOnAdminAPI.schemas";
 
 import { customInstance } from "../../custom-instance";
@@ -110,6 +111,82 @@ export const useMemberAuthSignupCreate = <TError = unknown, TContext = unknown>(
   TContext
 > => {
   const mutationOptions = getMemberAuthSignupCreateMutationOptions(options);
+
+  return useMutation(mutationOptions, queryClient);
+};
+/**
+ * 제시된 회원 토큰을 만료 시각까지 폐기 목록에 올린다. 이후 같은 토큰은 거부된다. 토큰이 이미 무효해도 200을 반환한다(로그아웃은 멱등).
+ * @summary 회원 로그아웃
+ */
+export const memberAuthLogout = (signal?: AbortSignal) => {
+  return customInstance<ResultDTOVoid>({
+    url: `/pub/v1/auth/logout`,
+    method: "POST",
+    signal,
+  });
+};
+
+export const getMemberAuthLogoutMutationOptions = <
+  TError = unknown,
+  TContext = unknown
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof memberAuthLogout>>,
+    TError,
+    void,
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof memberAuthLogout>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["memberAuthLogout"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof memberAuthLogout>>,
+    void
+  > = () => {
+    return memberAuthLogout();
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MemberAuthLogoutMutationResult = NonNullable<
+  Awaited<ReturnType<typeof memberAuthLogout>>
+>;
+
+export type MemberAuthLogoutMutationError = unknown;
+
+/**
+ * @summary 회원 로그아웃
+ */
+export const useMemberAuthLogout = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof memberAuthLogout>>,
+      TError,
+      void,
+      TContext
+    >;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof memberAuthLogout>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationOptions = getMemberAuthLogoutMutationOptions(options);
 
   return useMutation(mutationOptions, queryClient);
 };

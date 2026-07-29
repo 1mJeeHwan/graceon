@@ -21,7 +21,7 @@ import type {
 import { customInstance } from "../../custom-instance";
 
 /**
- * 해당 앨범을 구매한 회원에게만 16바이트 키를 반환. 캐시 금지.
+ * 16바이트 AES 키를 반환한다. 음악은 무료 감상이라 구매/로그인 게이트가 없다(공개). 캐시 금지.
  * @summary AES-128 키
  */
 export const albumHLSAlbumsTracksHlsKey = (
