@@ -41,6 +41,7 @@ import {
   Info,
   Bell,
   TrendingUp,
+  ChevronRight,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -60,46 +61,56 @@ interface NavSection {
 
 export const NAV_SECTIONS: NavSection[] = [
   {
-    title: "운영",
+    title: "운영·분석",
     items: [
       { label: "통합 운영 대시보드", href: "/admin-ops", icon: Gauge },
       { label: "대시보드", href: "/dashboard", icon: LayoutDashboard },
-      { label: "기능 카탈로그", href: "/catalog", icon: LayoutGrid },
-      { label: "전체 기능도", href: "/feature-map", icon: FolderTree },
       { label: "접속 통계", href: "/visits", icon: Activity },
       { label: "콘텐츠 분석", href: "/analytics", icon: TrendingUp },
+      { label: "기능 카탈로그", href: "/catalog", icon: LayoutGrid },
+      { label: "전체 기능도", href: "/feature-map", icon: FolderTree },
     ],
   },
   {
-    title: "회원·콘텐츠",
+    title: "회원",
     items: [
-      { label: "회원관리", href: "/member", icon: Users },
+      { label: "회원 관리", href: "/member", icon: Users },
       { label: "포인트 원장", href: "/point", icon: Coins },
-      { label: "콘텐츠관리", href: "/content", icon: FileVideo },
+    ],
+  },
+  {
+    title: "콘텐츠",
+    items: [
+      { label: "콘텐츠 관리", href: "/content", icon: FileVideo },
       { label: "콘텐츠 통계", href: "/content/stats", icon: BarChart3 },
       { label: "플레이리스트", href: "/playlists", icon: ListMusic },
+      { label: "앨범 관리", href: "/albums", icon: Disc3 },
     ],
   },
   {
     title: "교회·예배",
     items: [
-      { label: "교회관리", href: "/churches", icon: Church },
-      { label: "예배신청", href: "/worship", icon: HandHeart },
+      { label: "교회 관리", href: "/churches", icon: Church },
+      { label: "예배 신청", href: "/worship", icon: HandHeart },
     ],
   },
   {
-    title: "커머스",
+    title: "굿즈",
     items: [
-      { label: "굿즈관리", href: "/goods", icon: ShoppingBag },
+      { label: "굿즈 관리", href: "/goods", icon: ShoppingBag },
       { label: "카테고리 관리", href: "/goods/category", icon: FolderTree },
       { label: "옵션·재고 관리", href: "/goods/stock", icon: Boxes },
       { label: "굿즈 문의", href: "/goods/inquiry", icon: MessageCircleQuestion },
       { label: "굿즈 후기", href: "/goods/review", icon: Star },
-      { label: "주문관리", href: "/order", icon: ClipboardList },
-      { label: "앨범관리", href: "/albums", icon: Disc3 },
-      { label: "매장관리", href: "/stores", icon: Store },
+    ],
+  },
+  {
+    title: "판매·결제",
+    items: [
+      { label: "주문 관리", href: "/order", icon: ClipboardList },
+      { label: "매장 관리", href: "/stores", icon: Store },
       { label: "쿠폰 관리", href: "/coupons", icon: Ticket },
-      { label: "결제내역", href: "/payment", icon: CreditCard },
+      { label: "결제 내역", href: "/payment", icon: CreditCard },
     ],
   },
   {
@@ -108,7 +119,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "멤버십 플랜", href: "/subscription-plan", icon: Gem, systemOnly: true },
       { label: "구독 현황", href: "/subscription", icon: CreditCard },
       { label: "후원 내역", href: "/donation", icon: HeartHandshake, systemOnly: true },
-      { label: "결제일정", href: "/billing-calendar", icon: CalendarClock },
+      { label: "결제 일정", href: "/billing-calendar", icon: CalendarClock },
     ],
   },
   {
@@ -117,10 +128,15 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "게시판 관리", href: "/boards", icon: ClipboardList },
       { label: "게시글 관리", href: "/posts", icon: FileText },
       { label: "1:1 문의", href: "/inquiry", icon: Headset },
+      { label: "SMS", href: "/sms", icon: MessageSquare },
+    ],
+  },
+  {
+    title: "챗봇",
+    items: [
       { label: "챗봇 상담", href: "/chat", icon: Bot },
       { label: "챗봇 지식관리", href: "/chat-knowledge", icon: BookOpen },
       { label: "챗봇 분석", href: "/chat-analytics", icon: BarChart3 },
-      { label: "SMS", href: "/sms", icon: MessageSquare },
     ],
   },
   {
@@ -183,12 +199,17 @@ export default function Sidebar() {
           GraceOn
         </span>
       </div>
-      <nav className="flex-1 space-y-4 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {sections.map((section) => (
-          <div key={section.title} className="space-y-1">
-            <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <details
+            key={section.title}
+            open={section.items.some((item) => item.href === activeHref)}
+            className="group space-y-1"
+          >
+            <summary className="flex cursor-pointer list-none items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 hover:bg-slate-50">
+              <ChevronRight className="h-3 w-3 transition-transform group-open:rotate-90" />
               {section.title}
-            </p>
+            </summary>
             {section.items.map((item) => {
               const isActive = item.href === activeHref;
               const Icon = item.icon;
@@ -207,7 +228,7 @@ export default function Sidebar() {
                 </Link>
               );
             })}
-          </div>
+          </details>
         ))}
       </nav>
     </aside>
