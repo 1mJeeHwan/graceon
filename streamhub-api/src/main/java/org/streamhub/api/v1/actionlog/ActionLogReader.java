@@ -1,6 +1,8 @@
 package org.streamhub.api.v1.actionlog;
 
+import org.streamhub.api.base.response.ResCursorList;
 import org.streamhub.api.base.response.ResInfinityList;
+import org.streamhub.api.v1.actionlog.dto.ActionLogCursorRequest;
 import org.streamhub.api.v1.actionlog.dto.ActionLogItem;
 import org.streamhub.api.v1.actionlog.dto.ActionLogSearchRequest;
 
@@ -20,6 +22,12 @@ import org.streamhub.api.v1.actionlog.dto.ActionLogSearchRequest;
  */
 public interface ActionLogReader {
 
-    /** Returns a filtered, paginated page of audit-log rows. */
+    /** Returns a filtered, paginated page of audit-log rows (offset paging, with a total count). */
     ResInfinityList<ActionLogItem> list(ActionLogSearchRequest request);
+
+    /**
+     * Returns the page that follows the given cursor (keyset paging, no count). Used by the audit
+     * screen's "더 보기", where pages get deep and rows arrive while the operator reads.
+     */
+    ResCursorList<ActionLogItem> listAfter(ActionLogCursorRequest request);
 }

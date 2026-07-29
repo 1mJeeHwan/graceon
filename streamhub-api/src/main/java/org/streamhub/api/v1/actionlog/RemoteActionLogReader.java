@@ -8,8 +8,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.streamhub.api.base.exception.ApiException;
+import org.streamhub.api.base.response.ResCursorList;
 import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.response.ResultCode;
+import org.streamhub.api.v1.actionlog.dto.ActionLogCursorRequest;
 import org.streamhub.api.v1.actionlog.dto.ActionLogItem;
 import org.streamhub.api.v1.actionlog.dto.ActionLogSearchRequest;
 
@@ -54,6 +56,32 @@ public class RemoteActionLogReader implements ActionLogReader {
             log.warn("Audit service read failed: {}", e.getMessage());
             throw new ApiException(ResultCode.INTERNAL_ERROR, "감사 로그 서비스에 연결할 수 없습니다");
         }
+    }
+
+    @Override
+    public ResCursorList<ActionLogItem> listAfter(ActionLogCursorRequest request) {
+        int size = request.pageSizeOrDefault();
+        try {
+            RemoteCursorPage page = restClient.get()
+                    .uri(uriBuilder -> uriBuilder.path("/v1/action-logs/cursor")
+                            .queryParamIfPresent("cursor", java.util.Optional.ofNullable(request.cursor()))
+                            .queryParam("pageSize", size)
+                            .queryParamIfPresent("action", java.util.Optional.ofNullable(request.actionOrNull()))
+                            .queryParamIfPresent("keyword", java.util.Optional.ofNullable(request.keywordOrNull()))
+                            .build())
+                    .retrieve()
+                    .body(RemoteCursorPage.class);
+            List<ActionLogItem> contents = page != null && page.contents() != null ? page.contents() : List.of();
+            // The audit service already trimmed to the page size and encoded the cursor; pass it through.
+            return ResCursorList.ofRemote(contents, page == null ? null : page.nextCursor());
+        } catch (RestClientException e) {
+            log.warn("Audit service cursor read failed: {}", e.getMessage());
+            throw new ApiException(ResultCode.INTERNAL_ERROR, "감사 로그 서비스에 연결할 수 없습니다");
+        }
+    }
+
+    /** Mirrors the audit service's {@code ActionLogCursorPage} JSON. */
+    private record RemoteCursorPage(List<ActionLogItem> contents, String nextCursor, boolean hasNext) {
     }
 
     /** Mirrors the audit service's {@code ActionLogPage} JSON; {@link ActionLogItem} maps field-for-field. */

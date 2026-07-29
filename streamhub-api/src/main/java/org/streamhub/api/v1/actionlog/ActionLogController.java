@@ -7,8 +7,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.streamhub.api.base.response.ResCursorList;
 import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.response.ResultDTO;
+import org.streamhub.api.v1.actionlog.dto.ActionLogCursorRequest;
 import org.streamhub.api.v1.actionlog.dto.ActionLogItem;
 import org.streamhub.api.v1.actionlog.dto.ActionLogSearchRequest;
 
@@ -31,5 +33,12 @@ public class ActionLogController {
     @PostMapping("/list")
     public ResultDTO<ResInfinityList<ActionLogItem>> list(@RequestBody ActionLogSearchRequest request) {
         return ResultDTO.ok(actionLogReader.list(request));
+    }
+
+    @Operation(summary = "감사 로그 커서 목록",
+            description = "커서(keyset) 기반 조회. 깊은 페이지에서도 일정한 응답 시간이며, 조회 중 새 로그가 쌓여도 행이 중복되지 않는다.")
+    @PostMapping("/cursor")
+    public ResultDTO<ResCursorList<ActionLogItem>> cursor(@RequestBody ActionLogCursorRequest request) {
+        return ResultDTO.ok(actionLogReader.listAfter(request));
     }
 }

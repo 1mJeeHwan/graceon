@@ -1,5 +1,7 @@
 package org.streamhub.audit;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,4 +33,23 @@ public interface ActionLogRepository extends JpaRepository<ActionLog, Long> {
     Page<ActionLog> search(@Param("action") String action,
                            @Param("keyword") String keyword,
                            Pageable pageable);
+
+    /**
+     * Keyset page: the newest rows strictly older than the {@code (cursorCreatedAt, cursorId)} sort
+     * key, or the newest rows when the cursor is null. No count query — the caller asks for one row
+     * more than the page size to learn whether another page exists.
+     */
+    @Query("select a from ActionLog a where "
+            + "(:action is null or a.action = :action) and "
+            + "(:keyword is null or a.adminName like concat('%', :keyword, '%') "
+            + "or a.detail like concat('%', :keyword, '%') "
+            + "or a.targetId like concat('%', :keyword, '%')) and "
+            + "(:cursorCreatedAt is null or a.createdAt < :cursorCreatedAt "
+            + "or (a.createdAt = :cursorCreatedAt and a.id < :cursorId)) "
+            + "order by a.createdAt desc, a.id desc")
+    List<ActionLog> searchAfter(@Param("action") String action,
+                                @Param("keyword") String keyword,
+                                @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+                                @Param("cursorId") Long cursorId,
+                                Pageable pageable);
 }

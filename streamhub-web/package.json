@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "gen": "orval",
+    "test": "vitest run",
     "check:catalog": "node ../scripts/check-feature-catalog-sync.mjs"
   },
   "dependencies": {
@@ -50,6 +51,7 @@
     "orval": "^7.3.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.9"
   }
 }

@@ -26,4 +26,12 @@ public class ActionLogQueryController {
                               @RequestParam(required = false) String keyword) {
         return queryService.list(pageNumber, pageSize, action, keyword);
     }
+
+    @GetMapping("/v1/action-logs/cursor")
+    public ActionLogCursorPage cursor(@RequestParam(required = false) String cursor,
+                                      @RequestParam(required = false) Integer pageSize,
+                                      @RequestParam(required = false) String action,
+                                      @RequestParam(required = false) String keyword) {
+        return queryService.listAfter(cursor, pageSize, action, keyword);
+    }
 }
