@@ -162,6 +162,20 @@ export default function Sidebar() {
     items: section.items.filter((item) => !item.systemOnly || showSystem),
   })).filter((section) => section.items.length > 0);
 
+  /**
+   * The single menu entry that owns the current route: the longest `href` that the path sits under.
+   *
+   * <p>Highlighting every prefix match lit up two entries at once wherever one menu's route nests
+   * under another's — 굿즈관리 (`/goods`) stayed active on 옵션·재고 관리 (`/goods/stock`), and the
+   * same for 카테고리·문의·후기 and for 콘텐츠관리 (`/content`) under 콘텐츠 통계. Picking the
+   * longest match keeps 굿즈관리 correctly lit on a detail route like `/goods/123`, which has no
+   * menu entry of its own, while letting the more specific entry win when there is one.
+   */
+  const activeHref = sections
+    .flatMap((section) => section.items.map((item) => item.href))
+    .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((a, b) => b.length - a.length)[0];
+
   return (
     <aside className="flex h-screen w-60 flex-col border-r border-slate-200 bg-white">
       <div className="flex h-14 items-center border-b border-slate-200 px-5">
@@ -176,8 +190,7 @@ export default function Sidebar() {
               {section.title}
             </p>
             {section.items.map((item) => {
-              const isActive =
-                pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const isActive = item.href === activeHref;
               const Icon = item.icon;
               return (
                 <Link
