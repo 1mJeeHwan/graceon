@@ -6,8 +6,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * Member sign-up. The phone must already have passed identity verification
- * (see {@code /pub/v1/auth/verify/confirm}); sign-up consumes that one-time verified flag.
+ * Member sign-up. The phone number is stored as supplied — <b>it is not verified</b>. An earlier design routed sign-up through a
+ * one-time SMS confirmation and this comment still referenced that endpoint long after it was
+ * dropped, which reads as a guarantee the code does not make. Anything downstream that trusts this
+ * number (order notifications, SMS dispatch) is trusting unvalidated input; restoring verification
+ * means a Redis-held one-time flag consumed inside the sign-up transaction, not a comment.
  * The two mandatory consents ({@code agreeTerms}, {@code agreePrivacy}) are enforced both here
  * and on the client; {@code agreeMarketing} is optional and persisted on the member.
  */

@@ -1,5 +1,7 @@
 package org.streamhub.api.v1.dashboard;
 
+import org.streamhub.api.v1.inquiry.entity.InquiryStatus;
+import org.streamhub.api.v1.inquiry.repository.CustomerInquiryRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,8 +38,11 @@ public class DashboardService {
     private static final int DEFAULT_FEED_LIMIT = 20;
 
     private final DashboardMapper dashboardMapper;
+    private final CustomerInquiryRepository customerInquiryRepository;
 
-    public DashboardService(DashboardMapper dashboardMapper) {
+    public DashboardService(DashboardMapper dashboardMapper,
+                            CustomerInquiryRepository customerInquiryRepository) {
+        this.customerInquiryRepository = customerInquiryRepository;
         this.dashboardMapper = dashboardMapper;
     }
 
@@ -74,9 +79,11 @@ public class DashboardService {
         long lowStock = dashboardMapper.countLowStock();
         long activeSubscribers = dashboardMapper.countActiveSubscribers(churchId);
 
-        // No INQUIRY table exists yet — unanswered inquiries are always 0 until the
-        // inquiry domain lands, at which point this becomes a mapper count query.
-        long unansweredInquiry = 0L;
+        // The inquiry domain has since landed, so this KPI is a real count instead of the hardcoded
+        // 0 it returned while CUSTOMER_INQUIRY did not exist. Counted globally: an inquiry records
+        // the member who raised it but not a church, so there is nothing to scope it by — the same
+        // reason low stock is global above.
+        long unansweredInquiry = customerInquiryRepository.countByStatus(InquiryStatus.OPEN);
 
         DashboardSummaryResponse response = new DashboardSummaryResponse();
         response.setTodayRevenue(KpiDelta.of(revenueToday, revenueYesterday, sevenDayRevenueSpark(now, churchId)));

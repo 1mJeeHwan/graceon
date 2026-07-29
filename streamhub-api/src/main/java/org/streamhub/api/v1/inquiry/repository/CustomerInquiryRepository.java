@@ -11,6 +11,9 @@ public interface CustomerInquiryRepository extends JpaRepository<CustomerInquiry
 
     List<CustomerInquiry> findByStatus(InquiryStatus status);
 
+    /** Backs the dashboard's "unanswered inquiries" KPI. */
+    long countByStatus(InquiryStatus status);
+
     List<CustomerInquiry> findByCategory(InquiryCategory category);
 
     List<CustomerInquiry> findByStatusAndCategory(InquiryStatus status, InquiryCategory category);

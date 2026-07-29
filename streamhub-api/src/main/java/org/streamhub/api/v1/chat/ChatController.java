@@ -23,9 +23,20 @@ import org.streamhub.api.v1.chat.dto.ChatReplyDto;
 import org.streamhub.api.v1.chat.dto.ChatSendRequest;
 
 /**
- * Public chatbot widget endpoints (C5). Rule-based FAQ + DB-lookup provider — there is <b>no LLM
- * call and no "auto-response" model</b>; {@code testMode=true} so the widget labels it as a demo.
- * Replies are <b>stateless</b>: each turn classifies only the latest message — the persisted
+ * Public chatbot widget endpoints (C5).
+ *
+ * <p>Two providers sit behind {@code ChatProviderRouter}, selected by {@code app.chat.provider}:
+ * {@code RuleChatProvider} (keyword matching + DB lookup, the default) and {@code LlmChatProvider}
+ * (Gemini with function calling over the read-only tools in {@code ChatToolExecutor}). An earlier
+ * revision had only the former and this comment claimed no LLM call is ever made; that is no longer
+ * true, and anyone reasoning about prompt injection or data exposure needs to know which provider is
+ * configured.
+ *
+ * <p>Note that the LLM's instructions are not the security boundary — the tools are. Order lookup
+ * requires order number <i>and</i> orderer name in the SQL itself, so a prompt injection that talks
+ * the model into asking for less still gets nothing back.
+ *
+ * <p>Replies are <b>stateless</b>: each turn classifies only the latest message — the persisted
  * per-session history is for reload/console review, not fed back as conversation context.
  *
  * <p><b>Security note:</b> these endpoints are public, so {@code /v1/chat/send} and
@@ -64,7 +75,7 @@ public class ChatController {
                                                         HttpServletRequest httpRequest) {
         if (!rateLimiter.tryAcquire("chat:" + clientIpResolver.resolve(httpRequest))) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(ResultDTO.error(ResultCode.INVALID_PARAMETER, "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."));
+                    .body(ResultDTO.error(ResultCode.TOO_MANY_REQUESTS, ResultCode.TOO_MANY_REQUESTS.getMessage()));
         }
         return ResponseEntity.ok(ResultDTO.ok(chatService.send(request)));
     }

@@ -77,7 +77,7 @@ public class MediaPublicController {
         }
         // Unauthenticated, permitAll proxy → throttle per client IP so it cannot be flooded.
         if (!rateLimiter.tryAcquire("media:" + clientIpResolver.resolve(request), FILE_RATE_COST)) {
-            throw new ApiException(ResultCode.INVALID_PARAMETER, "요청이 너무 많습니다");
+            throw new ApiException(ResultCode.TOO_MANY_REQUESTS);
         }
         // Reject oversized objects before reading the body so the proxy cannot be used to stream
         // arbitrarily large private-bucket objects through the API.

@@ -185,7 +185,7 @@ public class PublicController {
             HttpServletRequest httpRequest) {
         if (!rateLimiter.tryAcquire("church:" + clientIpResolver.resolve(httpRequest), CHURCH_NEARBY_TOKEN_COST)) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(ResultDTO.error(ResultCode.INVALID_PARAMETER, "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."));
+                    .body(ResultDTO.error(ResultCode.TOO_MANY_REQUESTS, ResultCode.TOO_MANY_REQUESTS.getMessage()));
         }
         ChurchNearbyRequest request = new ChurchNearbyRequest(
                 lat, lng, radiusKm, denomination, keyword, regionId, pageNumber, pageSize);

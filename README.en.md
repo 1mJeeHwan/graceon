@@ -131,7 +131,7 @@ idempotency & failure handling.
 
 ## Deploy
 
-- **Backend** — Terraform provisions AWS (EC2 + RDS + S3 + SQS + ECR + SSM); the EC2 container sits behind CloudFront (HTTPS). Pushing `streamhub-api/**` to `main` triggers GitHub Actions to build → ECR → SSM zero-downtime roll. Manual: `gh workflow run deploy.yml`.
+- **Backend** — Terraform provisions AWS (EC2 + RDS + S3 + SQS + ECR + SSM); the EC2 container sits behind CloudFront (HTTPS). Pushing `streamhub-api/**` to `main` triggers GitHub Actions to build → ECR → SSM container roll (**~30s downtime** — a single host bound to one port cannot do blue/green). Manual: `gh workflow run deploy.yml`.
 - **Frontend** — Vercel (admin + user) connected to GitHub, auto-redeploys on `main` push.
 - Details `deploy/README.md` · low-cost single-VM alt `DEPLOY-FREE.md` · teardown `terraform destroy`.
 

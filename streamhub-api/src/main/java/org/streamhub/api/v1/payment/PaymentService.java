@@ -37,10 +37,17 @@ import org.streamhub.api.v1.payment.dto.PaymentSearchRequest;
 import org.streamhub.api.v1.payment.mapper.PaymentMapper;
 
 /**
- * Payment orchestration (C4): request → (mock) approve → order state transition + PG receipt
- * backfill. <b>No real PG call is made</b> — the {@link PaymentProvider} (mock by default)
- * synthesises an approval. The charged amount is always the server-computed {@code order.total};
- * card numbers are masked and never stored (spec §3.5).
+ * Payment orchestration (C4): request → approve → order state transition + PG receipt backfill.
+ *
+ * <p>Whether a real PG is contacted depends entirely on which {@link PaymentProvider} the
+ * {@code PaymentProviderRouter} selects for {@code app.payment.provider}. {@code MockPaymentProvider}
+ * is the default and synthesises an approval locally, but Toss, Kakao, PortOne, and PayPal providers
+ * all exist and make live calls once configured with credentials. Do not read this class as
+ * "payments are fake" — that was true of an earlier revision and is no longer a safe assumption to
+ * operate on.
+ *
+ * <p>Independent of provider: the charged amount is always the server-computed {@code order.total},
+ * never a client-supplied figure, and card numbers are masked and never stored (spec §3.5).
  */
 @Service
 public class PaymentService {

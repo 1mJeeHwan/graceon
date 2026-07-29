@@ -126,7 +126,7 @@ JUnit 5 + Mockito 단위 테스트 — JWT 발급/검증/회전 + 관리자↔�
 
 ## 배포
 
-- **백엔드** — Terraform으로 AWS(EC2 + RDS + S3 + SQS + ECR + SSM) 프로비저닝, EC2 컨테이너를 CloudFront(HTTPS) 뒤에 둠. `main`에 `streamhub-api/**` 변경 푸시 시 GitHub Actions가 빌드→ECR→SSM 무중단 롤. 수동: `gh workflow run deploy.yml`.
+- **백엔드** — Terraform으로 AWS(EC2 + RDS + S3 + SQS + ECR + SSM) 프로비저닝, EC2 컨테이너를 CloudFront(HTTPS) 뒤에 둠. `main`에 `streamhub-api/**` 변경 푸시 시 GitHub Actions가 빌드→ECR→SSM 컨테이너 롤(**약 30초 다운타임** — 단일 호스트·단일 포트라 blue/green 불가). 수동: `gh workflow run deploy.yml`.
 - **프론트** — Vercel(관리자·사용자) GitHub 연동, `main` 푸시 시 자동 재배포.
 - 상세 절차 `deploy/README.md` · 무료/저비용 단일 VM 대안 `DEPLOY-FREE.md` · 인프라 정리 `terraform destroy`.
 

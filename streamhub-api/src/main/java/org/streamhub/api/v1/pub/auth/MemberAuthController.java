@@ -81,8 +81,8 @@ public class MemberAuthController {
      */
     private void enforceRateLimit(String bucket, HttpServletRequest httpRequest) {
         if (!rateLimiter.tryAcquire(bucket + ":" + clientIpResolver.resolve(httpRequest), AUTH_RATE_COST)) {
-            throw new ApiException(ResultCode.INVALID_PARAMETER,
-                    "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+            throw new ApiException(ResultCode.TOO_MANY_REQUESTS,
+                    ResultCode.TOO_MANY_REQUESTS.getMessage());
         }
     }
 

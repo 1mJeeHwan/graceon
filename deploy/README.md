@@ -50,7 +50,7 @@ cp terraform.tfvars.example terraform.tfvars
 #   db_password    : 강한 비밀번호
 #   jwt_secret     : 긴 랜덤 문자열 (openssl rand -base64 48)
 #   ssh_public_key : "$(cat ~/.ssh/streamhub.pub)"
-#   ssh_ingress_cidr / api_ingress_cidr : 가능하면 내 IP/32 로 제한
+#   ssh_ingress_cidr : 가능하면 내 IP/32 로 제한 (API 포트는 CloudFront prefix list로만 열려 별도 변수 없음)
 
 terraform init
 terraform apply        # 생성될 자원 검토 후 yes
@@ -72,7 +72,11 @@ cd deploy/scripts
 ```bash
 curl http://<api_public_dns>:8080/actuator/health    # {"status":"UP"} 이면 OK
 ```
-첫 부팅 시 Hibernate가 스키마 생성 + 시드 계정(admin/admin1234, manager/manager1234, viewer/viewer1234)이 들어갑니다. 운영 시 시드 비밀번호는 관리자 콘솔에서 변경하세요.
+첫 부팅 시 Hibernate가 스키마를 생성하고 시드 계정이 들어갑니다.
+
+- `viewer` / `viewer1234` — README에 공개한 읽기 전용 데모 계정. 개인정보는 마스킹되어 내려갑니다.
+- `admin`(SYSTEM), `manager`(CHURCH_MANAGER) — **비밀번호를 주입해야만 생성됩니다.** `SEED_ADMIN_PASSWORD` / `SEED_MANAGER_PASSWORD`를 `api.env`에 넣으세요. 비워두면 계정을 만들지 않고 경고만 남깁니다(추측 가능한 SYSTEM 계정이 생기는 것보다 안전).
+- 이미 만들어진 계정의 비밀번호는 시더가 덮어쓰지 않습니다. 회전은 콘솔 로그인 후 `POST /v1/admin/me/password`(현재 비밀번호 확인 + 최소 10자)로 하며, 변경 시 저장된 refresh 토큰이 폐기됩니다.
 
 ---
 
@@ -91,7 +95,13 @@ curl http://<api_public_dns>:8080/actuator/health    # {"status":"UP"} 이면 OK
 ## 5. ⚠️ HTTPS 필수 (혼합 콘텐츠 해결)
 
 Vercel(https) 페이지가 **http API를 직접 호출하면 브라우저가 차단**합니다. API도 https여야 합니다.
-무료로 해결하는 권장 방법: **EC2에 Caddy + 무료 도메인(DuckDNS) → 자동 Let's Encrypt**.
+
+> **현재 라이브는 이 방식이 아닙니다.** CloudFront가 TLS를 종단하고 EC2 오리진(8080)에는 평문 HTTP로
+> 붙으며, 오리진 포트는 CloudFront prefix list로만 열려 있습니다(`deploy/terraform/cloudfront.tf`,
+> `main.tf`). 아래 Caddy + DuckDNS 절차는 **커스텀 도메인을 쓸 때의 대안**으로 남겨둡니다 —
+> CloudFront 도입 이전의 원래 구성이었습니다.
+
+무료로 해결하는 대안: **EC2에 Caddy + 무료 도메인(DuckDNS) → 자동 Let's Encrypt**.
 
 ```bash
 # EC2 접속 (SSM 또는 ssh -i ~/.ssh/streamhub ec2-user@<dns>)
@@ -103,7 +113,7 @@ api.<당신>.duckdns.org {
 sudo systemctl enable --now caddy
 ```
 - DuckDNS에 `api.<당신>` → EC2 퍼블릭 IP 등록.
-- 보안그룹에 443 인바운드 추가(`api_ingress_cidr`는 443용으로도 열기).
+- 보안그룹에 443 인바운드 추가(현재 terraform에는 443 규칙이 없으므로 이 대안을 쓸 때 직접 추가해야 합니다).
 - 그러면 `NEXT_PUBLIC_API_BASE_URL=https://api.<당신>.duckdns.org`, 백엔드 CORS의 허용 오리진을 Vercel URL로 맞추세요(`SecurityConfig`의 `corsConfigurationSource`).
 
 > 빠른 임시 데모만 원하면: 프론트도 EC2에서 같이 서빙(동일 오리진)하거나, Cloudflare Tunnel(무료)로 API를 https로 노출하는 방법도 있습니다.
@@ -113,14 +123,14 @@ sudo systemctl enable --now caddy
 ## 6. CI/CD (GitHub Actions)
 
 - `.github/workflows/ci.yml` — PR/푸시마다 백엔드 `mvn verify` + 프론트 `npm run build`.
-- `.github/workflows/deploy.yml` — 수동 실행 시 이미지 빌드→ECR push→SSM 재배포.
+- `.github/workflows/deploy.yml` — `main`에 `streamhub-api/**` 푸시 시 **자동 실행**(수동 실행도 가능). 이미지 빌드→ECR push→SSM 재배포.
   필요한 레포 시크릿: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `ECR_REPOSITORY`(=`streamhub-api`), `EC2_INSTANCE_ID`.
 
 ---
 
 ## 7. 비용 & 철거
 
-- 무료 티어 내: EC2 t2.micro + RDS db.t3.micro + S3 5GB ≈ $0 (12개월). 데이터 전송/초과 시 과금.
+- 무료 티어 내: EC2 t3.micro + RDS db.t3.micro + S3 5GB ≈ $0 (12개월). 데이터 전송/초과 시 과금.
 - **안 쓸 때**: `terraform destroy` (전부 삭제) — 가장 확실한 비용 차단.
 - 데이터 보존하며 잠깐 끄기: EC2/RDS 콘솔에서 *중지*(RDS는 7일 후 자동 재시작 주의).
 
