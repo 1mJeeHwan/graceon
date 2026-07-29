@@ -5,7 +5,11 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import java.time.Duration;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -25,19 +29,30 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
  * serializer ({@code EVERYTHING}) so each element carries {@code @class} and deserializes back to a
  * record instead of a {@code LinkedHashMap}.
  */
+@Slf4j
 @Configuration
 @EnableCaching
-public class CacheConfig {
+public class CacheConfig implements CachingConfigurer {
 
     /** Short-term nearby-church discovery (Kakao POI) cache name. */
     static final String CHURCH_DISCOVERY_CACHE = "churchDiscovery";
 
+    /** Dashboard/statistics aggregates: short TTL, they move constantly. */
+    private static final Duration STATS_TTL = Duration.ofSeconds(60);
+
+    /**
+     * Nearby-church POI results: minutes, not seconds. These come from an external, rate-limited,
+     * billed API and describe places that do not move — a 60-second TTL spent the quota without
+     * buying anything.
+     */
+    private static final Duration DISCOVERY_TTL = Duration.ofMinutes(30);
+
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration defaultConfig =
-                baseConfig(typedMapper(ObjectMapper.DefaultTyping.NON_FINAL));
+                baseConfig(typedMapper(ObjectMapper.DefaultTyping.NON_FINAL), STATS_TTL);
         RedisCacheConfiguration discoveryConfig =
-                baseConfig(typedMapper(ObjectMapper.DefaultTyping.EVERYTHING));
+                baseConfig(typedMapper(ObjectMapper.DefaultTyping.EVERYTHING), DISCOVERY_TTL);
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)
@@ -45,9 +60,48 @@ public class CacheConfig {
                 .build();
     }
 
-    private RedisCacheConfiguration baseConfig(ObjectMapper mapper) {
+    /**
+     * Degrades cache outages to "slow", not "down".
+     *
+     * <p>Spring's default handler rethrows, so an unreachable Redis turned every {@code @Cacheable}
+     * read into a 500 — taking down the dashboard and the public church search even though both can
+     * be computed from the database alone. Everything behind these caches is derived data with an
+     * authoritative source, so a lookup failure should fall through to the method and a write
+     * failure should be dropped. This also matches how the login lockout counter already treats
+     * Redis (fail-open); the two were previously inconsistent for no stated reason.
+     */
+    @Override
+    public CacheErrorHandler errorHandler() {
+        return new CacheErrorHandler() {
+            @Override
+            public void handleCacheGetError(RuntimeException e, Cache cache, Object key) {
+                log.warn("Cache get failed ({}#{}), recomputing from source: {}",
+                        cache.getName(), key, e.getMessage());
+            }
+
+            @Override
+            public void handleCachePutError(RuntimeException e, Cache cache, Object key, Object value) {
+                log.warn("Cache put failed ({}#{}): {}", cache.getName(), key, e.getMessage());
+            }
+
+            @Override
+            public void handleCacheEvictError(RuntimeException e, Cache cache, Object key) {
+                // Logged at WARN on purpose: a missed eviction leaves stale data until the TTL
+                // expires, which is a correctness smell rather than a mere slowdown.
+                log.warn("Cache evict failed ({}#{}), stale until TTL: {}",
+                        cache.getName(), key, e.getMessage());
+            }
+
+            @Override
+            public void handleCacheClearError(RuntimeException e, Cache cache) {
+                log.warn("Cache clear failed ({}): {}", cache.getName(), e.getMessage());
+            }
+        };
+    }
+
+    private RedisCacheConfiguration baseConfig(ObjectMapper mapper, Duration ttl) {
         return RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofSeconds(60))
+                .entryTtl(ttl)
                 .disableCachingNullValues()
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
                         new GenericJackson2JsonRedisSerializer(mapper)));

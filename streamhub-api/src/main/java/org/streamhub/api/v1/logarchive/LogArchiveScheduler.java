@@ -1,5 +1,7 @@
 package org.streamhub.api.v1.logarchive;
 
+import org.streamhub.api.base.scheduling.SchedulerLock;
+import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -15,14 +17,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class LogArchiveScheduler {
 
+    private final SchedulerLock schedulerLock;
+
     private final LogArchiveService logArchiveService;
 
-    public LogArchiveScheduler(LogArchiveService logArchiveService) {
+    public LogArchiveScheduler(LogArchiveService logArchiveService,
+            SchedulerLock schedulerLock) {
+        this.schedulerLock = schedulerLock;
         this.logArchiveService = logArchiveService;
     }
 
     @Scheduled(cron = "${app.log.archive-cron:0 0 4 * * SUN}")
     public void run() {
+        schedulerLock.runIfLeader("logArchive", Duration.ofHours(1), this::doArchive);
+    }
+
+    private void doArchive() {
         try {
             LogArchiveService.ArchiveResult result = logArchiveService.archiveAndPurge();
             log.info("Weekly log archive complete: {} action-log, {} security-event row(s).",

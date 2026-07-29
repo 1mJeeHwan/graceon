@@ -65,6 +65,10 @@ class OrderScopingTest {
     private DeliveryService deliveryService;
     @Mock
     private org.streamhub.api.v1.coupon.CouponService couponService;
+    /** Dashboard eviction now runs through the CacheManager; a no-op mock keeps these tests
+     *  focused on scoping rather than caching. */
+    @Mock
+    private org.springframework.cache.CacheManager cacheManager;
 
     /** SYSTEM operator — no church filter, bypasses the in-scope checks. */
     private static final AdminPrincipal SYSTEM = new AdminPrincipal(1L, AuthoritiesConstants.SYSTEM, null);
@@ -76,7 +80,7 @@ class OrderScopingTest {
         return new OrderService(
                 orderMapper, orderRepository, orderItemRepository, orderReceiptRepository,
                 goodsItemRepository, goodsOptionRepository, memberRepository,
-                actionLogPublisher, smsService, deliveryService, couponService);
+                actionLogPublisher, smsService, deliveryService, couponService, cacheManager);
     }
 
     private Order order(OrderStatus status, PayStatus payStatus) {

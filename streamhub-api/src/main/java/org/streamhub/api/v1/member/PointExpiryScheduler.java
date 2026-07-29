@@ -1,5 +1,7 @@
 package org.streamhub.api.v1.member;
 
+import org.streamhub.api.base.scheduling.SchedulerLock;
+import java.time.Duration;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -10,15 +12,21 @@ import org.springframework.stereotype.Component;
 @Component
 public class PointExpiryScheduler {
 
+    private final SchedulerLock schedulerLock;
+
     private final PointService pointService;
 
-    public PointExpiryScheduler(PointService pointService) {
+    public PointExpiryScheduler(PointService pointService,
+            SchedulerLock schedulerLock) {
+        this.schedulerLock = schedulerLock;
         this.pointService = pointService;
     }
 
     /** Runs daily at 04:00; recovers due accruals and records the expiry ledger rows. */
     @Scheduled(cron = "0 0 4 * * *")
     public void run() {
-        pointService.expirePoints();
+        // The most damaging job to double-run: expiry writes a ledger row per member and nothing
+        // in the schema makes a second deduction a constraint violation.
+        schedulerLock.runIfLeader("pointExpiry", Duration.ofMinutes(30), pointService::expirePoints);
     }
 }

@@ -1,5 +1,7 @@
 package org.streamhub.api.v1.delivery;
 
+import org.streamhub.api.base.scheduling.SchedulerLock;
+import java.time.Duration;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,16 +23,24 @@ import org.streamhub.api.v1.order.repository.OrderRepository;
 @Component
 public class DeliverySyncScheduler {
 
+    private final SchedulerLock schedulerLock;
+
     private final OrderRepository orderRepository;
     private final OrderService orderService;
 
-    public DeliverySyncScheduler(OrderRepository orderRepository, OrderService orderService) {
+    public DeliverySyncScheduler(OrderRepository orderRepository, OrderService orderService,
+            SchedulerLock schedulerLock) {
+        this.schedulerLock = schedulerLock;
         this.orderRepository = orderRepository;
         this.orderService = orderService;
     }
 
     @Scheduled(cron = "${app.delivery.sync-cron:0 */30 * * * *}")
     public void syncShippingOrders() {
+        schedulerLock.runIfLeader("deliverySync", Duration.ofMinutes(25), this::doSync);
+    }
+
+    private void doSync() {
         List<Order> shipping = orderRepository.findByStatus(OrderStatus.SHIPPING);
         int checked = 0;
         for (Order order : shipping) {

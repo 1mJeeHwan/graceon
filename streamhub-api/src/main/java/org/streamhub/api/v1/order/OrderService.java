@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.streamhub.api.base.exception.ApiException;
@@ -89,6 +90,10 @@ public class OrderService {
     private final SmsService smsService;
     private final org.streamhub.api.v1.delivery.DeliveryService deliveryService;
     private final org.streamhub.api.v1.coupon.CouponService couponService;
+    private final CacheManager cacheManager;
+
+    /** Dashboard aggregate caches invalidated by any order state change. */
+    private static final List<String> DASHBOARD_CACHES = List.of("dashboardSummary", "dashboardTimeseries");
 
     public OrderService(
             OrderMapper orderMapper,
@@ -101,7 +106,8 @@ public class OrderService {
             ActionLogPublisher actionLogPublisher,
             SmsService smsService,
             org.streamhub.api.v1.delivery.DeliveryService deliveryService,
-            org.streamhub.api.v1.coupon.CouponService couponService) {
+            org.streamhub.api.v1.coupon.CouponService couponService,
+            CacheManager cacheManager) {
         this.orderMapper = orderMapper;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -113,6 +119,7 @@ public class OrderService {
         this.smsService = smsService;
         this.deliveryService = deliveryService;
         this.couponService = couponService;
+        this.cacheManager = cacheManager;
     }
 
     /**
@@ -182,8 +189,24 @@ public class OrderService {
      *                      order is outside the operator's church
      */
     @Transactional
-    @CacheEvict(cacheNames = {"dashboardSummary", "dashboardTimeseries"}, allEntries = true)
     public OrderDetail changeStatus(Long orderId, OrderStatusChangeRequest request, AdminPrincipal principal) {
+        return applyStatusChange(orderId, request, principal);
+    }
+
+    /**
+     * The status transition itself, with no annotations of its own.
+     *
+     * <p>Split out from {@link #changeStatus} so in-class callers such as {@link #syncDelivery} do
+     * not invoke an annotated method through {@code this}: that bypasses the Spring proxy, and the
+     * {@code @Transactional}/{@code @CacheEvict} on the target silently do not apply. Today the
+     * callers carry equivalent annotations of their own, so the behaviour happens to be correct —
+     * but only by coincidence, and the next annotation added to {@code changeStatus} would go
+     * missing on exactly those paths. Calling a plain method makes the absence of proxying explicit
+     * instead of accidental; each public entry point stays responsible for its own transaction and
+     * cache eviction.
+     */
+    private OrderDetail applyStatusChange(Long orderId, OrderStatusChangeRequest request,
+                                          AdminPrincipal principal) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
         ensureMemberInScope(order.getMemberId(), principal);
@@ -229,10 +252,35 @@ public class OrderService {
 
         order.changeStatus(to);
         orderRepository.saveAndFlush(order);
+        evictDashboardCaches();
         actionLogPublisher.publish(
                 "ORDER_" + to.name(), "ORDER", String.valueOf(orderId), order.getOrderNo());
         notifyStatus(order, to);
         return getDetail(orderId, principal);
+    }
+
+    /**
+     * Clears the dashboard aggregates after an order transition actually happened.
+     *
+     * <p>Done here rather than with {@code @CacheEvict} on the public entry points because the
+     * courier-polling batch calls {@code syncDelivery} for every in-flight order every 30 minutes,
+     * and an annotation on that method fires whether or not the carrier reported anything new. With
+     * N shipping orders the dashboard caches were flushed N times per run and never survived their
+     * own 60-second TTL — the cache existed but effectively never hit. Evicting from the one place
+     * that mutates state ties the cost to real changes instead of to polling volume.
+     *
+     * <p>Still {@code clear()} rather than a per-church key: an order belongs to a member of one
+     * church, but the SYSTEM view aggregates every church, so a change invalidates both that
+     * church's entry and the {@code 'all'} entry. Over-evicting is safe; under-evicting serves one
+     * tenant another's stale numbers.
+     */
+    private void evictDashboardCaches() {
+        DASHBOARD_CACHES.forEach(name -> {
+            Cache cache = cacheManager.getCache(name);
+            if (cache != null) {
+                cache.clear();
+            }
+        });
     }
 
     /**
@@ -290,14 +338,19 @@ public class OrderService {
      *                      has no invoice / the carrier cannot be determined
      */
     @Transactional
-    @CacheEvict(cacheNames = {"dashboardSummary", "dashboardTimeseries"}, allEntries = true)
     public org.streamhub.api.v1.delivery.adapter.Tracking syncDelivery(Long orderId, AdminPrincipal principal) {
+        return applySyncDelivery(orderId, principal);
+    }
+
+    /** Unannotated body shared by both {@code syncDelivery} entry points — see {@link #applyStatusChange}. */
+    private org.streamhub.api.v1.delivery.adapter.Tracking applySyncDelivery(Long orderId,
+                                                                            AdminPrincipal principal) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND));
         ensureMemberInScope(order.getMemberId(), principal);
         org.streamhub.api.v1.delivery.adapter.Tracking tracking = deliveryService.trackOrder(order);
         deliveryDrivenTransition(order.getStatus(), tracking).ifPresent(next ->
-                changeStatus(orderId, new OrderStatusChangeRequest(next, "배송상태 자동연동(" + next + ")"), principal));
+                applyStatusChange(orderId, new OrderStatusChangeRequest(next, "배송상태 자동연동(" + next + ")"), principal));
         return tracking;
     }
 
@@ -307,9 +360,8 @@ public class OrderService {
      * {@link #syncDelivery(Long, AdminPrincipal)} with an unscoped SYSTEM principal.
      */
     @Transactional
-    @CacheEvict(cacheNames = {"dashboardSummary", "dashboardTimeseries"}, allEntries = true)
     public org.streamhub.api.v1.delivery.adapter.Tracking syncDelivery(Long orderId) {
-        return syncDelivery(orderId, SYSTEM_PRINCIPAL);
+        return applySyncDelivery(orderId, SYSTEM_PRINCIPAL);
     }
 
     /**

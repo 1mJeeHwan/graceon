@@ -1,6 +1,20 @@
 spring:
   application:
     name: streamhub-api
+  task:
+    scheduling:
+      # 기본값 1이면 스케줄러 5종이 스레드 하나를 공유한다. 주간 로그 아카이브(S3 업로드)가 길어지면
+      # 2초 주기 아웃박스 릴레이가 그 시간만큼 통째로 밀리고, 매일 04시의 포인트 만료와 일요일 04시의
+      # 아카이브가 같은 스레드에서 직렬화된다. 잡 수만큼 주면 서로를 막지 않는다.
+      pool:
+        size: ${SCHEDULING_POOL_SIZE:5}
+    execution:
+      # @Async는 현재 HLS 배치 패키징 하나뿐이고, 그 작업은 ffmpeg 프로세스를 띄운다. 1GB 인스턴스에서
+      # 동시 실행은 OOM이므로(해당 클래스 주석 참조) 코어/최대 1로 직렬화한다. 기본값 8은 그 불변식을
+      # 코드가 아니라 우연에 맡기는 셈이었다.
+      pool:
+        core-size: 1
+        max-size: 1
   # Boot 4 defaults the HTTP JSON engine to Jackson 3. Keep Jackson 2's serialization defaults so
   # REST responses stay consistent with the Boot 3.4 baseline during this upgrade.
   jackson:

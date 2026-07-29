@@ -32,8 +32,21 @@ class ActionOutboxRelayTest {
     @SuppressWarnings("unchecked")
     private final KafkaTemplate<String, Object> kafkaTemplate = org.mockito.Mockito.mock(KafkaTemplate.class);
 
+    /**
+     * Lease that always elects this caller, so the drain logic under test runs exactly as it would
+     * on the instance that won. Leader election itself is SchedulerLock's concern, not the relay's.
+     */
+    private static final org.streamhub.api.base.scheduling.SchedulerLock ALWAYS_LEADER =
+            new org.streamhub.api.base.scheduling.SchedulerLock(null) {
+                @Override
+                public void runIfLeader(String name, java.time.Duration ttl, Runnable job) {
+                    job.run();
+                }
+            };
+
     private ActionOutboxRelay relay() {
-        return new ActionOutboxRelay(outboxRepository, kafkaTemplate, new ObjectMapper(), TOPIC);
+        return new ActionOutboxRelay(outboxRepository, kafkaTemplate, new ObjectMapper(), TOPIC,
+                ALWAYS_LEADER);
     }
 
     private ActionOutbox row(long id, String key) {

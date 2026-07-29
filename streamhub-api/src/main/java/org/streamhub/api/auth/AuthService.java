@@ -75,7 +75,17 @@ public class AuthService {
         this.clientIpResolver = clientIpResolver;
     }
 
-    @Transactional(readOnly = true)
+    /**
+     * Not {@code readOnly}, despite reading no more than the account row.
+     *
+     * <p>The method publishes a LOGIN audit event, and under {@code app.eventlog.outbox=true} that
+     * emitter writes an {@code ACTION_OUTBOX} row inside this very transaction. A read-only
+     * transaction puts Hibernate in {@code FlushMode.MANUAL}, so the insert would never be flushed
+     * and the audit event would disappear without an error — the one failure mode an audit trail
+     * must not have. The emitter's contract is "call sites never change when the transport changes",
+     * and that only holds if call sites are actually able to write.
+     */
+    @Transactional
     public TokenResponse login(LoginRequest request) {
         String account = request.loginId() == null ? "" : request.loginId().trim();
         String failKey = loginFailKey(account);

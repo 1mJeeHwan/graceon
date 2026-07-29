@@ -102,6 +102,23 @@ public class BillingService {
         long point = plan.getPrice() * plan.getPointRate() / 100;
         int cycleNo = subscription.getCycleNo() + 1;
 
+        // Idempotency, first line: a scheduler double-fire or a retry after a prior commit finds the
+        // cycle already present and leaves without touching the transaction. Catching the constraint
+        // violation instead would be too late — a failed flush marks the transaction rollback-only,
+        // so returning "successfully" from the catch block still blows up at commit with
+        // UnexpectedRollbackException, which the scheduler would then misread as a billing failure
+        // and answer with a FAILED record plus backoff on a perfectly healthy subscription.
+        if (donationRepository.existsBySubscriptionIdAndCycleNo(subscription.getId(), cycleNo)) {
+            log.info("Cycle {} for subscription {} already charged, skipping duplicate",
+                    cycleNo, subscription.getId());
+            return;
+        }
+
+        // Second line: the uk_donation_cycle unique constraint. Only two callers racing inside the
+        // window between the check above and this insert can reach it. That is a genuine concurrent
+        // double-charge attempt, and it must not be swallowed — the transaction is already doomed.
+        // It surfaces as DuplicateCycleException so the scheduler can tell it apart from a real
+        // billing failure.
         Donation donation;
         try {
             donation = donationRepository.saveAndFlush(Donation.builder()
@@ -116,11 +133,7 @@ public class BillingService {
                     .paidAt(now)
                     .build());
         } catch (DataIntegrityViolationException e) {
-            // Idempotency guard: this (subscription_id, cycle_no) was already charged
-            // (scheduler double-fire or retry after a prior commit). Skip silently.
-            log.info("Cycle {} for subscription {} already charged, skipping duplicate",
-                    cycleNo, subscription.getId());
-            return;
+            throw new DuplicateCycleException(subscription.getId(), cycleNo);
         }
 
         pointLedgerWriter.append(subscription.getMemberId(), point,

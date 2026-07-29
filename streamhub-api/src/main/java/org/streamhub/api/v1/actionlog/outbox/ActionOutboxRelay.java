@@ -1,5 +1,6 @@
 package org.streamhub.api.v1.actionlog.outbox;
 
+import org.streamhub.api.base.scheduling.SchedulerLock;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -38,19 +39,26 @@ public class ActionOutboxRelay {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ObjectMapper objectMapper;
     private final String topic;
+    private final SchedulerLock schedulerLock;
 
     public ActionOutboxRelay(ActionOutboxRepository outboxRepository,
                              KafkaTemplate<String, Object> kafkaTemplate,
                              ObjectMapper objectMapper,
-                             @Value("${app.kafka.action-log-topic}") String topic) {
+                             @Value("${app.kafka.action-log-topic}") String topic,
+                             SchedulerLock schedulerLock) {
         this.outboxRepository = outboxRepository;
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
         this.topic = topic;
+        this.schedulerLock = schedulerLock;
     }
 
     @Scheduled(fixedDelayString = "${app.eventlog.outbox.relay-interval-ms:2000}")
     public void drain() {
+        schedulerLock.runIfLeader("outboxRelay", Duration.ofMinutes(1), this::doDrain);
+    }
+
+    private void doDrain() {
         List<ActionOutbox> batch = outboxRepository.findTop100ByPublishedFalseOrderByIdAsc();
         if (batch.isEmpty()) {
             return;
