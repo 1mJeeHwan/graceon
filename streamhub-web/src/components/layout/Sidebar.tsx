@@ -206,8 +206,8 @@ export default function Sidebar() {
             open={section.items.some((item) => item.href === activeHref)}
             className="group space-y-1"
           >
-            <summary className="flex cursor-pointer list-none items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 hover:bg-slate-50">
-              <ChevronRight className="h-3 w-3 transition-transform group-open:rotate-90" />
+            <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-90" />
               {section.title}
             </summary>
             {section.items.map((item) => {
