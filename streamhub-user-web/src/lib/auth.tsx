@@ -8,6 +8,10 @@ import type { MemberAuthResponse, MemberInfo } from "./types";
 // plumbing on this read-only public site). It is XSS-exposed; a production build would move to an
 // httpOnly, SameSite cookie issued by the API. The admin console already does the cookie-backed
 // approach via NextAuth — see streamhub-web.
+//
+// Two things narrow the blast radius until that move happens: the token now lives 2h rather than 8h,
+// and logging out revokes it server-side (jti denylist) instead of merely forgetting it here — so a
+// stolen copy stops working the moment the real user signs out.
 const STORAGE_KEY = "streamhub_member_token";
 
 interface AuthState {
@@ -59,9 +63,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(() => {
+    const current = localStorage.getItem(STORAGE_KEY);
+    // Clear locally first so the UI never waits on the network to sign out, then tell the server to
+    // revoke the token. A failed call is swallowed: the user is logged out of this browser either
+    // way, and the token expires on its own.
     localStorage.removeItem(STORAGE_KEY);
     setToken(null);
     setMember(null);
+    if (current) {
+      api.logout(current).catch(() => undefined);
+    }
   }, []);
 
   return (

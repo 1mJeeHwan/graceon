@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Loader2, X } from "lucide-react";
 
-import { useMemberList, useMemberApprove, useMemberDeny } from "@/apis/query/member/member";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { memberList, useMemberApprove, useMemberDeny } from "@/apis/query/member/member";
+import { dashboardKeys, memberKeys } from "@/lib/query-keys";
 import {
   MemberSearchRequestUserStatus,
   type MemberListItem,
@@ -56,14 +58,13 @@ export default function MemberPage() {
     }
   }, []);
 
+  const queryClient = useQueryClient();
+
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
-  const listMutation = useMemberList();
   const approveMutation = useMemberApprove();
   const denyMutation = useMemberDeny();
-
-  const { mutate: fetchList } = listMutation;
 
   const searchRequest = useMemo<MemberSearchRequest>(
     () => ({
@@ -80,11 +81,18 @@ export default function MemberPage() {
     [pageNumber, keyword, status, churchId, sort],
   );
 
-  useEffect(() => {
-    fetchList({ data: searchRequest });
-  }, [fetchList, searchRequest]);
+  // The list is a POST search, but semantically a read, so it is a cached query keyed by the
+  // criteria rather than a mutation fired from an effect. As a mutation it had no cache and no
+  // previous data, so every page or filter change blanked the grid to a full-page spinner and a
+  // back-navigation refetched from scratch. `keepPreviousData` keeps the old rows on screen while
+  // the next page loads, matching how the order list already worked.
+  const listQuery = useQuery({
+    queryKey: memberKeys.list(searchRequest),
+    queryFn: ({ signal }) => memberList(searchRequest, signal),
+    placeholderData: keepPreviousData,
+  });
 
-  const result = listMutation.data?.resultObject;
+  const result = listQuery.data?.resultObject;
   const rows: MemberListItem[] = result?.contents ?? [];
   const totalCount = result?.totalCount ?? 0;
   const totalPage = result?.totalPage ?? 0;
@@ -133,8 +141,12 @@ export default function MemberPage() {
     setPageNumber(1);
   };
 
+  // Approving or denying a member changes the member KPIs the dashboard shows, so invalidate by
+  // prefix rather than refetching only this screen: a targeted refetch left every other cached
+  // view stale for the rest of its TTL.
   const refetch = () => {
-    fetchList({ data: searchRequest });
+    queryClient.invalidateQueries({ queryKey: memberKeys.all });
+    queryClient.invalidateQueries({ predicate: dashboardKeys.matches });
   };
 
   const handleApprove = () => {
@@ -304,11 +316,11 @@ export default function MemberPage() {
       )}
 
       {/* Results */}
-      {listMutation.isPending ? (
+      {listQuery.isPending ? (
         <div className="flex h-[560px] items-center justify-center rounded-md border border-slate-200 bg-white">
           <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
         </div>
-      ) : listMutation.isError ? (
+      ) : listQuery.isError ? (
         <div className="flex h-[560px] items-center justify-center rounded-md border border-slate-200 bg-white">
           <p className="text-sm text-red-600">
             목록을 불러오지 못했습니다.

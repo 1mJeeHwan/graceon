@@ -136,6 +136,12 @@ export const api = {
   login: (email: string, password: string) =>
     request<MemberAuthResponse>("/pub/v1/auth/login", { method: "POST", body: { email, password } }),
   me: (token: string) => request<MemberInfo>("/pub/v1/auth/me", { token }),
+  /**
+   * Revokes the token server-side. Without this call, signing out only forgot the token locally —
+   * a copy taken by an XSS stayed valid until it expired.
+   */
+  logout: (token: string) =>
+    request<void>("/pub/v1/auth/logout", { method: "POST", token }),
 
   // Sign-up
   signup: (payload: SignupPayload) =>

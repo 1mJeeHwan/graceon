@@ -7,6 +7,7 @@ import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -112,10 +113,18 @@ public class JwtTokenProvider {
         return new UsernamePasswordAuthenticationToken(principal, null, authorities);
     }
 
-    /** Issues a member access token (end-user site login). Carries id/name/email, never a role. */
+    /**
+     * Issues a member access token (end-user site login). Carries id/name/email, never a role.
+     *
+     * <p>Includes a random {@code jti} so the token can be revoked. Without one, "log out" could
+     * only forget the token on the client — the server had no way to reject a copy an attacker had
+     * already taken, and a member with no password-change feature had no recourse at all for the
+     * token's full lifetime.
+     */
     public String createMemberAccessToken(Member member) {
         Instant now = Instant.now();
         return JWT.create()
+                .withJWTId(UUID.randomUUID().toString())
                 .withSubject(String.valueOf(member.getId()))
                 .withClaim(CLAIM_NAME, member.getName())
                 .withClaim(CLAIM_EMAIL, member.getEmail())

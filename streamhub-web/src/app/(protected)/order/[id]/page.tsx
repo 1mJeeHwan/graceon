@@ -28,6 +28,8 @@ import {
   isTrackingEnabled,
   type OrderStatus,
 } from "@/lib/order-status";
+import { useQueryClient } from "@tanstack/react-query";
+import { dashboardKeys, orderKeys } from "@/lib/query-keys";
 import { SUCCESS_CODE } from "@/types/api";
 
 const PAY_METHOD_LABEL: Record<string, string> = {
@@ -78,6 +80,8 @@ export default function OrderDetailPage() {
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackingError, setTrackingError] = useState<string | null>(null);
 
+  const queryClient = useQueryClient();
+
   const detailQuery = useOrderDetail(orderId, {
     query: { enabled: Number.isFinite(orderId) },
   });
@@ -122,6 +126,10 @@ export default function OrderDetailPage() {
             setPendingTransition(null);
             setMemo("");
             detailQuery.refetch();
+            // The order list and the dashboard KPIs both derive from this order's state; without
+            // invalidating them they keep serving the pre-change values from cache.
+            queryClient.invalidateQueries({ queryKey: orderKeys.all });
+            queryClient.invalidateQueries({ predicate: dashboardKeys.matches });
           } else {
             setError(response.resultMessage ?? "상태 변경에 실패했습니다.");
           }
@@ -151,6 +159,10 @@ export default function OrderDetailPage() {
           if (response.resultCode === SUCCESS_CODE) {
             setMessage("운송장 정보가 저장되었습니다.");
             detailQuery.refetch();
+            // The order list and the dashboard KPIs both derive from this order's state; without
+            // invalidating them they keep serving the pre-change values from cache.
+            queryClient.invalidateQueries({ queryKey: orderKeys.all });
+            queryClient.invalidateQueries({ predicate: dashboardKeys.matches });
           } else {
             setError(response.resultMessage ?? "운송장 저장에 실패했습니다.");
           }
@@ -171,6 +183,9 @@ export default function OrderDetailPage() {
       if (response.resultCode === SUCCESS_CODE && response.resultObject) {
         setTracking(response.resultObject);
         detailQuery.refetch();
+        // Delivery sync can advance the state machine, so the list and KPIs may be stale too.
+        queryClient.invalidateQueries({ queryKey: orderKeys.all });
+        queryClient.invalidateQueries({ predicate: dashboardKeys.matches });
       } else {
         setTrackingError(response.resultMessage ?? "배송 조회에 실패했습니다.");
       }

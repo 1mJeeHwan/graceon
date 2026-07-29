@@ -1,6 +1,10 @@
 "use client";
 
-import { useRef, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useRef,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize } from "lucide-react";
 
 /** Unified playback state both YouTube and native <video> backends report into. */
@@ -64,6 +68,46 @@ export function VideoControls({
     commands.seek(ratio * duration);
   };
 
+  /**
+   * Keyboard seeking, without which the scrubber was a trap: `role="slider"` plus `tabIndex={0}`
+   * promises an operable control, so a keyboard user could focus it and then find that no key did
+   * anything (WCAG 2.1.1). Step sizes follow the convention players use — arrows nudge, PageUp/Down
+   * jump, Home/End go to the ends.
+   */
+  const onSeekKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (duration <= 0) return;
+    const current = state.currentTime;
+    const step = e.shiftKey ? 1 : 5;
+    let next: number | null = null;
+    switch (e.key) {
+      case "ArrowRight":
+      case "ArrowUp":
+        next = current + step;
+        break;
+      case "ArrowLeft":
+      case "ArrowDown":
+        next = current - step;
+        break;
+      case "PageUp":
+        next = current + 30;
+        break;
+      case "PageDown":
+        next = current - 30;
+        break;
+      case "Home":
+        next = 0;
+        break;
+      case "End":
+        next = duration;
+        break;
+      default:
+        return;
+    }
+    // Only now, once a key is known to be handled — otherwise Tab and shortcuts would be swallowed.
+    e.preventDefault();
+    commands.seek(Math.min(duration, Math.max(0, next)));
+  };
+
   const onSeekPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     draggingRef.current = true;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -91,11 +135,13 @@ export function VideoControls({
         aria-valuemin={0}
         aria-valuemax={Math.floor(duration)}
         aria-valuenow={Math.floor(state.currentTime)}
+        aria-valuetext={`${formatTime(state.currentTime)} / ${formatTime(duration)}`}
         tabIndex={0}
         className="group relative flex h-4 w-full cursor-pointer touch-none items-center"
         onPointerDown={onSeekPointerDown}
         onPointerMove={onSeekPointerMove}
         onPointerUp={onSeekPointerUp}
+        onKeyDown={onSeekKeyDown}
       >
         <div className="relative h-1 w-full overflow-hidden rounded-full bg-white/25">
           <div className="absolute inset-y-0 left-0 rounded-full bg-white/40" style={{ width: `${bufferedPct}%` }} />

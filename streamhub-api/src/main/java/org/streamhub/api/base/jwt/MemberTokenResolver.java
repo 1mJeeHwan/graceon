@@ -18,9 +18,11 @@ public class MemberTokenResolver {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtTokenProvider tokenProvider;
+    private final MemberTokenDenylist denylist;
 
-    public MemberTokenResolver(JwtTokenProvider tokenProvider) {
+    public MemberTokenResolver(JwtTokenProvider tokenProvider, MemberTokenDenylist denylist) {
         this.tokenProvider = tokenProvider;
+        this.denylist = denylist;
     }
 
     /**
@@ -35,10 +37,26 @@ public class MemberTokenResolver {
         if (!StringUtils.hasText(authorization) || !authorization.startsWith(BEARER_PREFIX)) {
             throw new ApiException(ResultCode.UNAUTHORIZED);
         }
+        DecodedJWT jwt = verify(authorization);
+        return Long.valueOf(jwt.getSubject());
+    }
+
+    /**
+     * Same checks as {@link #resolve} but returns the decoded token, for callers that need the
+     * token itself — logout has to revoke the very token it was presented with.
+     */
+    public DecodedJWT verify(String authorization) {
+        if (!StringUtils.hasText(authorization) || !authorization.startsWith(BEARER_PREFIX)) {
+            throw new ApiException(ResultCode.UNAUTHORIZED);
+        }
         DecodedJWT jwt = tokenProvider.verify(authorization.substring(BEARER_PREFIX.length()));
         if (!tokenProvider.isMemberToken(jwt)) {
             throw new ApiException(ResultCode.INVALID_TOKEN);
         }
-        return Long.valueOf(jwt.getSubject());
+        // A signed, unexpired token is not enough — it must also not have been logged out.
+        if (denylist.isRevoked(jwt)) {
+            throw new ApiException(ResultCode.INVALID_TOKEN);
+        }
+        return jwt;
     }
 }

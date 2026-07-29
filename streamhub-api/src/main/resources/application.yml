@@ -93,6 +93,9 @@ jwt:
   secret: ${JWT_SECRET:streamhub-admin-dev-secret-key-please-change-in-production-0123456789}
   access-exp-seconds: 3600       # 1h
   refresh-exp-seconds: 28800     # 8h
+  # 회원 토큰은 refresh가 없는 단일 토큰이라 수명이 곧 탈취 시 노출 창이다. 8h는 그 창이 너무
+  # 넓었다. 2h로 줄이고, 로그아웃 시 jti 폐기 목록으로 즉시 무효화한다(MemberTokenDenylist).
+  member-exp-seconds: ${MEMBER_TOKEN_EXP_SECONDS:7200}   # 2h
 
 # 외부 연동 seam(실키 활성화) + 배치(스케줄러) 전체 요약은 패키지 주석 참고:
 #   streamhub-api/src/main/java/org/streamhub/api/package-info.java

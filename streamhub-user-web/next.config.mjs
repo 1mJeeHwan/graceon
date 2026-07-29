@@ -1,6 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Without remotePatterns, next/image refuses every non-local source, which is why this app fell
+  // back to plain <img> everywhere and lost format negotiation, responsive srcset, and the
+  // intrinsic sizing that prevents layout shift. These are the only hosts images come from:
+  // Unsplash (demo artwork) and the CloudFront distribution that fronts S3 media.
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "*.cloudfront.net" },
+      { protocol: "http", hostname: "localhost" },
+    ],
+  },
   async headers() {
     // CSP ships Report-Only first: surfaces violations in the browser console
     // without breaking the live app (inline theme script, hls.js blobs, Leaflet

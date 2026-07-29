@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
@@ -75,8 +77,17 @@ export function BannerHero({ target }: { target: BannerTarget }) {
             className="relative aspect-[16/9] w-full shrink-0 snap-start overflow-hidden text-left"
           >
             {banner.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={banner.imageUrl} alt="" className="h-full w-full object-cover" />
+              // Above the fold on the home page, so this is the LCP element: `priority` skips lazy
+              // loading and `sizes` lets the browser pick a width instead of downloading the
+              // full-resolution original on a phone.
+              <Image
+                src={banner.imageUrl}
+                alt=""
+                fill
+                priority={i === 0}
+                sizes="(max-width: 768px) 100vw, 1200px"
+                className="object-cover"
+              />
             ) : (
               <div className={clsx("h-full w-full", GRADIENTS[i % GRADIENTS.length])} />
             )}

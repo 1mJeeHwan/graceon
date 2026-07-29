@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -63,11 +65,13 @@ export function Hero({ items }: { items: ContentListItem[] }) {
             aria-label={item.title}
           >
             {item.thumbnailUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={item.thumbnailUrl}
                 alt=""
-                className="h-full w-full object-cover object-top"
+                fill
+                priority={i === 0}
+                sizes="(max-width: 768px) 100vw, 1200px"
+                className="object-cover object-top"
               />
             ) : (
               <div

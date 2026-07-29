@@ -1,11 +1,9 @@
 package org.streamhub.api.v1.pub.auth;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,10 +11,11 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.streamhub.api.base.exception.ApiException;
-import org.streamhub.api.base.jwt.JwtTokenProvider;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.response.ResultDTO;
 import org.streamhub.api.base.util.ClientIpResolver;
+import org.streamhub.api.base.jwt.MemberTokenDenylist;
+import org.streamhub.api.base.jwt.MemberTokenResolver;
 import org.streamhub.api.v1.analytics.PublicIngestRateLimiter;
 import org.streamhub.api.v1.pub.auth.dto.MemberAuthResponse;
 import org.streamhub.api.v1.pub.auth.dto.MemberInfo;
@@ -33,8 +32,6 @@ import org.streamhub.api.v1.pub.auth.dto.MemberSignupRequest;
 @RequestMapping("/pub/v1/auth")
 public class MemberAuthController {
 
-    private static final String BEARER_PREFIX = "Bearer ";
-
     /**
      * Token cost per signup/login attempt charged to the shared {@link PublicIngestRateLimiter}
      * (capacity 60, refill 5/s). At cost 12 an IP gets a burst of ~5 attempts and a steady ~25/min
@@ -43,16 +40,19 @@ public class MemberAuthController {
     private static final int AUTH_RATE_COST = 12;
 
     private final MemberAuthService memberAuthService;
-    private final JwtTokenProvider tokenProvider;
+    private final MemberTokenResolver memberTokenResolver;
+    private final MemberTokenDenylist tokenDenylist;
     private final PublicIngestRateLimiter rateLimiter;
     private final ClientIpResolver clientIpResolver;
 
     public MemberAuthController(MemberAuthService memberAuthService,
-                               JwtTokenProvider tokenProvider,
+                               MemberTokenResolver memberTokenResolver,
+                               MemberTokenDenylist tokenDenylist,
                                PublicIngestRateLimiter rateLimiter,
                                ClientIpResolver clientIpResolver) {
         this.memberAuthService = memberAuthService;
-        this.tokenProvider = tokenProvider;
+        this.memberTokenResolver = memberTokenResolver;
+        this.tokenDenylist = tokenDenylist;
         this.rateLimiter = rateLimiter;
         this.clientIpResolver = clientIpResolver;
     }
@@ -92,14 +92,23 @@ public class MemberAuthController {
         return ResultDTO.ok(memberAuthService.me(resolveMemberId(authorization)));
     }
 
+    @Operation(summary = "회원 로그아웃",
+            description = "제시된 회원 토큰을 만료 시각까지 폐기 목록에 올린다. 이후 같은 토큰은 거부된다. "
+                    + "토큰이 이미 무효해도 200을 반환한다(로그아웃은 멱등).")
+    @PostMapping("/logout")
+    public ResultDTO<Void> logout(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        try {
+            tokenDenylist.revoke(memberTokenResolver.verify(authorization));
+        } catch (ApiException ignored) {
+            // Already expired, malformed, or absent — the caller is logged out either way. Telling
+            // them otherwise would only reveal whether a token was still valid.
+        }
+        return ResultDTO.ok();
+    }
+
+    /** Delegates to the shared resolver so the denylist check cannot be forgotten here. */
     private Long resolveMemberId(String authorization) {
-        if (!StringUtils.hasText(authorization) || !authorization.startsWith(BEARER_PREFIX)) {
-            throw new ApiException(ResultCode.UNAUTHORIZED);
-        }
-        DecodedJWT jwt = tokenProvider.verify(authorization.substring(BEARER_PREFIX.length()));
-        if (!tokenProvider.isMemberToken(jwt)) {
-            throw new ApiException(ResultCode.INVALID_TOKEN);
-        }
-        return Long.valueOf(jwt.getSubject());
+        return memberTokenResolver.resolve(authorization);
     }
 }
