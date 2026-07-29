@@ -23,4 +23,14 @@ public record AdminPrincipal(Long id, String role, Long churchId) {
     public boolean isUnscoped() {
         return isSystem() || AuthoritiesConstants.VIEWER.equals(role);
     }
+
+    /**
+     * True for the read-only browse role published as a public demo account. Such a caller may see
+     * every screen but must not read personal data in the clear — list responses mask emails, phone
+     * numbers, attempted login ids, and client IPs for it. Operators who actually run the service
+     * (SYSTEM, CHURCH_MANAGER) keep full values because contacting a member is their job.
+     */
+    public boolean isDemoViewer() {
+        return AuthoritiesConstants.VIEWER.equals(role);
+    }
 }

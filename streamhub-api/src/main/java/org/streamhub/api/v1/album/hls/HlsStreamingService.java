@@ -18,8 +18,8 @@ import org.streamhub.api.v1.album.repository.TrackRepository;
  *   <li>{@link #playlist} (public) — returns {@code index.m3u8} rewritten so segment URLs point at
  *       the CDN ({@code segment-base-url}) and the AES key URI is a relative {@code key} (resolved
  *       by the player against the playlist URL → the key endpoint).</li>
- *   <li>{@link #serveKey} (public) — returns the raw 16-byte AES key. Music is free to listen, so
- *       there is no purchase gate.</li>
+ *   <li>{@link #serveKey} (public) — returns the raw 16-byte AES key to any caller. Music is free
+ *       to listen, so there is no purchase gate anywhere in this flow.</li>
  * </ul>
  */
 @Service
@@ -52,12 +52,17 @@ public class HlsStreamingService {
     }
 
     /**
-     * The raw AES-128 key for a full track. Music is a free listening experience — there is no
-     * purchase gate, so the key is served to anyone (the {@code memberId} is ignored). The stream is
-     * still AES-packaged; the key endpoint simply no longer restricts access.
+     * The raw AES-128 key for a full track, served to anyone.
+     *
+     * <p>Music is a free listening experience, so there is no purchase gate. The method therefore
+     * takes no caller identity: an unused {@code memberId} parameter would read as a gate that
+     * exists, and the next person to touch this code would trust a check that was never made.
+     * The stream stays AES-packaged, but with the key public that is transport hygiene (it stops
+     * casual segment scraping), <b>not</b> access control — restoring a paid tier means adding a
+     * purchase lookup here plus short-lived signed key URLs.
      */
     @Transactional(readOnly = true)
-    public byte[] serveKey(Long albumId, Long trackId, Long memberId) {
+    public byte[] serveKey(Long albumId, Long trackId) {
         Track track = requireFullTrack(albumId, trackId);
         HlsKey key = hlsKeyRepository.findById(track.getHlsKeyId())
                 .orElseThrow(() -> new ApiException(ResultCode.NOT_FOUND, "키를 찾을 수 없습니다"));

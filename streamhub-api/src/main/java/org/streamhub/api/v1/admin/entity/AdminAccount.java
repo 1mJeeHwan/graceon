@@ -59,4 +59,12 @@ public class AdminAccount {
         this.churchId = churchId;
         this.createdAt = LocalDateTime.now();
     }
+
+    /**
+     * Replaces the stored credential. Takes an already-encoded hash — the caller owns the
+     * {@code PasswordEncoder} so a raw password can never reach the entity by mistake.
+     */
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
 }

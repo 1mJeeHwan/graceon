@@ -8,6 +8,7 @@ import org.streamhub.api.base.exception.ApiException;
 import org.streamhub.api.base.response.ResInfinityList;
 import org.streamhub.api.base.response.ResultCode;
 import org.streamhub.api.base.security.AdminPrincipal;
+import org.streamhub.api.base.util.PiiMasker;
 import org.streamhub.api.base.util.SortResolver;
 import org.streamhub.api.v1.member.dto.MemberDetail;
 import org.streamhub.api.v1.member.dto.MemberListItem;
@@ -58,8 +59,20 @@ public class MemberService {
 
         List<MemberListItem> contents =
                 memberMapper.selectList(blankToNull(request.keyword()), status, churchId, orderBy, request.offset(), size);
+        if (principal != null && principal.isDemoViewer()) {
+            contents.forEach(MemberService::maskContact);
+        }
         long total = memberMapper.countList(blankToNull(request.keyword()), status, churchId);
         return ResInfinityList.of(contents, total, size);
+    }
+
+    /**
+     * Blanks out contact details in place for the public read-only demo account. The rows are
+     * already-detached MyBatis DTOs, so mutating them cannot write back to the database.
+     */
+    private static void maskContact(MemberListItem item) {
+        item.setEmail(PiiMasker.maskEmail(item.getEmail()));
+        item.setPhone(PiiMasker.maskPhone(item.getPhone()));
     }
 
     @Transactional(readOnly = true)
@@ -69,6 +82,10 @@ public class MemberService {
             throw new ApiException(ResultCode.NOT_FOUND);
         }
         ensureInScope(detail.getChurchId(), principal);
+        if (principal != null && principal.isDemoViewer()) {
+            detail.setEmail(PiiMasker.maskEmail(detail.getEmail()));
+            detail.setPhone(PiiMasker.maskPhone(detail.getPhone()));
+        }
         return detail;
     }
 

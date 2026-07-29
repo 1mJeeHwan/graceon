@@ -3,7 +3,10 @@ package org.streamhub.api.base.jwt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
@@ -91,6 +94,24 @@ class JwtTokenProviderTest {
         DecodedJWT jwt = provider.verify(provider.createRefreshToken(admin));
 
         assertThat(provider.isRefreshToken(jwt)).isTrue();
+    }
+
+    /**
+     * The filter authenticates an admin only when {@code isAccessToken} says so. Any other kind —
+     * and, critically, a token signed with this key but carrying no {@code type} claim at all —
+     * must answer false, so the default is "reject" rather than "treat as admin".
+     */
+    @Test
+    void onlyAccessTokens_areAcceptedAsAdminCredentials() {
+        assertThat(provider.isAccessToken(provider.verify(provider.createAccessToken(admin)))).isTrue();
+        assertThat(provider.isAccessToken(provider.verify(provider.createRefreshToken(admin)))).isFalse();
+
+        String noTypeClaim = JWT.create()
+                .withSubject("1")
+                .withClaim("role", "SYSTEM")
+                .withExpiresAt(Instant.now().plusSeconds(300))
+                .sign(Algorithm.HMAC512(SECRET));
+        assertThat(provider.isAccessToken(provider.verify(noTypeClaim))).isFalse();
     }
 
     @Test

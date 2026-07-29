@@ -25,6 +25,14 @@ storage:
 spring.cloud.aws:
   region.static: ${AWS_REGION:ap-northeast-2}
 
+# 시드 계정: 운영에서는 dev 기본값(admin1234 등)을 상속하지 않는다. 값을 주입하지 않으면 권한 있는
+# 두 계정은 생성되지 않고 경고만 남는다(fail-closed). 이미 생성된 계정의 비밀번호는 시더가 건드리지
+# 않으므로(existsByLoginId 가드), 회전은 콘솔의 POST /v1/admin/me/password 로 한다.
+app:
+  seed:
+    system-password: ${SEED_ADMIN_PASSWORD:}
+    church_manager-password: ${SEED_MANAGER_PASSWORD:}
+
 jwt:
   secret: ${JWT_SECRET}
   access-exp-seconds: 3600

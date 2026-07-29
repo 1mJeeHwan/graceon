@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -71,6 +72,17 @@ public class DataInitializer implements CommandLineRunner {
     private final PostRepository postRepository;
     private final PasswordEncoder passwordEncoder;
 
+    /** Blank (the production default) means "do not seed this account at all". */
+    @Value("${app.seed.system-password:}")
+    private String systemPassword;
+
+    @Value("${app.seed.church_manager-password:}")
+    private String managerPassword;
+
+    /** The published read-only demo account; a literal default is intentional here. */
+    @Value("${app.seed.viewer-password:viewer1234}")
+    private String viewerPassword;
+
     public DataInitializer(
             AdminAccountRepository adminRepository,
             CountryRepository countryRepository,
@@ -113,14 +125,26 @@ public class DataInitializer implements CommandLineRunner {
         seedPosts();
     }
 
+    /**
+     * Seeds operator accounts. The two privileged accounts take their password from configuration
+     * and are <b>skipped entirely when it is blank</b>, so a production deployment that forgets to
+     * set {@code SEED_ADMIN_PASSWORD} ends up with no SYSTEM login rather than a guessable one.
+     * Only {@code viewer} — the read-only account published in the README for browsing the demo —
+     * keeps a literal default.
+     */
     private void seedAdmins() {
-        seedAdmin("admin", "admin1234", "홍길동", Role.SYSTEM, null);
-        seedAdmin("manager", "manager1234", "김영희", Role.CHURCH_MANAGER, 1L);
-        seedAdmin("viewer", "viewer1234", "이몽룡", Role.VIEWER, null);
+        seedAdmin("admin", systemPassword, "홍길동", Role.SYSTEM, null);
+        seedAdmin("manager", managerPassword, "김영희", Role.CHURCH_MANAGER, 1L);
+        seedAdmin("viewer", viewerPassword, "이몽룡", Role.VIEWER, null);
     }
 
     private void seedAdmin(String loginId, String rawPassword, String name, Role role, Long churchId) {
         if (adminRepository.existsByLoginId(loginId)) {
+            return;
+        }
+        if (rawPassword == null || rawPassword.isBlank()) {
+            log.warn("Skipping seed of '{}' ({}): no password configured. "
+                    + "Set app.seed.{}-password to create it.", loginId, role, role.name().toLowerCase());
             return;
         }
         adminRepository.save(AdminAccount.builder()

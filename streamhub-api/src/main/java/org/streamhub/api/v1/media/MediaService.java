@@ -1,6 +1,7 @@
 package org.streamhub.api.v1.media;
 
 import java.util.List;
+import java.util.regex.Pattern;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -23,6 +24,12 @@ import org.streamhub.api.v1.media.repository.MediaAssetRepository;
 public class MediaService {
 
     private static final int DEFAULT_PAGE_SIZE = 24;
+
+    /** Category fallback when the caller sends nothing usable. */
+    private static final String DEFAULT_CATEGORY = "general";
+
+    /** Lowercase slug — letters, digits, hyphen, underscore. No dots, no path separators. */
+    private static final Pattern SAFE_CATEGORY = Pattern.compile("[a-z0-9_-]{1,40}");
 
     private final MediaAssetRepository mediaAssetRepository;
     private final StorageService storageService;
@@ -80,8 +87,22 @@ public class MediaService {
         return MediaAssetDto.of(asset, storageService.publicUrl(asset.getStorageKey()));
     }
 
+    /**
+     * Normalizes the caller-supplied category into a safe key segment.
+     *
+     * <p>The value arrives as an unvalidated request parameter and becomes part of the S3 object
+     * key ({@code media/<category>/...}). Trimming alone let {@code ../} and {@code /} through,
+     * which lets an uploader place objects outside the {@code media/} namespace the read path
+     * whitelists. Anything that is not a simple slug falls back to {@code general} rather than
+     * failing the upload — the category is a filing label, not a security decision, and the read
+     * side ({@code MediaPublicController}) enforces the prefix whitelist independently.
+     */
     private String blankToDefault(String value) {
-        return value == null || value.isBlank() ? "general" : value.trim();
+        if (value == null || value.isBlank()) {
+            return DEFAULT_CATEGORY;
+        }
+        String trimmed = value.trim().toLowerCase();
+        return SAFE_CATEGORY.matcher(trimmed).matches() ? trimmed : DEFAULT_CATEGORY;
     }
 
     private String blankToNull(String value) {

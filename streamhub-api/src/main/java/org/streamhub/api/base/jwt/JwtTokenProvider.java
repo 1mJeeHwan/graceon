@@ -129,6 +129,16 @@ public class JwtTokenProvider {
         return TYPE_REFRESH.equals(jwt.getClaim(CLAIM_TYPE).asString());
     }
 
+    /**
+     * Whether the token is an admin access token — the only kind that may populate the security
+     * context. Callers must gate on this <i>positively</i> rather than rejecting known-bad types:
+     * a token minted with this signing key but an unknown (or absent) {@code type} claim must fail
+     * closed, not fall through to admin authentication.
+     */
+    public boolean isAccessToken(DecodedJWT jwt) {
+        return TYPE_ACCESS.equals(jwt.getClaim(CLAIM_TYPE).asString());
+    }
+
     /** A member token authenticates an end user — it must never grant admin authorities. */
     public boolean isMemberToken(DecodedJWT jwt) {
         return TYPE_MEMBER.equals(jwt.getClaim(CLAIM_TYPE).asString());

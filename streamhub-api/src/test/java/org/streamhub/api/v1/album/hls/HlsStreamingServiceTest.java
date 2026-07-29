@@ -71,7 +71,7 @@ class HlsStreamingServiceTest {
         when(hlsKeyRepository.findById(42L)).thenReturn(Optional.of(key));
 
         // No member id, no purchase — still served.
-        byte[] result = service().serveKey(5L, 7L, null);
+        byte[] result = service().serveKey(5L, 7L);
 
         assertThat(result).hasSize(16).isEqualTo(HexFormat.of().parseHex(KEY_HEX));
     }

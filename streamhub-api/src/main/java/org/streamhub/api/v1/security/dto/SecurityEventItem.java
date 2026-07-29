@@ -1,6 +1,7 @@
 package org.streamhub.api.v1.security.dto;
 
 import java.time.LocalDateTime;
+import org.streamhub.api.base.util.PiiMasker;
 import org.streamhub.api.v1.security.entity.SecurityEvent;
 
 /**
@@ -41,6 +42,25 @@ public record SecurityEventItem(
                 event.getIp(),
                 event.getPath(),
                 event.getDetail(),
+                event.getCreatedAt());
+    }
+
+    /**
+     * Same row with the two identifying fields blanked, for the public read-only demo account.
+     * {@code detail} is dropped rather than masked: it is free-form context written by whatever
+     * recorded the event, so there is no format to mask safely.
+     */
+    public static SecurityEventItem masked(SecurityEvent event) {
+        return new SecurityEventItem(
+                event.getId(),
+                event.getEventType(),
+                event.getSeverity(),
+                event.getActorType(),
+                event.getActorId(),
+                PiiMasker.maskLoginId(event.getLoginId()),
+                PiiMasker.maskIp(event.getIp()),
+                event.getPath(),
+                null,
                 event.getCreatedAt());
     }
 }

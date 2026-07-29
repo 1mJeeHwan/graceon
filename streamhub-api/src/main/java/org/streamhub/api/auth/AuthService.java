@@ -43,6 +43,13 @@ public class AuthService {
     /** How long the failure counter (and therefore the lockout) lives. */
     private static final Duration LOGIN_FAIL_WINDOW = Duration.ofMinutes(10);
 
+    /**
+     * BCrypt hash of an unguessable constant, compared against when the submitted login id has no
+     * account, so that a miss costs the same as a wrong password. Never matches a real password.
+     */
+    private static final String DUMMY_PASSWORD_HASH =
+            "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
     private final AdminAccountRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
@@ -76,13 +83,13 @@ public class AuthService {
             throw new ApiException(ResultCode.LOGIN_FAILED,
                     "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.");
         }
-        AdminAccount admin = adminRepository.findByLoginId(request.loginId())
-                .orElseThrow(() -> {
-                    securityMonitor.recordAuthFailure(request.loginId(), "ADMIN");
-                    recordLoginFailure(failKey);
-                    return new ApiException(ResultCode.LOGIN_FAILED);
-                });
-        if (!passwordEncoder.matches(request.password(), admin.getPassword())) {
+        AdminAccount admin = adminRepository.findByLoginId(account).orElse(null);
+        // Always spend one BCrypt verification, even for an unknown login id: returning early on a
+        // miss makes it measurably faster than a wrong password, which turns response time into an
+        // operator-account enumeration oracle.
+        boolean passwordMatches = passwordEncoder.matches(
+                request.password(), admin == null ? DUMMY_PASSWORD_HASH : admin.getPassword());
+        if (admin == null || !passwordMatches) {
             securityMonitor.recordAuthFailure(request.loginId(), "ADMIN");
             recordLoginFailure(failKey);
             throw new ApiException(ResultCode.LOGIN_FAILED);
@@ -173,6 +180,15 @@ public class AuthService {
         } catch (ApiException ignored) {
             // already invalid/expired — nothing to revoke
         }
+    }
+
+    /**
+     * Revokes the stored refresh token for an operator, forcing re-login once the current access
+     * token expires. Called after a password change so a stolen session cannot be renewed
+     * indefinitely with the old credential.
+     */
+    public void revokeRefreshToken(Long adminId) {
+        redisTemplate.delete(REFRESH_KEY_PREFIX + adminId);
     }
 
     private TokenResponse issueTokens(AdminAccount admin) {

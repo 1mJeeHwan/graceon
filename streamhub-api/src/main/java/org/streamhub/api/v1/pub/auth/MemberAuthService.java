@@ -44,6 +44,15 @@ public class MemberAuthService {
     /** How long the failure counter (and therefore the lockout) lives. */
     private static final Duration LOGIN_FAIL_WINDOW = Duration.ofMinutes(10);
 
+    /**
+     * BCrypt hash of an unguessable constant, compared against when the submitted address has no
+     * account. Its only job is to make the not-found path cost the same as the wrong-password path:
+     * BCrypt takes tens of milliseconds, so returning early on a miss would let an attacker read
+     * "this address is registered" straight off the response time. Never matches a real password.
+     */
+    private static final String DUMMY_PASSWORD_HASH =
+            "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
     private final MemberRepository memberRepository;
     private final ChurchRepository churchRepository;
     private final PasswordEncoder passwordEncoder;
@@ -125,18 +134,24 @@ public class MemberAuthService {
             throw new ApiException(ResultCode.LOGIN_FAILED,
                     "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.");
         }
-        Member member = memberRepository.findByEmail(request.email())
-                .orElseThrow(() -> {
-                    securityMonitor.recordAuthFailure(request.email(), "MEMBER");
-                    recordLoginFailure(failKey);
-                    return new ApiException(ResultCode.LOGIN_FAILED);
-                });
-        if (!passwordEncoder.matches(request.password(), member.getPassword())) {
+        // Look up on the normalized address so the lockout key and the account resolve to the same
+        // identity — otherwise `User@X.com` and `user@x.com` share an account but not a counter.
+        Member member = memberRepository.findByEmail(account).orElse(null);
+        // Always spend one BCrypt verification, even when the account does not exist: skipping it
+        // for unknown addresses makes the miss measurably faster than a wrong password and turns
+        // response time into an account-enumeration oracle.
+        boolean passwordMatches = passwordEncoder.matches(
+                request.password(), member == null ? DUMMY_PASSWORD_HASH : member.getPassword());
+        if (member == null || !passwordMatches) {
             securityMonitor.recordAuthFailure(request.email(), "MEMBER");
             recordLoginFailure(failKey);
             throw new ApiException(ResultCode.LOGIN_FAILED);
         }
         if (member.getUserStatus() != UserStatus.CONFIRMED) {
+            // Reached only with a valid credential, so this is not an enumeration oracle. It is
+            // still worth recording: repeated hits mean someone is working a verified credential list.
+            securityMonitor.record("LOGIN_BLOCKED_STATUS", "MEDIUM", "MEMBER", member.getId(),
+                    request.email(), "/pub/v1/auth/login", "status=" + member.getUserStatus());
             throw new ApiException(ResultCode.FORBIDDEN, "승인 대기 중이거나 비활성화된 계정입니다");
         }
         clearLoginFailures(failKey);

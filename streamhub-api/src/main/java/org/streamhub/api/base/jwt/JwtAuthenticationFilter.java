@@ -50,14 +50,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             DecodedJWT jwt = tokenProvider.verify(token);
-            if (tokenProvider.isRefreshToken(jwt)) {
-                throw new ApiException(org.streamhub.api.base.response.ResultCode.INVALID_TOKEN);
-            }
             // Member (end-user) tokens are not admin credentials: leave the context unauthenticated
             // so they can reach permitAll /pub/** but never any admin-protected endpoint.
             if (tokenProvider.isMemberToken(jwt)) {
                 filterChain.doFilter(request, response);
                 return;
+            }
+            // Whitelist, not blacklist: only an access token may authenticate an admin. A refresh
+            // token — or any token whose `type` claim is unknown or missing — is rejected rather
+            // than falling through to admin authentication.
+            if (!tokenProvider.isAccessToken(jwt)) {
+                throw new ApiException(org.streamhub.api.base.response.ResultCode.INVALID_TOKEN);
             }
             Authentication authentication = tokenProvider.getAuthentication(jwt);
             SecurityContextHolder.getContext().setAuthentication(authentication);

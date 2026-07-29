@@ -4,11 +4,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.streamhub.api.base.response.ResultDTO;
+import org.streamhub.api.base.security.AdminPrincipal;
 import org.streamhub.api.v1.statistics.dto.ChannelWatchItem;
 import org.streamhub.api.v1.statistics.dto.SummaryResponse;
 import org.streamhub.api.v1.statistics.dto.TopContentItem;
@@ -29,16 +31,19 @@ public class StatController {
         this.statService = statService;
     }
 
-    @Operation(summary = "요약 카드", description = "총 회원/신규(7일)/총 조회수/총 콘텐츠. Redis 캐싱(60s).")
+    @Operation(summary = "요약 카드",
+            description = "총 회원/신규(7일)/총 조회수/총 콘텐츠. 회원 지표는 소속 교회로 스코핑되고, "
+                    + "콘텐츠 지표는 CONTENT에 교회 차원이 없어 플랫폼 전체다. Redis 캐싱(60s, 교회별 키).")
     @GetMapping("/summary")
-    public ResultDTO<SummaryResponse> summary() {
-        return ResultDTO.ok(statService.getSummary());
+    public ResultDTO<SummaryResponse> summary(@AuthenticationPrincipal AdminPrincipal principal) {
+        return ResultDTO.ok(statService.getSummary(principal));
     }
 
-    @Operation(summary = "일별 가입 추이")
+    @Operation(summary = "일별 가입 추이", description = "CHURCH_MANAGER는 자기 교회 가입만 집계된다.")
     @GetMapping("/member-trend")
-    public ResultDTO<List<TrendPoint>> memberTrend(@RequestParam(defaultValue = "30") int days) {
-        return ResultDTO.ok(statService.getMemberTrend(days));
+    public ResultDTO<List<TrendPoint>> memberTrend(@RequestParam(defaultValue = "30") int days,
+                                                   @AuthenticationPrincipal AdminPrincipal principal) {
+        return ResultDTO.ok(statService.getMemberTrend(days, principal));
     }
 
     @Operation(summary = "조회수 Top N")

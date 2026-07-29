@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -24,6 +25,10 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 public class StorageService {
 
     private final S3Client s3Client;
+    /** A dot plus 1–10 alphanumerics — everything a real media/document suffix needs, and nothing
+     *  that can act as a path separator or key delimiter. */
+    private static final Pattern SAFE_EXTENSION = Pattern.compile("\\.[A-Za-z0-9]{1,10}");
+
     private final String bucket;
     private final String endpoint;
     private final String region;
@@ -141,11 +146,26 @@ public class StorageService {
         return "https://" + bucket + ".s3." + region + ".amazonaws.com/" + key;
     }
 
+    /**
+     * The uploaded file's extension, or {@code ""} when it has none or the suffix is not a plain
+     * alphanumeric one.
+     *
+     * <p>The suffix is caller-controlled and lands in the S3 object key, so it is matched against a
+     * strict pattern rather than sliced off at the last dot: a name like {@code a.b/c/d} would
+     * otherwise inject path separators and scatter the object across a key namespace it does not
+     * own. Anything unrecognized degrades to no extension — the object is still stored under its
+     * UUID, only without a suffix. This is key hygiene, not content validation; the read side
+     * ({@code MediaPublicController}) is what decides how bytes are served.
+     */
     private String extension(String filename) {
         if (filename == null) {
             return "";
         }
         int dot = filename.lastIndexOf('.');
-        return dot >= 0 ? filename.substring(dot) : "";
+        if (dot < 0) {
+            return "";
+        }
+        String suffix = filename.substring(dot);
+        return SAFE_EXTENSION.matcher(suffix).matches() ? suffix.toLowerCase() : "";
     }
 }

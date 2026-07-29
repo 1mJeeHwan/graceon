@@ -85,6 +85,14 @@ jwt:
 # 아래 각 블록은 해당 seam의 env 자리. 기본값은 mock/seed/공개 데모키라 키 없이도 동작하고,
 # 실키는 환경변수로만 주입하면 코드 변경 없이 실연동으로 전환된다.
 app:
+  # 시드 운영자 계정 비밀번호. 권한 있는 두 계정(SYSTEM/CHURCH_MANAGER)은 값이 비어 있으면 아예
+  # 생성하지 않는다 — 운영 환경에서 주입을 빠뜨렸을 때 "추측 가능한 SYSTEM 계정"이 생기는 것보다
+  # "SYSTEM 계정이 없는" 쪽이 안전하기 때문. viewer는 README에 공개된 읽기 전용 데모 계정이라
+  # 리터럴 기본값을 유지한다. 로컬/데모 편의를 위해 dev 기본값만 여기에 둔다.
+  seed:
+    system-password: ${SEED_ADMIN_PASSWORD:admin1234}
+    church_manager-password: ${SEED_MANAGER_PASSWORD:manager1234}
+    viewer-password: ${SEED_VIEWER_PASSWORD:viewer1234}
   # Async action-log transport seam. sqs(기본) = AWS SQS(@SqsListener, LocalStack 로컬);
   # kafka = Apache Kafka(@KafkaListener). 빈 교체 + env 플래그만으로 전환, 호출부 무변경.
   eventlog:
