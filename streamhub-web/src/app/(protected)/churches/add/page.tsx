@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
+import ReadOnlyNotice from "@/components/common/ReadOnlyNotice";
 import { useWritePermission } from "@/lib/use-permissions";
 import { useChurchChurchesCreate } from "@/apis/query/church/church";
 import { type ChurchUpsertRequest } from "@/apis/query/graceOnAdminAPI.schemas";
@@ -74,6 +75,7 @@ export default function ChurchAddPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
+      <ReadOnlyNotice />
       <Link
         href="/churches"
         className="mb-4 inline-flex items-center gap-1 text-sm text-slate-600 transition hover:text-slate-900"

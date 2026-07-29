@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Loader2, Plus } from "lucide-react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
+import { useWritePermission } from "@/lib/use-permissions";
 import { albumList } from "@/apis/query/album/album";
 import {
   AlbumSearchRequestGenre,
@@ -47,6 +48,8 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 
 export default function AlbumsPage() {
   // Committed search criteria (applied on 검색 / page change).
+  const { writable } = useWritePermission();
+
   const [keyword, setKeyword] = useState("");
   const [genre, setGenre] = useState<GenreFilter>("ALL");
   const [status, setStatus] = useState<StatusFilter>("ALL");
@@ -105,13 +108,15 @@ export default function AlbumsPage() {
             앨범을 조회하고 트랙리스트 / 가격 / 노출상태를 관리합니다.
           </p>
         </div>
-        <Link
-          href="/albums/add"
-          className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
-        >
-          <Plus className="h-4 w-4" />
-          앨범 등록
-        </Link>
+        {writable && (
+          <Link
+            href="/albums/add"
+            className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+          >
+            <Plus className="h-4 w-4" />
+            앨범 등록
+          </Link>
+        )}
       </div>
 
       {/* Search / filter bar */}

@@ -15,6 +15,7 @@ import {
   type ChurchListItem,
   type ChurchSearchRequest,
 } from "@/apis/query/graceOnAdminAPI.schemas";
+import { useWritePermission } from "@/lib/use-permissions";
 import { DENOMINATION_LABELS } from "@/lib/church-form";
 
 const ChurchGrid = dynamic(() => import("@/components/churches/ChurchGrid"), {
@@ -32,6 +33,8 @@ type DenominationFilter = "ALL" | ChurchSearchRequestDenomination;
 
 export default function ChurchesPage() {
   // Committed search criteria (applied on 검색 / page change).
+  const { writable } = useWritePermission();
+
   const [keyword, setKeyword] = useState("");
   const [denomination, setDenomination] = useState<DenominationFilter>("ALL");
   const [regionId, setRegionId] = useState("");
@@ -115,13 +118,15 @@ export default function ChurchesPage() {
             교회를 조회하고 교단 / 좌표 / 예배시간을 관리합니다.
           </p>
         </div>
-        <Link
-          href="/churches/add"
-          className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
-        >
-          <Plus className="h-4 w-4" />
-          교회 등록
-        </Link>
+        {writable && (
+          <Link
+            href="/churches/add"
+            className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+          >
+            <Plus className="h-4 w-4" />
+            교회 등록
+          </Link>
+        )}
       </div>
 
       {/* Search / filter bar */}

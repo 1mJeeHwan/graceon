@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
+import ReadOnlyNotice from "@/components/common/ReadOnlyNotice";
 import { useWritePermission } from "@/lib/use-permissions";
 import { useAlbumCreate } from "@/apis/query/album/album";
 import { type AlbumCreateRequest } from "@/apis/query/graceOnAdminAPI.schemas";
@@ -68,6 +69,7 @@ export default function AlbumAddPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
+      <ReadOnlyNotice />
       <Link
         href="/albums"
         className="mb-4 inline-flex items-center gap-1 text-sm text-slate-600 transition hover:text-slate-900"

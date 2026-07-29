@@ -44,7 +44,7 @@ const SOLD_OUT_OPTIONS: { value: SoldOutFilter; label: string }[] = [
 
 export default function GoodsPage() {
   // Committed search criteria (applied on 검색 / page change).
-  const { writeGuardProps } = useWritePermission();
+  const { writable, writeGuardProps } = useWritePermission();
 
   const [keyword, setKeyword] = useState("");
   const [categoryId, setCategoryId] = useState<string>("ALL");
@@ -213,13 +213,15 @@ export default function GoodsPage() {
             굿즈 상품을 조회하고 재고 / 가격을 인라인으로 일괄 수정합니다.
           </p>
         </div>
-        <Link
-          href="/goods/add"
-          className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
-        >
-          <Plus className="h-4 w-4" />
-          굿즈 등록
-        </Link>
+        {writable && (
+          <Link
+            href="/goods/add"
+            className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
+          >
+            <Plus className="h-4 w-4" />
+            굿즈 등록
+          </Link>
+        )}
       </div>
 
       {/* Search / filter bar */}

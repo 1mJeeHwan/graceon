@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
+import ReadOnlyNotice from "@/components/common/ReadOnlyNotice";
 import { useWritePermission } from "@/lib/use-permissions";
 import { useGoodsCategories, useGoodsCreate } from "@/apis/query/goods/goods";
 import {
@@ -77,6 +78,7 @@ export default function GoodsAddPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
+      <ReadOnlyNotice />
       <Link
         href="/goods"
         className="mb-4 inline-flex items-center gap-1 text-sm text-slate-600 transition hover:text-slate-900"

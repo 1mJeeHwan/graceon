@@ -20,6 +20,7 @@ import {
   type PaymentListItem,
 } from "@/apis/query/graceOnAdminAPI.schemas";
 import { formatDateTime } from "@/lib/format";
+import { useWritePermission } from "@/lib/use-permissions";
 import {
   KIND_META,
   PAY_METHOD_LABEL,
@@ -69,6 +70,10 @@ interface PaymentGridProps {
  */
 export default function PaymentGrid({ rows, onRefund, onSortChange }: PaymentGridProps) {
   const router = useRouter();
+  // The refund confirm inside the modal is already guarded, so a read-only operator could never
+  // complete a refund — but they could still open the modal and find its only action dead. Gate the
+  // trigger so the dead end is never reached.
+  const { writeGuardProps } = useWritePermission();
 
   const columnDefs = useMemo<ColDef<PaymentListItem>[]>(
     () => [
@@ -171,6 +176,7 @@ export default function PaymentGrid({ rows, onRefund, onSortChange }: PaymentGri
                 onRefund(row);
               }}
               className="text-sm font-medium text-rose-600 hover:underline"
+              {...writeGuardProps}
             >
               환불
             </button>
@@ -203,7 +209,10 @@ export default function PaymentGrid({ rows, onRefund, onSortChange }: PaymentGri
         },
       },
     ],
-    [router, onRefund],
+    // writeGuardProps belongs here: the column definitions close over it, so leaving it out would
+    // freeze the refund button in whatever state it had when the grid first rendered — which is
+    // "disabled" during the brief window before the session resolves.
+    [router, onRefund, writeGuardProps],
   );
 
   const defaultColDef = useMemo<ColDef<PaymentListItem>>(

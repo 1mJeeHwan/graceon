@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
+import ReadOnlyNotice from "@/components/common/ReadOnlyNotice";
 import { useWritePermission } from "@/lib/use-permissions";
 import { useContentChannels, useContentCreate } from "@/apis/query/content/content";
 import {
@@ -117,6 +118,7 @@ export default function ContentAddPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      <ReadOnlyNotice />
       <Link
         href="/content"
         className="mb-4 inline-flex items-center gap-1 text-sm text-slate-600 transition hover:text-slate-900"

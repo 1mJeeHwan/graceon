@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { canWrite, type AdminRole } from "@/lib/auth-utils";
 
@@ -29,8 +30,12 @@ export function useWritePermission(): {
 } {
   const { data: session } = useSession();
   const writable = canWrite(session?.user?.role as AdminRole | undefined);
-  return {
-    writable,
-    writeGuardProps: writable ? {} : { disabled: true, title: READ_ONLY_HINT },
-  };
+  // Memoized so the object identity only changes when the permission does. Callers put these props
+  // in dependency arrays — AG Grid column definitions close over them — and a fresh object every
+  // render would silently defeat the memo it was added to.
+  const writeGuardProps = useMemo(
+    () => (writable ? {} : { disabled: true as const, title: READ_ONLY_HINT }),
+    [writable],
+  );
+  return { writable, writeGuardProps };
 }
