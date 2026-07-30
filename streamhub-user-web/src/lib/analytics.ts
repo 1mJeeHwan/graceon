@@ -73,13 +73,27 @@ export function sendEvent(p: TrackPayload): void {
   }
 }
 
-/** Maps a route to its content classification (only album detail is a tracked content for now). */
+/**
+ * Maps a route to its content classification.
+ *
+ * Detail routes of tracked content become CONTENT_VIEW with a target id; everything else is a
+ * plain PAGE_VIEW. Only CONTENT_VIEW rows feed the admin "콘텐츠 성과" ranking and the
+ * channel watch-time chart, so a content route missing from this table is invisible there no
+ * matter how much real traffic it gets.
+ */
+const CONTENT_ROUTES: { pattern: RegExp; contentType: ContentKind }[] = [
+  { pattern: /^\/albums\/(\d+)/, contentType: "ALBUM" },
+  { pattern: /^\/video\/(\d+)/, contentType: "VIDEO" },
+];
+
 export function classifyPath(path: string): {
   type: EventType;
   contentType: ContentKind;
   targetId: number | null;
 } {
-  const album = /^\/albums\/(\d+)/.exec(path);
-  if (album) return { type: "CONTENT_VIEW", contentType: "ALBUM", targetId: Number(album[1]) };
+  for (const { pattern, contentType } of CONTENT_ROUTES) {
+    const match = pattern.exec(path);
+    if (match) return { type: "CONTENT_VIEW", contentType, targetId: Number(match[1]) };
+  }
   return { type: "PAGE_VIEW", contentType: "PAGE", targetId: null };
 }
